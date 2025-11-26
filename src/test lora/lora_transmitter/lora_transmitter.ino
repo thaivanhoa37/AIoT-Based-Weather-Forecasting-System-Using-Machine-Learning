@@ -14,8 +14,8 @@
  * M0        ->   GPIO19
  */
 
-#define M0 18       
-#define M1 19
+#define M0 19       
+#define M1 18
 
 unsigned long lastSendTime = 0;
 const unsigned long sendInterval = 5000; // Gửi mỗi 5 giây (tăng từ 3s)
