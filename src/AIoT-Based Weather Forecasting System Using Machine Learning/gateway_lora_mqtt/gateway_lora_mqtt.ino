@@ -31,6 +31,9 @@
 #define LORA_RX 16
 #define LORA_TX 17
 
+// LED Pin Definition
+#define LED_PIN 2
+
 // MQTT Topic Definitions
 const char* TOPIC_STATE_TEMPERATURE = "esp32/sensor/temperature";
 const char* TOPIC_STATE_HUMIDITY = "esp32/sensor/humidity";
@@ -80,6 +83,8 @@ void reconnectMQTT();
 void processLoRaData();
 float parseValue(String json, String key);
 void publishSensorData(float temp, float humidity, float pressure, float co2, float dust, int aqi);
+void blinkLED(int times, int delayMs);
+void ledConnectionError();
 
 void setup() {
   Serial.begin(115200);
@@ -88,7 +93,12 @@ void setup() {
   Serial.println("║   Web Config Enabled              ║");
   Serial.println("╚════════════════════════════════════╝");
   
-  // Load saved configuration
+  // Setup LED
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+  Serial.println("✓ LED initialized on GPIO2");
+  
+    // Load saved configuration
   loadConfig();
   
   // Setup LoRa
@@ -115,6 +125,7 @@ void loop() {
   
   // Reconnect WiFi if disconnected (only in Station mode)
   if (!apMode && WiFi.status() != WL_CONNECTED) {
+    ledConnectionError(); // Blink LED continuously for WiFi error
     if (millis() - lastReconnectAttempt > 30000) {
       Serial.println("WiFi disconnected. Attempting reconnect...");
       reconnectWiFi();
@@ -124,6 +135,7 @@ void loop() {
   
   // Reconnect MQTT if disconnected
   if (!apMode && WiFi.status() == WL_CONNECTED && !mqttClient.connected()) {
+    ledConnectionError(); // Blink LED continuously for MQTT error
     if (millis() - lastMqttAttempt > 5000) {
       reconnectMQTT();
       lastMqttAttempt = millis();
@@ -464,6 +476,9 @@ void processLoRaData() {
   if (Serial2.available() > 0) {
     Serial.println("\n!!! DATA DETECTED !!!");
     
+    // Blink LED 2 times when receiving data
+    blinkLED(2, 100);
+    
     delay(100);
     
     String received = "";
@@ -606,4 +621,26 @@ float parseValue(String json, String key) {
   value.trim();
   
   return value.toFloat();
+}
+
+// LED Control Functions
+void blinkLED(int times, int delayMs) {
+  for (int i = 0; i < times; i++) {
+    digitalWrite(LED_PIN, HIGH);
+    delay(delayMs);
+    digitalWrite(LED_PIN, LOW);
+    delay(delayMs);
+  }
+}
+
+void ledConnectionError() {
+  static unsigned long lastBlink = 0;
+  static bool ledState = false;
+  
+  // Blink every 200ms for connection errors
+  if (millis() - lastBlink > 200) {
+    ledState = !ledState;
+    digitalWrite(LED_PIN, ledState ? HIGH : LOW);
+    lastBlink = millis();
+  }
 }
