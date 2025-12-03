@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tổng quan - AIoT Weather</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="app-logo">
+                <span class="logo-icon">🌤️</span>
+                <div>
+                    <div class="app-title">AIoT Weather</div>
+                    <div class="app-subtitle">AIoT-ML</div>
+                </div>
+            </div>
+        </div>
+        <nav>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">
+                        <span class="nav-icon">🏠</span>
+                        <span>Tổng quan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="charts.html" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Biểu đồ & Phân tích</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="forecast.html" class="nav-link">
+                        <span class="nav-icon">🤖</span>
+                        <span>Dự báo (ML)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="mysql.html" class="nav-link">
+                        <span class="nav-icon">💾</span>
+                        <span>Quản lý dữ liệu MySQL</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="settings.html" class="nav-link">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Cấu hình hệ thống</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+                <h1 class="page-title">Tổng quan thời tiết</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="clock-display">
+                    <span class="clock-time" id="clockTime">00:00:00</span>
+                    <span class="clock-label">GMT+7</span>
+                </div>
+                <div class="status-badge connected" id="mysqlStatus">
+                    <span class="status-dot"></span> MySQL: Connected
+                </div>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content">
+            <!-- Real-time IoT Data Section -->
+            <section class="section">
+                <h2 class="section-title">Real time IoT data</h2>
+                <div class="cards-grid" id="iotDataCards">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon temp">🌡️</div>
+                            <div class="card-label">Nhiệt độ</div>
+                        </div>
+                        <div class="card-value" id="tempValue">--</div>
+                        <div class="card-footer" id="tempTime">Đang tải...</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon humidity">💧</div>
+                            <div class="card-label">Độ ẩm</div>
+                        </div>
+                        <div class="card-value" id="humidityValue">--</div>
+                        <div class="card-footer" id="humidityTime">Đang tải...</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon pressure">🎯</div>
+                            <div class="card-label">Áp suất</div>
+                        </div>
+                        <div class="card-value" id="pressureValue">--</div>
+                        <div class="card-footer" id="pressureTime">Đang tải...</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon co2">☁️</div>
+                            <div class="card-label">CO₂</div>
+                        </div>
+                        <div class="card-value" id="co2Value">--</div>
+                        <div class="card-footer" id="co2Time">Đang tải...</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon dust">😷</div>
+                            <div class="card-label">Bụi mịn</div>
+                        </div>
+                        <div class="card-value" id="dustValue">--</div>
+                        <div class="card-footer" id="dustTime">Đang tải...</div>
+                    </div>
+                </div>
+                <div class="text-center mt-10">
+                    <button class="btn btn-primary" onclick="loadRealtimeData()">
+                        🔄 Cập nhật dữ liệu
+                    </button>
+                </div>
+            </section>
+
+            <!-- Weather API Data Section -->
+            <section class="section">
+                <h2 class="section-title">Dữ liệu từ API Thời tiết</h2>
+                <div class="cards-grid" id="weatherApiCards">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon wind">🌬️</div>
+                            <div class="card-label">Tốc độ gió</div>
+                        </div>
+                        <div class="card-value" id="windSpeedValue">--</div>
+                        <div class="card-footer">km/h</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon wind">🧭</div>
+                            <div class="card-label">Hướng gió</div>
+                        </div>
+                        <div class="card-value" style="font-size: 20px;" id="windDirectionValue">--</div>
+                        <div class="card-footer">Đông Nam</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon rain">🌧️</div>
+                            <div class="card-label">Lượng mưa</div>
+                        </div>
+                        <div class="card-value" id="rainfallValue">--</div>
+                        <div class="card-footer">mm</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon uv">☀️</div>
+                            <div class="card-label">Chỉ số UV</div>
+                        </div>
+                        <div class="card-value" id="uvValue">--</div>
+                        <div class="card-footer" id="uvLevel">--</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Station Location Section -->
+            <section class="section">
+                <h2 class="section-title">Vị trí trạm đo hiện tại</h2>
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">Tên trạm</label>
+                        <input type="text" class="form-input" value="Trạm tầm Công nghệ cao, Quận 9" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tọa độ</label>
+                        <input type="text" class="form-input" value="10.8231° N, 106.6297° E" disabled>
+                    </div>
+                    <div class="info-panel">
+                        <div class="info-panel-content">
+                            <strong>Nguồn dữ liệu:</strong> ESP32 + Cảm biến & OpenWeatherMap
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trend Charts Section -->
+            <section class="section">
+                <h2 class="section-title">Xu hướng 1 giờ gần nhất</h2>
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <div class="chart-title">● Nhiệt độ</div>
+                        <canvas class="mini-chart" id="tempTrendChart" width="400" height="100"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">● Độ ẩm</div>
+                        <canvas class="mini-chart" id="humidityTrendChart" width="400" height="100"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">● CO₂</div>
+                        <canvas class="mini-chart" id="co2TrendChart" width="400" height="100"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">● Bụi mịn</div>
+                        <canvas class="mini-chart" id="dustTrendChart" width="400" height="100"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Status Section -->
+            <section class="section">
+                <h2 class="section-title">Trạng thái hệ thống</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Dữ liệu mới nhất</div>
+                        <div class="stat-value" style="font-size: 14px;" id="lastDataTime">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Bản ghi mới (1h)</div>
+                        <div class="stat-value" id="newRecords">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Trạng thái</div>
+                        <div class="stat-value" style="font-size: 16px;" id="systemStatus">✓ Hoạt động</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+    <script>
+        // Page-specific JavaScript
+        let trendData = {
+            temperature: [],
+            humidity: [],
+            co2: [],
+            dust: []
+        };
+
+        // Load realtime data
+        async function loadRealtimeData() {
+            const cards = document.getElementById('iotDataCards');
+            const loading = AppUtils.showLoading(cards);
+
+            try {
+                const data = await AppUtils.fetchRealtimeData();
+
+                // Update IoT data cards
+                document.getElementById('tempValue').innerHTML = `${data.temperature}<span class="card-unit">°C</span>`;
+                document.getElementById('humidityValue').innerHTML = `${data.humidity}<span class="card-unit">%</span>`;
+                document.getElementById('pressureValue').innerHTML = `${data.pressure}<span class="card-unit">hPa</span>`;
+                document.getElementById('co2Value').innerHTML = `${data.co2}<span class="card-unit">ppm</span>`;
+                document.getElementById('dustValue').innerHTML = `${data.dust}<span class="card-unit">µg/m³</span>`;
+
+                // Update timestamps
+                const timestamp = `Cập nhật: ${data.timestamp}`;
+                document.getElementById('tempTime').textContent = timestamp;
+                document.getElementById('humidityTime').textContent = timestamp;
+                document.getElementById('pressureTime').textContent = timestamp;
+                document.getElementById('co2Time').textContent = timestamp;
+                document.getElementById('dustTime').textContent = timestamp;
+
+                // Update weather API data
+                document.getElementById('windSpeedValue').innerHTML = `${data.windSpeed}<span class="card-unit">km/h</span>`;
+                document.getElementById('windDirectionValue').textContent = data.windDirection;
+                document.getElementById('rainfallValue').innerHTML = `${data.rainfall}<span class="card-unit">mm</span>`;
+                document.getElementById('uvValue').textContent = data.uvIndex;
+                document.getElementById('uvLevel').textContent = AppUtils.getUVLevel(data.uvIndex);
+
+                // Update system status
+                document.getElementById('lastDataTime').textContent = data.timestamp;
+                document.getElementById('newRecords').textContent = Math.floor(Math.random() * 10) + 5;
+
+                AppUtils.showToast('Đã cập nhật dữ liệu thành công', 'success');
+            } catch (error) {
+                AppUtils.showToast(error.message, 'error');
+            } finally {
+                AppUtils.hideLoading(loading);
+            }
+        }
+
+        // Load trend charts
+        async function loadTrendCharts() {
+            try {
+                const data = await AppUtils.fetchChartsData('1h', ['temperature', 'humidity', 'co2', 'dust']);
+
+                // Draw mini charts
+                const tempCanvas = document.getElementById('tempTrendChart');
+                const humidityCanvas = document.getElementById('humidityTrendChart');
+                const co2Canvas = document.getElementById('co2TrendChart');
+                const dustCanvas = document.getElementById('dustTrendChart');
+
+                AppUtils.drawMiniChart(tempCanvas, data.temperature, '#ff6b9d');
+                AppUtils.drawMiniChart(humidityCanvas, data.humidity, '#4299e1');
+                AppUtils.drawMiniChart(co2Canvas, data.co2, '#68d391');
+                AppUtils.drawMiniChart(dustCanvas, data.dust, '#b794f4');
+            } catch (error) {
+                console.error('Error loading trend charts:', error);
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRealtimeData();
+            loadTrendCharts();
+
+            // Auto-refresh every 30 seconds
+            setInterval(loadRealtimeData, 30000);
+        });
+    </script>
+</body>
+
+</html>
