@@ -41,6 +41,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="ml-training.html" class="nav-link">
+                        <span class="nav-icon">🚀</span>
+                        <span>Huấn luyện ML</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="mysql.html" class="nav-link">
                         <span class="nav-icon">💾</span>
                         <span>Quản lý dữ liệu MySQL</span>
@@ -172,50 +178,201 @@
 
             <!-- ML Configuration -->
             <section class="section">
-                <h2 class="section-title">Cấu hình ML</h2>
+                <h2 class="section-title">⚙️ Cấu hình và Huấn luyện Model</h2>
+                
+                <!-- ML Configuration Card -->
                 <div class="card">
+                    <h3 class="section-subtitle">Cấu hình Model</h3>
                     <form id="mlConfigForm" onsubmit="saveMLConfig(event)">
-                        <div class="form-group">
-                            <label class="form-label">Model dự báo</label>
-                            <select class="form-select" id="mlModel">
-                                <option value="prophet" selected>Prophet (Facebook)</option>
-                                <option value="lstm">LSTM (Deep Learning)</option>
-                                <option value="arima">ARIMA</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Lịch train lại tự động</label>
-                            <select class="form-select" id="trainSchedule">
-                                <option value="6">Mỗi 6 giờ</option>
-                                <option value="12" selected>Mỗi 12 giờ</option>
-                                <option value="24">Mỗi 24 giờ</option>
-                                <option value="0">Không tự động</option>
-                            </select>
-                        </div>
-
-                        <div class="info-panel mt-10">
-                            <div class="info-panel-content">
-                                <strong>Lưu ý:</strong> Model sẽ được train lại tự động dựa trên dữ liệu mới nhất từ
-                                MySQL. Quá trình train có thể mất vài phút.
+                        <div class="filter-row">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">🤖 Model dự báo</label>
+                                <select class="form-select" id="mlModel">
+                                    <option value="prophet" selected>Prophet (Facebook)</option>
+                                    <option value="lstm">LSTM (Deep Learning)</option>
+                                    <option value="arima">ARIMA</option>
+                                </select>
+                                <small style="color: var(--text-secondary); font-size: 11px; margin-top: 5px; display: block;">
+                                    Chọn model phù hợp với dữ liệu của bạn
+                                </small>
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">⏰ Lịch train tự động</label>
+                                <select class="form-select" id="trainSchedule">
+                                    <option value="6">Mỗi 6 giờ</option>
+                                    <option value="12" selected>Mỗi 12 giờ</option>
+                                    <option value="24">Mỗi 24 giờ</option>
+                                    <option value="0">Không tự động</option>
+                                </select>
+                                <small style="color: var(--text-secondary); font-size: 11px; margin-top: 5px; display: block;">
+                                    Tần suất tự động train lại model
+                                </small>
                             </div>
                         </div>
 
                         <div class="mt-20">
                             <button type="submit" class="btn btn-primary">💾 Lưu cấu hình ML</button>
-                            <button type="button" class="btn btn-secondary" onclick="manualTrain()">
-                                🤖 Giả lập Train model ngay
-                            </button>
-                        </div>
-
-                        <div id="mlTrainingProgress" class="hidden mt-20">
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="mlProgressFill" style="width: 0%;"></div>
-                            </div>
-                            <p style="text-align: center; margin-top: 10px; font-size: 14px;" id="mlTrainingStatus">Đang
-                                train model...</p>
                         </div>
                     </form>
+                </div>
+
+                <!-- Model Status Card -->
+                <div class="card mt-20">
+                    <h3 class="section-subtitle">📊 Trạng thái Model hiện tại</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div class="stat-info-box">
+                            <div class="stat-info-label">Model đang dùng</div>
+                            <div class="stat-info-value" id="currentModel">Prophet</div>
+                        </div>
+                        <div class="stat-info-box">
+                            <div class="stat-info-label">Lần train gần nhất</div>
+                            <div class="stat-info-value" id="lastTrainTime">--</div>
+                        </div>
+                        <div class="stat-info-box">
+                            <div class="stat-info-label">Dữ liệu đã dùng</div>
+                            <div class="stat-info-value" id="trainingDataCount">0</div>
+                        </div>
+                        <div class="stat-info-box">
+                            <div class="stat-info-label">Độ chính xác (RMSE)</div>
+                            <div class="stat-info-value" id="modelAccuracy">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training Section Card -->
+                <div class="card mt-20">
+                    <h3 class="section-subtitle">🚀 Huấn luyện Model</h3>
+                    
+                    <div class="info-panel">
+                        <div class="info-panel-content">
+                            <strong>ℹ️ Thông tin:</strong> Quá trình huấn luyện sẽ sử dụng dữ liệu từ MySQL, tiền xử lý, 
+                            xây dựng model và đánh giá hiệu suất. Thời gian có thể từ vài phút đến vài giờ tùy vào dung lượng dữ liệu.
+                        </div>
+                    </div>
+
+                    <div class="training-options mt-20">
+                        <div class="form-group">
+                            <label class="form-label">📁 Nguồn dữ liệu</label>
+                            <select class="form-select" id="dataSource">
+                                <option value="mysql" selected>MySQL Local</option>
+                                <option value="firebase">Firebase Realtime Database</option>
+                                <option value="csv">CSV File</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-row mt-10">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">📅 Khoảng thời gian dữ liệu</label>
+                                <input type="number" class="form-input" id="trainingDays" value="30" min="7" max="365">
+                                <small style="color: var(--text-secondary); font-size: 11px; margin-top: 5px; display: block;">
+                                    Số ngày dữ liệu quá khứ
+                                </small>
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">🎯 Biến dự báo</label>
+                                <select class="form-select" id="targetVariable">
+                                    <option value="temp" selected>Nhiệt độ (°C)</option>
+                                    <option value="humidity">Độ ẩm (%)</option>
+                                    <option value="pressure">Áp suất (hPa)</option>
+                                    <option value="all">Tất cả biến</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="filter-row mt-10">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">🔧 Tỷ lệ train/test</label>
+                                <select class="form-select" id="testRatio">
+                                    <option value="0.2" selected>80/20 (Khuyến nghị)</option>
+                                    <option value="0.15">85/15</option>
+                                    <option value="0.25">75/25</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">⚡ Khả năng GPU</label>
+                                <div style="display: flex; gap: 10px; margin-top: 10px; align-items: center;">
+                                    <input type="checkbox" id="useGPU">
+                                    <label for="useGPU" style="margin: 0;">Sử dụng GPU nếu có</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-20" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary" onclick="startTraining()" style="flex: 1; min-width: 200px;">
+                            🚀 Bắt đầu Train Model
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="previewTrainingData()" style="flex: 1; min-width: 200px;">
+                            👁️ Xem trước dữ liệu
+                        </button>
+                    </div>
+
+                    <!-- Training Progress Section -->
+                    <div id="mlTrainingProgress" class="hidden mt-20">
+                        <h4 style="margin-bottom: 15px; color: var(--text);">📈 Tiến trình huấn luyện</h4>
+                        
+                        <div class="progress-container">
+                            <div class="progress-bar-large">
+                                <div class="progress-fill-large" id="mlProgressFill" style="width: 0%;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                                <p id="mlTrainingStatus" style="font-size: 14px; font-weight: 600; color: var(--text); margin: 0;">
+                                    Đang chuẩn bị...
+                                </p>
+                                <span id="trainingPercentage" style="font-size: 14px; font-weight: 600; color: var(--accent);">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="training-steps mt-20">
+                            <div class="training-step" id="step-1">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-label">Tải dữ liệu từ MySQL</span>
+                                <span class="step-status"></span>
+                            </div>
+                            <div class="training-step" id="step-2">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-label">Tiền xử lý & làm sạch dữ liệu</span>
+                                <span class="step-status"></span>
+                            </div>
+                            <div class="training-step" id="step-3">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-label">Xây dựng model</span>
+                                <span class="step-status"></span>
+                            </div>
+                            <div class="training-step" id="step-4">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-label">Đánh giá hiệu suất</span>
+                                <span class="step-status"></span>
+                            </div>
+                            <div class="training-step" id="step-5">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-label">Lưu model</span>
+                                <span class="step-status"></span>
+                            </div>
+                        </div>
+
+                        <div id="trainingResults" class="hidden mt-20">
+                            <h4 style="margin-bottom: 15px; color: var(--text);">📋 Kết quả huấn luyện</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                                <div class="result-box">
+                                    <div class="result-label">RMSE</div>
+                                    <div class="result-value" id="resultRMSE">--</div>
+                                </div>
+                                <div class="result-box">
+                                    <div class="result-label">MAE</div>
+                                    <div class="result-value" id="resultMAE">--</div>
+                                </div>
+                                <div class="result-box">
+                                    <div class="result-label">R² Score</div>
+                                    <div class="result-value" id="resultR2">--</div>
+                                </div>
+                                <div class="result-box">
+                                    <div class="result-label">Thời gian</div>
+                                    <div class="result-value" id="resultTime">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -320,7 +477,126 @@
             AppUtils.showToast('Đã lưu cấu hình ML thành công', 'success');
         }
 
-        // Manual Train
+        // Start Training
+        async function startTraining() {
+            const progressDiv = document.getElementById('mlTrainingProgress');
+            const resultsDiv = document.getElementById('trainingResults');
+            
+            progressDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+            
+            // Get form values
+            const config = {
+                dataSource: document.getElementById('dataSource').value,
+                trainingDays: document.getElementById('trainingDays').value,
+                targetVariable: document.getElementById('targetVariable').value,
+                testRatio: document.getElementById('testRatio').value,
+                useGPU: document.getElementById('useGPU').checked,
+                model: document.getElementById('mlModel').value,
+            };
+
+            console.log('Training Config:', config);
+
+            // Simulate training steps
+            const steps = [
+                { progress: 15, text: 'Tải dữ liệu từ MySQL...', stepId: 1 },
+                { progress: 35, text: 'Tiền xử lý & làm sạch dữ liệu...', stepId: 2 },
+                { progress: 60, text: 'Xây dựng model ' + document.getElementById('mlModel').value + '...', stepId: 3 },
+                { progress: 85, text: 'Đánh giá hiệu suất model...', stepId: 4 },
+                { progress: 100, text: 'Lưu model thành công!', stepId: 5 }
+            ];
+
+            let currentStep = 0;
+            const startTime = Date.now();
+
+            for (const step of steps) {
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                
+                // Update progress
+                const progressFill = document.getElementById('mlProgressFill');
+                const statusText = document.getElementById('mlTrainingStatus');
+                const percentageSpan = document.querySelector('#trainingPercentage');
+                
+                progressFill.style.width = step.progress + '%';
+                statusText.textContent = step.text;
+                percentageSpan.textContent = step.progress + '%';
+
+                // Mark step as completed
+                markStepAsCompleted(step.stepId);
+                
+                currentStep++;
+            }
+
+            // Show results
+            setTimeout(() => {
+                displayTrainingResults(startTime);
+                resultsDiv.classList.remove('hidden');
+                AppUtils.showToast('✓ Huấn luyện model thành công!', 'success');
+                
+                // Update current model info
+                document.getElementById('currentModel').textContent = 
+                    document.getElementById('mlModel').value.toUpperCase();
+                document.getElementById('lastTrainTime').textContent = 
+                    new Date().toLocaleString('vi-VN');
+                document.getElementById('trainingDataCount').textContent = 
+                    (parseInt(config.trainingDays) * 24).toLocaleString('vi-VN');
+            }, 800);
+        }
+
+        // Mark step as completed
+        function markStepAsCompleted(stepId) {
+            const stepElement = document.getElementById('step-' + stepId);
+            if (stepElement) {
+                stepElement.classList.remove('active');
+                stepElement.classList.add('completed');
+                
+                // Update next step to active (if exists)
+                const nextStep = document.getElementById('step-' + (stepId + 1));
+                if (nextStep) {
+                    nextStep.classList.add('active');
+                }
+            }
+        }
+
+        // Display training results
+        function displayTrainingResults(startTime) {
+            const endTime = Date.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            
+            // Simulate random metrics
+            const rmse = (Math.random() * 0.5 + 0.3).toFixed(3);
+            const mae = (Math.random() * 0.4 + 0.2).toFixed(3);
+            const r2 = (Math.random() * 0.15 + 0.85).toFixed(3);
+            
+            document.getElementById('resultRMSE').textContent = rmse + '°C';
+            document.getElementById('resultMAE').textContent = mae + '°C';
+            document.getElementById('resultR2').textContent = r2;
+            document.getElementById('resultTime').textContent = duration + 's';
+            
+            // Update model accuracy
+            document.getElementById('modelAccuracy').textContent = 
+                (parseFloat(r2) * 100).toFixed(1) + '%';
+        }
+
+        // Preview training data
+        function previewTrainingData() {
+            const dataSource = document.getElementById('dataSource').value;
+            const trainingDays = document.getElementById('trainingDays').value;
+            const targetVariable = document.getElementById('targetVariable').value;
+            
+            AppUtils.showToast(
+                `📊 Xem trước dữ liệu:\n` +
+                `Nguồn: ${dataSource}\n` +
+                `Thời gian: ${trainingDays} ngày gần nhất\n` +
+                `Biến: ${targetVariable}`,
+                'info'
+            );
+            
+            // In a real implementation, this would open a modal with data preview
+            console.log('Preview data - Source:', dataSource, 'Days:', trainingDays, 'Target:', targetVariable);
+        }
+
+        // Manual Train (legacy)
         async function manualTrain() {
             const progressDiv = document.getElementById('mlTrainingProgress');
             const progressFill = document.getElementById('mlProgressFill');

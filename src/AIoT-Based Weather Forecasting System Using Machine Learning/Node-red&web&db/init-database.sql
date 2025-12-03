@@ -1,7 +1,7 @@
 -- Create database if not exists
-CREATE DATABASE IF NOT EXISTS environmental_monitoring_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS weather_forecasting CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE environmental_monitoring_system;
+USE weather_forecasting;
 
 -- Create sensor_data table
 CREATE TABLE IF NOT EXISTS sensor_data (
@@ -12,6 +12,17 @@ CREATE TABLE IF NOT EXISTS sensor_data (
     co2 FLOAT NOT NULL,
     dust FLOAT NOT NULL,
     aqi FLOAT NOT NULL,
+    timestamp DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_timestamp (timestamp)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create weather_forecasting table for OpenWeatherMap API data
+CREATE TABLE IF NOT EXISTS weather_forecasting (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    wind_speed FLOAT NOT NULL DEFAULT 0 COMMENT 'Wind speed in m/s',
+    rainfall FLOAT NOT NULL DEFAULT 0 COMMENT 'Rainfall in mm',
+    uv_index FLOAT NOT NULL DEFAULT 0 COMMENT 'UV index',
     timestamp DATETIME NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_timestamp (timestamp)
