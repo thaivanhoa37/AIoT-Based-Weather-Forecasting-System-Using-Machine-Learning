@@ -22,5 +22,8 @@ prophet==1.1.5
 httpx==0.25.1
 aiofiles==23.2.1
 
+# System monitoring
+psutil==5.9.6
+
 # Utilities
 python-dateutil==2.8.2

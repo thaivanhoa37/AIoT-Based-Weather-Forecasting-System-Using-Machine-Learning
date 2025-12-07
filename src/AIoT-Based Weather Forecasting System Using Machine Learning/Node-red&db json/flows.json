@@ -1,5 +1,1150 @@
 [
     {
+        "id": "5fd485c3286421e7",
+        "type": "tab",
+        "label": "Weather_Forecasting",
+        "disabled": false,
+        "info": "Flow giám sát môi trường với ESP32 và Firebase"
+    },
+    {
+        "id": "d96ff72f54d5a087",
+        "type": "group",
+        "z": "5fd485c3286421e7",
+        "name": "Database Storage SQL",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "9190411312aca048",
+            "1fb6273a028931c4",
+            "215e74e03f8fd673",
+            "e8b704c2f6f4e42a",
+            "cf60a09258ea3807",
+            "ce0ef09c4a96384f",
+            "6307779e9931bef9",
+            "dfcfa6a2cd2a84b4",
+            "21ac7c06747889aa",
+            "d479752e6462c652",
+            "9505a9bfaaf3e6f5"
+        ],
+        "x": 514,
+        "y": 19,
+        "w": 652,
+        "h": 282
+    },
+    {
+        "id": "be6ffd7f7a6aa82e",
+        "type": "group",
+        "z": "5fd485c3286421e7",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "d6ccbae2b87b1c25",
+            "505e6c4d2b0929a3",
+            "1499e6af4d012190",
+            "ce1a7ebf1149711a",
+            "34f68642aa1fdbec",
+            "b58904e844088de8",
+            "662f8b8015e5a875",
+            "ef1a19a2eecf4808",
+            "6d827e857cc5937c",
+            "dc7c76e6a888c701",
+            "17f232be6553f111",
+            "3c6d2a12db92ed16",
+            "aad9b1e9310f71fb",
+            "7a408190b7f1bbd6",
+            "02d6e209cca50846",
+            "d61d9748cf43207a",
+            "8cc6ee781e560d5b",
+            "faa51e9c1a8b74c4"
+        ],
+        "x": 54,
+        "y": 19,
+        "w": 452,
+        "h": 622
+    },
+    {
+        "id": "ce530ac79ef6c7ae",
+        "type": "group",
+        "z": "5fd485c3286421e7",
+        "name": "Firebase Integration",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "b0ad6180eed7b94f",
+            "05f03a3504258d8e",
+            "6c5773b7fb998d3d",
+            "49306af8e7289249",
+            "0dccaebfb8df60fe",
+            "f4c3e50968cf3d36",
+            "ff0b9484f0e69585",
+            "2057121852911604",
+            "75c0025cb39a3b5f"
+        ],
+        "x": 514,
+        "y": 299,
+        "w": 652,
+        "h": 342
+    },
+    {
+        "id": "bfe6d5833941b1c5",
+        "type": "group",
+        "z": "5fd485c3286421e7",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "inject_trigger",
+            "get_weather_danang",
+            "parse_and_insert_db",
+            "mysql_insert",
+            "debug_output"
+        ],
+        "x": 54,
+        "y": 659,
+        "w": 1112,
+        "h": 142
+    },
+    {
+        "id": "d6ccbae2b87b1c25",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Humidity",
+        "topic": "esp32/sensor/humidity",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 160,
+        "y": 180,
+        "wires": [
+            [
+                "ef1a19a2eecf4808",
+                "7a408190b7f1bbd6"
+            ]
+        ]
+    },
+    {
+        "id": "505e6c4d2b0929a3",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Pressure",
+        "topic": "esp32/sensor/pressure",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 160,
+        "y": 280,
+        "wires": [
+            [
+                "6d827e857cc5937c",
+                "02d6e209cca50846"
+            ]
+        ]
+    },
+    {
+        "id": "1499e6af4d012190",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "CO2",
+        "topic": "esp32/sensor/co2",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 170,
+        "y": 380,
+        "wires": [
+            [
+                "dc7c76e6a888c701",
+                "d61d9748cf43207a"
+            ]
+        ]
+    },
+    {
+        "id": "ce1a7ebf1149711a",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Dust",
+        "topic": "esp32/sensor/dust",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 170,
+        "y": 480,
+        "wires": [
+            [
+                "17f232be6553f111",
+                "8cc6ee781e560d5b"
+            ]
+        ]
+    },
+    {
+        "id": "34f68642aa1fdbec",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "AQI",
+        "topic": "esp32/sensor/aqi",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 170,
+        "y": 580,
+        "wires": [
+            [
+                "3c6d2a12db92ed16",
+                "faa51e9c1a8b74c4"
+            ]
+        ]
+    },
+    {
+        "id": "b58904e844088de8",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Temperature",
+        "topic": "esp32/sensor/temperature",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 150,
+        "y": 80,
+        "wires": [
+            [
+                "662f8b8015e5a875",
+                "aad9b1e9310f71fb"
+            ]
+        ]
+    },
+    {
+        "id": "662f8b8015e5a875",
+        "type": "ui_gauge",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Temperature Gauge",
+        "group": "5aec396a7f817308",
+        "order": 1,
+        "width": "8",
+        "height": "5",
+        "gtype": "donut",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{value | number:1}}",
+        "min": 0,
+        "max": "50",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "25",
+        "seg2": "35",
+        "diff": false,
+        "className": "",
+        "x": 380,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "ef1a19a2eecf4808",
+        "type": "ui_gauge",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Humidity Gauge",
+        "group": "5aec396a7f817308",
+        "order": 2,
+        "width": "8",
+        "height": "5",
+        "gtype": "donut",
+        "title": "Humidity",
+        "label": "%",
+        "format": "{{value | number:1}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#ca3838",
+            "#00b500",
+            "#ca3838"
+        ],
+        "seg1": "30",
+        "seg2": "70",
+        "diff": false,
+        "className": "",
+        "x": 360,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "6d827e857cc5937c",
+        "type": "ui_gauge",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Pressure Gauge",
+        "group": "5aec396a7f817308",
+        "order": 3,
+        "width": "8",
+        "height": "5",
+        "gtype": "donut",
+        "title": "Pressure",
+        "label": "hPa",
+        "format": "{{value | number:1}}",
+        "min": "900",
+        "max": "1100",
+        "colors": [
+            "#ca3838",
+            "#00b500",
+            "#ca3838"
+        ],
+        "seg1": "980",
+        "seg2": "1020",
+        "diff": false,
+        "className": "",
+        "x": 360,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "dc7c76e6a888c701",
+        "type": "ui_gauge",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "CO2 Gauge",
+        "group": "94f03bc6e0320edd",
+        "order": 1,
+        "width": "8",
+        "height": "5",
+        "gtype": "donut",
+        "title": "CO2",
+        "label": "ppm",
+        "format": "{{value | number:0}}",
+        "min": "400",
+        "max": "5000",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "800",
+        "seg2": "1200",
+        "diff": false,
+        "className": "",
+        "x": 350,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "17f232be6553f111",
+        "type": "ui_gauge",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Dust Gauge",
+        "group": "94f03bc6e0320edd",
+        "order": 2,
+        "width": "8",
+        "height": "5",
+        "gtype": "donut",
+        "title": "Dust",
+        "label": "μg/m³",
+        "format": "{{value | number:1}}",
+        "min": 0,
+        "max": "500",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "35.4",
+        "seg2": "150.4",
+        "diff": false,
+        "className": "",
+        "x": 350,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "3c6d2a12db92ed16",
+        "type": "ui_gauge",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "AQI Gauge",
+        "group": "94f03bc6e0320edd",
+        "order": 3,
+        "width": "8",
+        "height": "5",
+        "gtype": "donut",
+        "title": "AQI",
+        "label": "",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "500",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "100",
+        "seg2": "200",
+        "diff": false,
+        "className": "",
+        "x": 350,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "aad9b1e9310f71fb",
+        "type": "ui_chart",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Temperature History",
+        "group": "4cfb1c5353984686",
+        "order": 1,
+        "width": "12",
+        "height": "7",
+        "label": "Temperature",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "3600",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 380,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7a408190b7f1bbd6",
+        "type": "ui_chart",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Humidity History",
+        "group": "4cfb1c5353984686",
+        "order": 2,
+        "width": "12",
+        "height": "7",
+        "label": "Humidity",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "3600",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#2ca02c"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 360,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "02d6e209cca50846",
+        "type": "ui_chart",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Pressure History",
+        "group": "3302b0f6c88da3e5",
+        "order": 1,
+        "width": "12",
+        "height": "7",
+        "label": "Pressure",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "3600",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#ff7f0e"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 360,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d61d9748cf43207a",
+        "type": "ui_chart",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "CO2 History",
+        "group": "3302b0f6c88da3e5",
+        "order": 2,
+        "width": "12",
+        "height": "7",
+        "label": "CO2",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "3600",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#d62728"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 350,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8cc6ee781e560d5b",
+        "type": "ui_chart",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "Dust History",
+        "group": "68e8d7ac28844c49",
+        "order": 1,
+        "width": "12",
+        "height": "7",
+        "label": "Dust",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "3600",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#9467bd"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 350,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "faa51e9c1a8b74c4",
+        "type": "ui_chart",
+        "z": "5fd485c3286421e7",
+        "g": "be6ffd7f7a6aa82e",
+        "name": "AQI History",
+        "group": "68e8d7ac28844c49",
+        "order": 2,
+        "width": "12",
+        "height": "7",
+        "label": "AQI",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "3600",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#8c564b"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 350,
+        "y": 600,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9190411312aca048",
+        "type": "function",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "name": "Format MySQL Data",
+        "func": "let sensor = context.get('sensor') || {};\n\nswitch (msg.topic) {\n    case 'esp32/sensor/temperature':\n        sensor.temperature = parseFloat(msg.payload);\n        break;\n    case 'esp32/sensor/humidity':\n        sensor.humidity = parseFloat(msg.payload);\n        break;\n    case 'esp32/sensor/pressure':\n        sensor.pressure = parseFloat(msg.payload);\n        break;\n    case 'esp32/sensor/co2':\n        sensor.co2 = parseFloat(msg.payload);\n        break;\n    case 'esp32/sensor/dust':\n        sensor.dust = parseFloat(msg.payload);\n        break;\n    case 'esp32/sensor/aqi':\n        sensor.aqi = parseFloat(msg.payload);\n        break;\n}\n\ncontext.set('sensor', sensor);\n\n// Check if we have all sensor readings\nif (sensor.temperature !== undefined &&\n    sensor.humidity !== undefined &&\n    sensor.pressure !== undefined &&\n    sensor.co2 !== undefined &&\n    sensor.dust !== undefined &&\n    sensor.aqi !== undefined) {\n    \n    let now = new Date();\n    now.setHours(now.getHours() + 7); // Vietnam timezone\n    let timestamp = now.toISOString().slice(0, 19).replace('T', ' ');\n    \n    msg.topic = `INSERT INTO sensor_data (temperature, humidity, pressure, co2, dust, aqi, timestamp) VALUES (${sensor.temperature}, ${sensor.humidity}, ${sensor.pressure}, ${sensor.co2}, ${sensor.dust}, ${sensor.aqi}, '${timestamp}')`;\n    \n    // Reset sensor data after storing\n    context.set('sensor', {});\n    return msg;\n}\n\nreturn null;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 60,
+        "wires": [
+            [
+                "1fb6273a028931c4"
+            ]
+        ]
+    },
+    {
+        "id": "1fb6273a028931c4",
+        "type": "mysql",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "mydb": "c08db5e37956216c",
+        "name": "MySQL Storage",
+        "x": 1060,
+        "y": 60,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "215e74e03f8fd673",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "name": "Humidity",
+        "topic": "esp32/sensor/humidity",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 620,
+        "y": 100,
+        "wires": [
+            [
+                "9190411312aca048"
+            ]
+        ]
+    },
+    {
+        "id": "e8b704c2f6f4e42a",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "name": "Pressure",
+        "topic": "esp32/sensor/pressure",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 620,
+        "y": 140,
+        "wires": [
+            [
+                "9190411312aca048"
+            ]
+        ]
+    },
+    {
+        "id": "cf60a09258ea3807",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "name": "CO2",
+        "topic": "esp32/sensor/co2",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 630,
+        "y": 180,
+        "wires": [
+            [
+                "9190411312aca048"
+            ]
+        ]
+    },
+    {
+        "id": "ce0ef09c4a96384f",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "name": "Dust",
+        "topic": "esp32/sensor/dust",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 630,
+        "y": 220,
+        "wires": [
+            [
+                "9190411312aca048"
+            ]
+        ]
+    },
+    {
+        "id": "6307779e9931bef9",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "name": "AQI",
+        "topic": "esp32/sensor/aqi",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 630,
+        "y": 260,
+        "wires": [
+            [
+                "9190411312aca048"
+            ]
+        ]
+    },
+    {
+        "id": "dfcfa6a2cd2a84b4",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "name": "Temperature",
+        "topic": "esp32/sensor/temperature",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 610,
+        "y": 60,
+        "wires": [
+            [
+                "9190411312aca048"
+            ]
+        ]
+    },
+    {
+        "id": "21ac7c06747889aa",
+        "type": "inject",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "name": "Send sensor_data every 5s",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "60",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{}",
+        "payloadType": "json",
+        "x": 880,
+        "y": 120,
+        "wires": [
+            [
+                "d479752e6462c652"
+            ]
+        ]
+    },
+    {
+        "id": "d479752e6462c652",
+        "type": "function",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "name": "Collect and Insert Sensor Data",
+        "func": "try {\n    // Get stored sensor data\n    let sensor = context.get('sensor') || {};\n    \n    // Get values or default to 0\n    const temperature = sensor.temperature || 0;\n    const humidity = sensor.humidity || 0;\n    const pressure = sensor.pressure || 0;\n    const co2 = sensor.co2 || 0;\n    const dust = sensor.dust || 0;\n    const aqi = sensor.aqi || 0;\n    \n    // Create timestamp\n    let now = new Date();\n    now.setHours(now.getHours() + 7); // Vietnam timezone\n    let timestamp = now.toISOString().slice(0, 19).replace('T', ' ');\n    \n    // Create INSERT query\n    const query = `INSERT INTO sensor_data (temperature, humidity, pressure, co2, dust, aqi, timestamp) VALUES (${temperature}, ${humidity}, ${pressure}, ${co2}, ${dust}, ${aqi}, '${timestamp}')`;\n    \n    msg.topic = query;\n    msg.payload = {\n        temperature: temperature,\n        humidity: humidity,\n        pressure: pressure,\n        co2: co2,\n        dust: dust,\n        aqi: aqi,\n        timestamp: timestamp\n    };\n    \n    node.log(`Sensor Data - Temp: ${temperature}°C, Humidity: ${humidity}%, Pressure: ${pressure}hPa, CO2: ${co2}ppm, Dust: ${dust}μg/m³, AQI: ${aqi}`);\n    \n    return msg;\n    \n} catch (error) {\n    node.error('Error collecting sensor data: ' + error.message);\n    return null;\n}",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 910,
+        "y": 200,
+        "wires": [
+            [
+                "9505a9bfaaf3e6f5"
+            ]
+        ]
+    },
+    {
+        "id": "9505a9bfaaf3e6f5",
+        "type": "mysql",
+        "z": "5fd485c3286421e7",
+        "g": "d96ff72f54d5a087",
+        "mydb": "c08db5e37956216c",
+        "name": "MySQL Insert sensor_data",
+        "x": 1020,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b0ad6180eed7b94f",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "ce530ac79ef6c7ae",
+        "name": "Humidity",
+        "topic": "esp32/sensor/humidity",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 600,
+        "y": 400,
+        "wires": [
+            [
+                "2057121852911604"
+            ]
+        ]
+    },
+    {
+        "id": "05f03a3504258d8e",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "ce530ac79ef6c7ae",
+        "name": "Pressure",
+        "topic": "esp32/sensor/pressure",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 600,
+        "y": 460,
+        "wires": [
+            [
+                "2057121852911604"
+            ]
+        ]
+    },
+    {
+        "id": "6c5773b7fb998d3d",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "ce530ac79ef6c7ae",
+        "name": "CO2",
+        "topic": "esp32/sensor/co2",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 590,
+        "y": 520,
+        "wires": [
+            [
+                "2057121852911604"
+            ]
+        ]
+    },
+    {
+        "id": "49306af8e7289249",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "ce530ac79ef6c7ae",
+        "name": "Dust",
+        "topic": "esp32/sensor/dust",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 590,
+        "y": 580,
+        "wires": [
+            [
+                "2057121852911604"
+            ]
+        ]
+    },
+    {
+        "id": "0dccaebfb8df60fe",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "ce530ac79ef6c7ae",
+        "name": "AQI",
+        "topic": "esp32/sensor/aqi",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 730,
+        "y": 600,
+        "wires": [
+            [
+                "2057121852911604"
+            ]
+        ]
+    },
+    {
+        "id": "f4c3e50968cf3d36",
+        "type": "mqtt in",
+        "z": "5fd485c3286421e7",
+        "g": "ce530ac79ef6c7ae",
+        "name": "Temperature",
+        "topic": "esp32/sensor/temperature",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "6df0540f12236ba5",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 610,
+        "y": 340,
+        "wires": [
+            [
+                "2057121852911604"
+            ]
+        ]
+    },
+    {
+        "id": "ff0b9484f0e69585",
+        "type": "firebase-out",
+        "z": "5fd485c3286421e7",
+        "g": "ce530ac79ef6c7ae",
+        "name": "Save to Firebase",
+        "database": "4cc9225acd81a250",
+        "path": "env_data",
+        "pathType": "str",
+        "priority": "0",
+        "queryType": "update",
+        "x": 1050,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "2057121852911604",
+        "type": "function",
+        "z": "5fd485c3286421e7",
+        "g": "ce530ac79ef6c7ae",
+        "name": "Format Firebase Data",
+        "func": "try {\n    // Parse value to number\n    let value = parseFloat(msg.payload);\n    if (isNaN(value)) {\n        node.error('Invalid sensor value');\n        return null;\n    }\n\n    // Round to 2 decimal places\n    value = Math.round(value * 100) / 100;\n\n    // Get sensor name from topic\n    const sensorType = msg.topic.split('/').pop();\n\n    // Create update payload\n    msg.payload = {\n        [`sensors/${sensorType}`]: value\n    };\n\n    node.log(`Storing ${sensorType}: ${value}`);\n    return msg;\n    \n} catch (error) {\n    node.error('Error processing sensor data: ' + error.message);\n    return null;\n}",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 400,
+        "wires": [
+            [
+                "ff0b9484f0e69585",
+                "75c0025cb39a3b5f"
+            ]
+        ]
+    },
+    {
+        "id": "75c0025cb39a3b5f",
+        "type": "debug",
+        "z": "5fd485c3286421e7",
+        "g": "ce530ac79ef6c7ae",
+        "name": "Debug Firebase Data",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1010,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "inject_trigger",
+        "type": "inject",
+        "z": "5fd485c3286421e7",
+        "g": "bfe6d5833941b1c5",
+        "name": "Trigger Every 30 Seconds",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "30",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 220,
+        "y": 700,
+        "wires": [
+            [
+                "get_weather_danang"
+            ]
+        ]
+    },
+    {
+        "id": "get_weather_danang",
+        "type": "http request",
+        "z": "5fd485c3286421e7",
+        "g": "bfe6d5833941b1c5",
+        "name": "Get Weather Đà Nẵng - WeatherAPI",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://api.weatherapi.com/v1/current.json?key=ef59b66a1dde46ad840230322250612&q=Da Nang&aqi=yes",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 570,
+        "y": 700,
+        "wires": [
+            [
+                "parse_and_insert_db"
+            ]
+        ]
+    },
+    {
+        "id": "parse_and_insert_db",
+        "type": "function",
+        "z": "5fd485c3286421e7",
+        "g": "bfe6d5833941b1c5",
+        "name": "Parse Weather & Insert DB",
+        "func": "try {\n    const data = msg.payload;\n    \n    // Extract weather data from WeatherAPI response\n    const windSpeed = data.current.wind_kph / 3.6 || 0; // Convert km/h to m/s\n    const rainfall = data.current.precip_mm || 0; // Precipitation in mm\n    const uvIndex = data.current.uv || 0; // UV index\n    const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');\n    \n    // Additional data available from WeatherAPI\n    const temperature = data.current.temp_c || 0;\n    const humidity = data.current.humidity || 0;\n    const condition = data.current.condition.text || '';\n    \n    // Create INSERT query for weather_forecasting database\n    const query = `INSERT INTO weather_api (wind_speed, rainfall, uv_index, timestamp) VALUES (${windSpeed}, ${rainfall}, ${uvIndex}, '${timestamp}')`;\n    \n    msg.topic = query;\n    msg.payload = {\n        windSpeed: windSpeed,\n        rainfall: rainfall,\n        uvIndex: uvIndex,\n        timestamp: timestamp,\n        temperature: temperature,\n        humidity: humidity,\n        condition: condition,\n        location: data.location.name + ', ' + data.location.country\n    };\n    \n    node.log(`Đà Nẵng Weather - Wind: ${windSpeed.toFixed(2)} m/s, Rain: ${rainfall} mm, UV: ${uvIndex}, Temp: ${temperature}°C`);\n    \n    return msg;\n    \n} catch (error) {\n    node.error('Error parsing weather data: ' + error.message);\n    return null;\n}",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 760,
+        "wires": [
+            [
+                "mysql_insert"
+            ]
+        ]
+    },
+    {
         "id": "mysql_insert",
         "type": "mysql",
         "z": "5fd485c3286421e7",
@@ -15,6 +1160,107 @@
         ]
     },
     {
+        "id": "debug_output",
+        "type": "debug",
+        "z": "5fd485c3286421e7",
+        "g": "bfe6d5833941b1c5",
+        "name": "Debug Output",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "6df0540f12236ba5",
+        "type": "mqtt-broker",
+        "name": "MQTT Broker",
+        "broker": "192.168.101.88",
+        "port": "1883",
+        "clientid": "node-red-client",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "5aec396a7f817308",
+        "type": "ui_group",
+        "name": "Environmental Sensors",
+        "tab": "environment_tab",
+        "order": 1,
+        "disp": true,
+        "width": "24",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "94f03bc6e0320edd",
+        "type": "ui_group",
+        "name": "Air Quality Sensors",
+        "tab": "environment_tab",
+        "order": 2,
+        "disp": true,
+        "width": "24",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "4cfb1c5353984686",
+        "type": "ui_group",
+        "name": "Temperature & Humidity History",
+        "tab": "environment_tab",
+        "order": 3,
+        "disp": true,
+        "width": "24",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "3302b0f6c88da3e5",
+        "type": "ui_group",
+        "name": "Pressure & CO2 History",
+        "tab": "environment_tab",
+        "order": 4,
+        "disp": true,
+        "width": "24",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "68e8d7ac28844c49",
+        "type": "ui_group",
+        "name": "Dust & AQI History",
+        "tab": "environment_tab",
+        "order": 5,
+        "disp": true,
+        "width": "24",
+        "collapse": false,
+        "className": ""
+    },
+    {
         "id": "c08db5e37956216c",
         "type": "MySQLdatabase",
         "name": "Environment DB",
@@ -23,5 +1269,26 @@
         "db": "weather_forecasting",
         "tz": "Asia/Ho_Chi_Minh",
         "charset": "UTF8"
+    },
+    {
+        "id": "4cc9225acd81a250",
+        "type": "firebase-config",
+        "name": "My Database",
+        "authType": "privateKey",
+        "claims": {},
+        "createUser": false,
+        "status": {
+            "firestore": true,
+            "storage": false
+        },
+        "useClaims": false
+    },
+    {
+        "id": "environment_tab",
+        "type": "ui_tab",
+        "name": "Environmental Monitor",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
     }
 ]

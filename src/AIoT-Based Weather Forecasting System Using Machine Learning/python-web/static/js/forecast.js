@@ -7,7 +7,16 @@ let forecastUpdateInterval = null;
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize app state
     if (!window.AppState) {
-        window.AppState = { updateInProgress: false };
+        window.AppState = { 
+            updateInProgress: false,
+            theme: localStorage.getItem('theme') || 'light'
+        };
+    }
+    
+    // Apply theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
     }
     
     loadForecastData();
@@ -29,18 +38,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle theme toggle
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-            themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+        // Apply saved theme
+        const isDarkMode = localStorage.getItem('theme') === 'dark';
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
+        } else {
+            document.body.classList.remove('dark-mode');
+            themeToggle.textContent = '🌙';
+        }
+        
+        themeToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+            
+            // Animate
+            themeToggle.style.transform = 'rotate(180deg)';
+            setTimeout(() => {
+                themeToggle.style.transform = 'rotate(0deg)';
+            }, 300);
         });
-    }
-    
-    // Restore theme preference
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        if (themeToggle) themeToggle.textContent = '☀️';
+        
+        themeToggle.style.transition = 'transform 0.3s ease';
     }
     
     // Update clock
@@ -146,34 +169,61 @@ function updateForecastGrid(forecasts) {
     const grid = document.getElementById('forecastGrid');
     if (!grid) return;
     
-    // Show first 12 hours
-    const displayForecasts = forecasts.slice(0, 12);
+    // Show all available forecasts (up to 24 hours)
+    const displayForecasts = forecasts.slice(0, 24);
     
     if (displayForecasts.length === 0) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px;">Không có dữ liệu dự báo</div>';
+        grid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary); grid-column: 1/-1;">📭 Không có dữ liệu dự báo</div>';
         return;
     }
     
-    grid.innerHTML = displayForecasts.map((forecast) => {
+    grid.innerHTML = displayForecasts.map((forecast, index) => {
         const tempValue = parseFloat(forecast.temperature);
         const humidityValue = parseFloat(forecast.humidity);
         const rainChance = forecast.willRain ? '🌧️' : '✅';
+        const confidence = parseInt(forecast.confidence) || 0;
         
         return `
-            <div class="forecast-card">
-                <div class="forecast-time">${forecast.timestamp.split(' ')[1]}</div>
+            <div class="forecast-card" style="animation: fadeInUp 0.3s ease ${index * 0.05}s both;">
+                <div class="forecast-time">${forecast.timestamp.split(' ')[1] || '--:--'}</div>
                 <div class="forecast-icon">${forecast.weatherIcon || '🌤️'}</div>
-                <div class="forecast-temp">${tempValue}°C</div>
+                <div class="forecast-temp">${isNaN(tempValue) ? '--' : tempValue}°C</div>
                 <div class="forecast-details">
-                    💧 ${humidityValue}% | 📊 ${forecast.pressure} hPa
+                    💧 ${isNaN(humidityValue) ? '--' : humidityValue}%<br>
+                    📊 ${forecast.pressure || '--'} hPa
                 </div>
                 <div class="rain-indicator ${forecast.willRain ? 'rain-yes' : 'rain-no'}">
-                    ${rainChance} ${forecast.willRain ? 'Có khả năng mưa' : 'Không mưa'}
+                    ${rainChance} ${forecast.willRain ? 'Mưa' : 'Nắng'}
                 </div>
-                <div class="confidence-badge">Tin cậy: ${forecast.confidence}%</div>
+                <div class="confidence-badge" style="margin-top: 6px;">📊 ${confidence}%</div>
             </div>
         `;
     }).join('');
+    
+    // Add animation styles if not exists
+    if (!document.getElementById('forecastAnimationStyle')) {
+        const style = document.createElement('style');
+        style.id = 'forecastAnimationStyle';
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Auto-scroll to start
+    const container = document.getElementById('forecastGridContainer');
+    if (container) {
+        container.scrollLeft = 0;
+    }
 }
 
 // Update forecast table
@@ -182,28 +232,55 @@ function updateForecastTable(forecasts) {
     if (!tableBody) return;
     
     if (forecasts.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">Không có dữ liệu</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">📭 Không có dữ liệu</td></tr>';
         return;
     }
     
-    tableBody.innerHTML = forecasts.map((forecast) => {
+    tableBody.innerHTML = forecasts.map((forecast, index) => {
         const tempValue = parseFloat(forecast.temperature) || '--';
         const humidityValue = parseFloat(forecast.humidity) || '--';
         const aqiValue = parseFloat(forecast.aqi) || '--';
-        const rainBadge = forecast.willRain ? '<span style="color: #c53030;">🌧️ Có</span>' : '<span style="color: #22543d;">✅ Không</span>';
+        const confidence = parseInt(forecast.confidence) || 0;
+        const rainBadge = forecast.willRain 
+            ? '<span style="color: #c53030; font-weight: 600;">🌧️ Có</span>' 
+            : '<span style="color: #22543d; font-weight: 600;">✅ Không</span>';
         
         return `
-            <tr>
-                <td><small>${forecast.timestamp}</small></td>
-                <td><strong>${tempValue}°C</strong></td>
+            <tr style="animation: slideIn 0.3s ease ${index * 0.02}s both; opacity: 0;">
+                <td><small><strong>${forecast.timestamp}</strong></small></td>
+                <td><strong style="font-size: 15px; color: var(--primary-color);">${tempValue}${tempValue !== '--' ? '°C' : ''}</strong></td>
                 <td>${humidityValue}${humidityValue !== '--' ? '%' : ''}</td>
-                <td>${forecast.pressure} hPa</td>
-                <td>${aqiValue}</td>
+                <td>${forecast.pressure || '--'} hPa</td>
+                <td><span style="font-weight: 600;">${aqiValue}</span></td>
                 <td>${rainBadge}</td>
-                <td><span class="confidence-badge">${forecast.confidence}%</span></td>
+                <td><span class="confidence-badge" style="background: ${confidence >= 80 ? '#22543d' : confidence >= 50 ? '#744210' : '#c53030'}; color: white;">📊 ${confidence}%</span></td>
             </tr>
         `;
     }).join('');
+    
+    // Add animation style if not exists
+    if (!document.getElementById('tableAnimationStyle')) {
+        const style = document.createElement('style');
+        style.id = 'tableAnimationStyle';
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            
+            tbody tr:hover {
+                background-color: rgba(102, 126, 234, 0.05);
+                transition: all 0.2s ease;
+            }
+        `;
+        document.head.appendChild(style);
+    }
 }
 
 // Update statistics

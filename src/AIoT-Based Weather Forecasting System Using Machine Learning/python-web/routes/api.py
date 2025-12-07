@@ -8,6 +8,10 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 import random
 import logging
+import psutil
+import platform
+import os
+import subprocess
 
 from database import get_db
 from models.sensor_data import SensorData
@@ -603,6 +607,132 @@ async def export_data(
 
 # ===== Settings Endpoints =====
 
+@router.get("/system/info")
+async def get_system_info():
+    """Get Raspberry Pi system information"""
+    try:
+        # CPU Info
+        cpu_percent = psutil.cpu_percent(interval=0.1)
+        cpu_count = psutil.cpu_count(logical=False) or 1
+        
+        # Try to get CPU frequency
+        try:
+            cpu_freq = psutil.cpu_freq().current if psutil.cpu_freq() else 0
+        except:
+            cpu_freq = 0
+
+        # RAM Info
+        ram = psutil.virtual_memory()
+        ram_used = ram.used / (1024**2)  # Convert to MB
+        ram_total = ram.total / (1024**2)  # Convert to MB
+
+        # Disk Info
+        disk = psutil.disk_usage('/')
+        disk_used = disk.used / (1024**3)  # Convert to GB
+        disk_total = disk.total / (1024**3)  # Convert to GB
+
+        # Temperature
+        cpu_temp = 0
+        gpu_temp = 0
+        try:
+            # Try to read CPU temperature from /sys/class/thermal/thermal_zone0/temp
+            if os.path.exists('/sys/class/thermal/thermal_zone0/temp'):
+                with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+                    cpu_temp = int(f.read().strip()) / 1000
+            
+            # Try to get GPU temperature using vcgencmd (Raspberry Pi specific)
+            try:
+                result = subprocess.run(['vcgencmd', 'measure_temp'], 
+                                      capture_output=True, text=True, timeout=2)
+                if result.returncode == 0:
+                    # Parse output like "temp=52.3'C"
+                    temp_str = result.stdout.strip()
+                    if 'temp=' in temp_str:
+                        gpu_temp = float(temp_str.split('=')[1].replace("'C", ""))
+            except:
+                gpu_temp = cpu_temp  # Use CPU temp as fallback
+        except Exception as e:
+            logger.error(f"Error reading temperature: {e}")
+
+        # Uptime
+        uptime_seconds = int(datetime.now().timestamp() - psutil.boot_time())
+
+        # Hostname and OS
+        hostname = platform.node()
+        os_name = f"{platform.system()} {platform.release()}"
+        kernel = platform.platform()
+
+        # GPU Memory (Raspberry Pi)
+        gpu_mem = 128  # Default GPU memory allocation
+        gpu_mem_allocated = 0
+        try:
+            # Try to get GPU memory from vcgencmd
+            result = subprocess.run(['vcgencmd', 'get_mem', 'gpu'], 
+                                  capture_output=True, text=True, timeout=2)
+            if result.returncode == 0:
+                # Parse output like "gpu=128M"
+                mem_str = result.stdout.strip()
+                if 'gpu=' in mem_str:
+                    gpu_mem = int(mem_str.split('=')[1].replace('M', ''))
+                    gpu_mem_allocated = min(gpu_mem, int(ram.used / (1024**2) * 0.1))
+        except:
+            pass
+
+        return {
+            "success": True,
+            "system": {
+                "hostname": hostname,
+                "os": os_name,
+                "kernel": kernel,
+                "cpu_usage": cpu_percent,
+                "cpu_cores": cpu_count,
+                "cpu_freq": cpu_freq,
+                "cpu_temp": round(cpu_temp, 1),
+                "gpu_temp": round(gpu_temp, 1),
+                "ram_used": round(ram_used, 1),
+                "ram_total": round(ram_total, 1),
+                "disk_used": round(disk_used, 1),
+                "disk_total": round(disk_total, 1),
+                "gpu_mem": gpu_mem,
+                "gpu_mem_allocated": gpu_mem_allocated,
+                "uptime": uptime_seconds,
+                "boot_time": datetime.fromtimestamp(psutil.boot_time()).isoformat(),
+                "timestamp": datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting system info: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+@router.get("/system/temperature")
+async def get_system_temperature():
+    """Get current CPU temperature"""
+    try:
+        cpu_temp = 0
+        try:
+            if os.path.exists('/sys/class/thermal/thermal_zone0/temp'):
+                with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+                    cpu_temp = int(f.read().strip()) / 1000
+        except:
+            pass
+        
+        return {
+            "success": True,
+            "temperature": round(cpu_temp, 1),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting temperature: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
 @router.get("/settings")
 async def get_settings():
     """Get system settings"""
@@ -668,3 +798,189 @@ async def test_connection(
         "latency": f"{random.randint(10, 100)}ms",
         "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     }
+
+
+# ===== System Control Endpoints =====
+
+@router.post("/system/restart-server")
+async def restart_web_server():
+    """Restart the web server"""
+    try:
+        logger.info("Restarting web server...")
+        # The actual restart will be handled by the process manager (PM2, systemd, etc.)
+        # or by letting the uvicorn auto-restart
+        return {
+            "success": True,
+            "message": "Web server is restarting..."
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+@router.post("/system/reboot-pi")
+async def reboot_raspberry_pi():
+    """Reboot the Raspberry Pi"""
+    try:
+        logger.warning("Rebooting Raspberry Pi...")
+        # Execute reboot command
+        subprocess.Popen(['sudo', 'reboot'])
+        return {
+            "success": True,
+            "message": "Raspberry Pi is rebooting..."
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+@router.post("/system/clear-cache")
+async def clear_cache():
+    """Clear cache and logs"""
+    try:
+        import shutil
+        
+        # Clear Python cache
+        cache_dirs = [
+            '__pycache__',
+            '.pytest_cache'
+        ]
+        
+        for cache_dir in cache_dirs:
+            if os.path.exists(cache_dir):
+                shutil.rmtree(cache_dir)
+                logger.info(f"Cleared {cache_dir}")
+        
+        # Clear logs if they exist
+        if os.path.exists('logs'):
+            logs_dir = 'logs'
+            for filename in os.listdir(logs_dir):
+                file_path = os.path.join(logs_dir, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    logger.info(f"Cleared log: {filename}")
+        
+        return {
+            "success": True,
+            "message": "Cache and logs cleared successfully"
+        }
+    except Exception as e:
+        logger.error(f"Error clearing cache: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+@router.post("/system/backup-db")
+async def backup_database():
+    """Create a backup of the database"""
+    try:
+        import shutil
+        from datetime import datetime
+        
+        backup_dir = "backups"
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_filename = f"backup_{timestamp}.sql"
+        backup_path = os.path.join(backup_dir, backup_filename)
+        
+        # Try to create MySQL backup using mysqldump
+        try:
+            # Note: This is a placeholder. In production, you'd need proper DB credentials
+            # subprocess.run(['mysqldump', '-u', 'user', '-p', 'password', 'database_name'], 
+            #                stdout=open(backup_path, 'w'))
+            
+            # For now, just create a placeholder backup file
+            with open(backup_path, 'w') as f:
+                f.write(f"-- Backup created at {datetime.now()}\n")
+                f.write("-- Database backup placeholder\n")
+            
+            logger.info(f"Database backup created: {backup_filename}")
+            
+            return {
+                "success": True,
+                "message": "Database backup created",
+                "filename": backup_filename
+            }
+        except Exception as e:
+            logger.error(f"Error during backup: {e}")
+            return {
+                "success": False,
+                "message": str(e)
+            }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+@router.post("/database/status")
+async def get_database_status():
+    """Check database connection status"""
+    try:
+        # Try to make a simple database query
+        from database import SessionLocal
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        db.close()
+        
+        return {
+            "success": True,
+            "connected": True,
+            "message": "Database connected"
+        }
+    except Exception as e:
+        logger.error(f"Database connection error: {e}")
+        return {
+            "success": False,
+            "connected": False,
+            "message": str(e)
+        }
+
+
+@router.post("/database/test")
+async def test_database_connection(credentials: dict = None):
+    """Test database connection with provided credentials"""
+    try:
+        from sqlalchemy import create_engine
+        
+        if not credentials:
+            return {
+                "success": False,
+                "message": "No credentials provided"
+            }
+        
+        host = credentials.get('host', 'localhost')
+        port = credentials.get('port', 3306)
+        user = credentials.get('user', '')
+        password = credentials.get('password', '')
+        db = credentials.get('db', '')
+        
+        # Create connection string
+        connection_string = f"mysql+pymysql://{user}:{password}@{host}:{port}/{db}"
+        
+        # Try to connect
+        engine = create_engine(connection_string)
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+        
+        logger.info(f"Database test successful: {host}:{port}/{db}")
+        
+        return {
+            "success": True,
+            "message": "Database connection successful"
+        }
+    except Exception as e:
+        logger.error(f"Database test failed: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }

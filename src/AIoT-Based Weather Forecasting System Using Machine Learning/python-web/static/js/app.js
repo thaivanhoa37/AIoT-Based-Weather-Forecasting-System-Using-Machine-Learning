@@ -75,22 +75,47 @@ function initTheme() {
     const themeToggle = document.getElementById('themeToggle');
     if (!themeToggle) return;
 
-    // Apply saved theme
-    if (AppState.theme === 'dark') {
+    // Apply saved theme on page load
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
         document.body.classList.add('dark-mode');
         themeToggle.innerHTML = '☀️';
+        AppState.theme = 'dark';
     } else {
+        document.body.classList.remove('dark-mode');
         themeToggle.innerHTML = '🌙';
+        AppState.theme = 'light';
     }
 
     // Toggle theme on click
-    themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        const isDark = document.body.classList.contains('dark-mode');
+    themeToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isDark = document.body.classList.toggle('dark-mode');
         AppState.theme = isDark ? 'dark' : 'light';
+        
+        // Save preference
         localStorage.setItem('theme', AppState.theme);
+        
+        // Update button
         themeToggle.innerHTML = isDark ? '☀️' : '🌙';
+        
+        // Trigger animation
+        themeToggle.style.transform = 'rotate(180deg)';
+        setTimeout(() => {
+            themeToggle.style.transform = 'rotate(0deg)';
+        }, 300);
+        
+        // Show toast notification
+        if (typeof AppUtils !== 'undefined' && AppUtils.showToast) {
+            const themeName = isDark ? '🌙 Chế độ tối' : '☀️ Chế độ sáng';
+            AppUtils.showToast(`Chuyển sang ${themeName}`, 'info');
+        }
     });
+    
+    // Add smooth transition
+    themeToggle.style.transition = 'transform 0.3s ease';
 }
 
 // ===== Sidebar Toggle =====

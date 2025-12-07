@@ -1,0 +1,64 @@
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+*.logs
+logs/
+
+# Models and storage
+models_storage/
+*.pkl
+*.joblib
+*.h5
+
+# Node modules (if using Node-red)
+node_modules/
+npm-debug.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Build
+dist/
+build/
+*.egg-info/

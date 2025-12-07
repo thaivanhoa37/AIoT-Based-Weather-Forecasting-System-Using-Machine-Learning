@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cấu hình hệ thống - AIoT Weather</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* ===== Settings Styles ===== */
+
+        /* System Stats Banner */
+        .system-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            color: white;
+            padding: 50px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4), 0 0 40px rgba(240, 147, 251, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .system-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent);
+            border-radius: 50%;
+        }
+
+        .system-banner h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            font-weight: 800;
+            position: relative;
+            z-index: 2;
+            letter-spacing: -0.5px;
+        }
+
+        .system-banner p {
+            font-size: 16px;
+            opacity: 0.95;
+            position: relative;
+            z-index: 2;
+            font-weight: 500;
+        }
+
+        /* System Info Grid */
+        .system-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .system-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .system-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-8px);
+            box-shadow: 0 16px 40px rgba(102, 126, 234, 0.25);
+            border: 1px solid var(--primary-color);
+        }
+
+        .system-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .system-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .card-detail {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* Progress Bar */
+        .progress-mini {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+            position: relative;
+        }
+
+        .progress-mini::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-mini-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-good { background: linear-gradient(90deg, #48bb78, #38a169) !important; }
+        .progress-warning { background: linear-gradient(90deg, #ed8936, #dd6b20) !important; }
+        .progress-danger { background: linear-gradient(90deg, #f56565, #e53e3e) !important; }
+
+        /* Detailed Info */
+        .detailed-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .detail-group {
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .detail-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .detail-value {
+            color: var(--text);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Settings Section */
+        .settings-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .settings-subsection {
+            margin-bottom: 50px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .settings-subsection::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 32px;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+            border-radius: 0 4px 4px 0;
+        }
+
+        .settings-subsection:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .settings-subtitle {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 28px;
+            margin-left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .settings-group {
+            margin-bottom: 28px;
+        }
+
+        .settings-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+            display: block;
+            letter-spacing: 0.2px;
+        }
+
+        .checkbox-input {
+            margin-right: 10px;
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-color);
+            transition: transform 0.2s ease;
+        }
+
+        .checkbox-input:hover {
+            transform: scale(1.1);
+        }
+
+        .help-text {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        .form-control {
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            font-weight: 500;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            background: var(--card-bg);
+            transform: translateY(-1px);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 14px;
+            margin-top: 35px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1;
+            min-width: 160px;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-action::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.3s ease;
+            z-index: 1;
+        }
+
+        .btn-action:hover::before {
+            left: 100%;
+        }
+
+        .btn-action span {
+            position: relative;
+            z-index: 2;
+        }
+
+        .btn-primary-action {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
+        }
+
+        .btn-primary-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.45);
+        }
+
+        .btn-primary-action:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary-action {
+            background: var(--card-bg);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+        }
+
+        .btn-secondary-action:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, var(--accent), #38a169);
+            color: white;
+            padding: 10px 18px;
+            font-size: 12px;
+            min-width: auto;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .system-banner {
+                padding: 35px 25px;
+            }
+
+            .system-banner h2 {
+                font-size: 26px;
+            }
+
+            .settings-section {
+                padding: 28px 20px;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-action {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .system-info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .system-banner h2 {
+                font-size: 22px;
+            }
+
+            .card-value {
+                font-size: 24px;
+            }
+
+            .settings-subtitle {
+                font-size: 18px;
+            }
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Badge */
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-ok { background: #48bb78; }
+        .status-warn { background: #ed8936; }
+        .status-error { background: #f56565; }
+
+        /* Section Title */
+        .section-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+            position: relative;
+            padding-bottom: 12px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="app-logo">
+                <span class="logo-icon">🌤️</span>
+                <div>
+                    <div class="app-title">AIoT Weather</div>
+                    <div class="app-subtitle">AIoT-ML</div>
+                </div>
+            </div>
+        </div>
+        <nav>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <span class="nav-icon">🏠</span>
+                        <span>Tổng quan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/charts" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Biểu đồ & Phân tích</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/forecast" class="nav-link">
+                        <span class="nav-icon">🤖</span>
+                        <span>Dự báo (ML)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/ml-training" class="nav-link">
+                        <span class="nav-icon">🚀</span>
+                        <span>Huấn luyện ML</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/mysql" class="nav-link">
+                        <span class="nav-icon">💾</span>
+                        <span>Quản lý dữ liệu</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="/settings" class="nav-link">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Cấu hình</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+                <h1 class="page-title">⚙️ Cấu hình hệ thống</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="clock-display">
+                    <span class="clock-time" id="clockTime">00:00:00</span>
+                    <span class="clock-label">GMT+7</span>
+                </div>
+                <div class="status-badge connected" id="mysqlStatus">
+                    <span class="status-dot"></span> Kết nối: OK
+                </div>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content">
+            <!-- Banner -->
+            <section class="section">
+                <div class="system-banner">
+                    <h2>⚙️ Cấu hình hệ thống</h2>
+                    <p>Quản lý trạm thời tiết, cảm biến LoRa, dữ liệu và tham số máy chủ</p>
+                </div>
+            </section>
+
+            <!-- Quick Stats -->
+            <section class="section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+                    <h2 class="section-title">📊 Thông số nhanh</h2>
+                    <button class="btn-refresh" onclick="loadSystemStats()">🔄 Làm mới</button>
+                </div>
+                <div class="system-info-grid">
+                    <!-- CPU -->
+                    <div class="system-card">
+                        <span class="card-icon">⚙️</span>
+                        <div class="card-title">CPU</div>
+                        <div class="card-value" id="cpuUsage">--</div>
+                        <div class="progress-mini" id="cpuProgress">
+                            <div class="progress-mini-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="card-detail">
+                            <div>Nhiệt độ: <span id="cpuTemp">--</span>°C</div>
+                            <div>Lõi: <span id="cpuCount">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- RAM -->
+                    <div class="system-card">
+                        <span class="card-icon">💾</span>
+                        <div class="card-title">RAM</div>
+                        <div class="card-value" id="ramUsage">--</div>
+                        <div class="progress-mini" id="ramProgress">
+                            <div class="progress-mini-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="card-detail">
+                            <div id="ramDetail">-- GB / -- GB</div>
+                            <div>Sẵn có: <span id="ramAvailable">--</span> GB</div>
+                        </div>
+                    </div>
+
+                    <!-- Disk -->
+                    <div class="system-card">
+                        <span class="card-icon">💿</span>
+                        <div class="card-title">Storage</div>
+                        <div class="card-value" id="diskUsage">--</div>
+                        <div class="progress-mini" id="diskProgress">
+                            <div class="progress-mini-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="card-detail">
+                            <div id="diskDetail">-- GB / -- GB</div>
+                            <div>Trống: <span id="diskFree">--</span> GB</div>
+                        </div>
+                    </div>
+
+                    <!-- System -->
+                    <div class="system-card">
+                        <span class="card-icon">🖥️</span>
+                        <div class="card-title">Hệ thống</div>
+                        <div class="card-value" id="systemHost">--</div>
+                        <div class="progress-mini" style="background: transparent; margin-top: 8px;">
+                            <div></div>
+                        </div>
+                        <div class="card-detail">
+                            <div>OS: <span id="systemOS">--</span></div>
+                            <div>Kernel: <span id="systemKernel">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Uptime -->
+                    <div class="system-card">
+                        <span class="card-icon">⏱️</span>
+                        <div class="card-title">Uptime</div>
+                        <div class="card-value" id="uptimeValue">--</div>
+                        <div class="progress-mini" style="background: transparent; margin-top: 8px;">
+                            <div></div>
+                        </div>
+                        <div class="card-detail">
+                            <div>Boot: <span id="bootTime">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Network -->
+                    <div class="system-card">
+                        <span class="card-icon">🌐</span>
+                        <div class="card-title">Network</div>
+                        <div class="card-value"><span class="status-indicator status-ok"></span>Online</div>
+                        <div class="progress-mini" style="background: transparent; margin-top: 8px;">
+                            <div></div>
+                        </div>
+                        <div class="card-detail">
+                            <div id="networkInfo">Đang tải...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detailed System Info -->
+            <section class="section">
+                <h2 class="section-title">📋 Thông tin chi tiết</h2>
+                <div class="detailed-section">
+                    <div class="detail-grid">
+                        <!-- System Info -->
+                        <div>
+                            <div class="detail-title">🖥️ Hệ thống</div>
+                            <div class="detail-item">
+                                <span class="detail-label">Hostname:</span>
+                                <span class="detail-value" id="detailHostname">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">OS:</span>
+                                <span class="detail-value" id="detailOS">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Kernel:</span>
+                                <span class="detail-value" id="detailKernel">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Machine:</span>
+                                <span class="detail-value" id="detailMachine">--</span>
+                            </div>
+                        </div>
+
+                        <!-- CPU Info -->
+                        <div>
+                            <div class="detail-title">⚙️ Processor</div>
+                            <div class="detail-item">
+                                <span class="detail-label">Cores:</span>
+                                <span class="detail-value" id="detailCores">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Current MHz:</span>
+                                <span class="detail-value" id="detailCPUFreq">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Max MHz:</span>
+                                <span class="detail-value" id="detailCPUMax">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Temperature:</span>
+                                <span class="detail-value" id="detailTemp">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Storage Details -->
+                        <div>
+                            <div class="detail-title">💾 Storage</div>
+                            <div class="detail-item">
+                                <span class="detail-label">Total:</span>
+                                <span class="detail-value" id="detailDiskTotal">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Used:</span>
+                                <span class="detail-value" id="detailDiskUsed">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Free:</span>
+                                <span class="detail-value" id="detailDiskFree">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Usage:</span>
+                                <span class="detail-value" id="detailDiskPercent">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings -->
+            <section class="section">
+                <h2 class="section-title">⚙️ Cấu hình ứng dụng</h2>
+                <div class="settings-section">
+                    <form id="settingsForm">
+                        <!-- Trạm thời tiết -->
+                        <div class="settings-subsection">
+                            <h3 class="settings-subtitle">🌤️ Trạm thời tiết</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+                                <div class="settings-group">
+                                    <label class="settings-label">Tên trạm</label>
+                                    <input type="text" class="form-control" id="stationName" placeholder="Ví dụ: Trạm thời tiết Sài Gòn">
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Vị trí (Địa chỉ)</label>
+                                    <input type="text" class="form-control" id="address" placeholder="Ví dụ: 123 Nguyễn Huệ, Q1, TPHCM">
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Vĩ độ (Latitude)</label>
+                                    <input type="number" class="form-control" id="latitude" placeholder="10.773" step="0.0001">
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Kinh độ (Longitude)</label>
+                                    <input type="number" class="form-control" id="longitude" placeholder="106.700" step="0.0001">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Node LoRa -->
+                        <div class="settings-subsection">
+                            <h3 class="settings-subtitle">📡 Cấu hình Node LoRa</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+                                <div class="settings-group">
+                                    <label class="settings-label">ID Node 1 (Cảm biến)</label>
+                                    <input type="text" class="form-control" id="node1Id" placeholder="Ví dụ: NODE_001" maxlength="20">
+                                    <small class="help-text">Mã định danh duy nhất cho Node cảm biến</small>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">ID Node 2 (Backup)</label>
+                                    <input type="text" class="form-control" id="node2Id" placeholder="Ví dụ: NODE_002" maxlength="20">
+                                    <small class="help-text">Node dự phòng (nếu có)</small>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Tần số LoRa (MHz)</label>
+                                    <select class="form-control" id="loraFrequency">
+                                        <option value="433" selected>433 MHz (ISM)</option>
+                                        <option value="868">868 MHz (EU)</option>
+                                        <option value="915">915 MHz (US)</option>
+                                    </select>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Công suất truyền (dBm)</label>
+                                    <input type="number" class="form-control" id="loraPower" value="20" min="0" max="30">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cảm biến -->
+                        <div class="settings-subsection">
+                            <h3 class="settings-subtitle">🌡️ Cấu hình cảm biến</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+                                <div class="settings-group">
+                                    <label class="settings-label">
+                                        <input type="checkbox" class="checkbox-input" checked> Nhiệt độ (DHT22)
+                                    </label>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">
+                                        <input type="checkbox" class="checkbox-input" checked> Độ ẩm (DHT22)
+                                    </label>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">
+                                        <input type="checkbox" class="checkbox-input" checked> Áp suất (BMP280)
+                                    </label>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">
+                                        <input type="checkbox" class="checkbox-input" checked> CO₂ (MQ135)
+                                    </label>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">
+                                        <input type="checkbox" class="checkbox-input" checked> Bụi (GP2Y1014AU)
+                                    </label>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">
+                                        <input type="checkbox" class="checkbox-input"> Tốc độ gió
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 24px;">
+                                <div class="settings-group">
+                                    <label class="settings-label">Khoảng đo nhiệt độ tối thiểu (°C)</label>
+                                    <input type="number" class="form-control" id="tempMin" value="-20" step="0.1">
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Khoảng đo nhiệt độ tối đa (°C)</label>
+                                    <input type="number" class="form-control" id="tempMax" value="50" step="0.1">
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Chu kỳ đọc cảm biến (giây)</label>
+                                    <input type="number" class="form-control" id="sensorInterval" value="60" min="5" step="5">
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Độ trễ gửi dữ liệu (giây)</label>
+                                    <input type="number" class="form-control" id="sendInterval" value="300" min="30" step="30">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quản trị -->
+                        <div class="settings-subsection">
+                            <h3 class="settings-subtitle">👤 Thông tin quản trị</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+                                <div class="settings-group">
+                                    <label class="settings-label">Email quản trị</label>
+                                    <input type="email" class="form-control" id="adminEmail" placeholder="admin@example.com">
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Số điện thoại</label>
+                                    <input type="tel" class="form-control" id="adminPhone" placeholder="0123456789">
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Múi giờ</label>
+                                    <select class="form-control" id="timezone">
+                                        <option value="+7" selected>GMT+7 (Việt Nam)</option>
+                                        <option value="+6">GMT+6 (Bangkok)</option>
+                                        <option value="+8">GMT+8 (Shanghai)</option>
+                                        <option value="+9">GMT+9 (Tokyo)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cơ sở dữ liệu -->
+                        <div class="settings-subsection">
+                            <h3 class="settings-subtitle">💾 Cơ sở dữ liệu</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+                                <div class="settings-group">
+                                    <label class="settings-label">Máy chủ MySQL</label>
+                                    <input type="text" class="form-control" id="mysqlHost" placeholder="localhost" disabled>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Tên cơ sở dữ liệu</label>
+                                    <input type="text" class="form-control" id="mysqlDb" placeholder="sensor_data" disabled>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Trạng thái kết nối</label>
+                                    <div style="padding: 10px; background: var(--bg); border-radius: 8px; border: 2px solid var(--border-color); color: #48bb78;">
+                                        <span class="status-indicator status-ok"></span>
+                                        <span id="dbStatus">✓ Kết nối OK</span>
+                                    </div>
+                                </div>
+
+                                <div class="settings-group">
+                                    <label class="settings-label">Dung lượng cơ sở dữ liệu</label>
+                                    <div style="padding: 10px; background: var(--bg); border-radius: 8px; border: 2px solid var(--border-color);">
+                                        <span id="dbSize">-- MB</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button type="submit" class="btn-action btn-primary-action"><span>💾 Lưu tất cả cấu hình</span></button>
+                            <button type="reset" class="btn-action btn-secondary-action"><span>↺ Reset</span></button>
+                            <button type="button" class="btn-action btn-secondary-action" onclick="testConnection()"><span>🔗 Kiểm tra kết nối</span></button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            loadSystemStats();
+            setInterval(loadSystemStats, 10000); // Refresh every 10s
+            updateClock();
+            setInterval(updateClock, 1000);
+        });
+
+        // Theme
+        function initTheme() {
+            const toggle = document.getElementById('themeToggle');
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                toggle.textContent = '☀️';
+            }
+            toggle.addEventListener('click', () => {
+                const isDark = document.body.classList.toggle('dark-mode');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                toggle.textContent = isDark ? '☀️' : '🌙';
+            });
+        }
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            const time = String(now.getHours()).padStart(2, '0') + ':' +
+                        String(now.getMinutes()).padStart(2, '0') + ':' +
+                        String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clockTime').textContent = time;
+        }
+
+        // Load System Stats
+        async function loadSystemStats() {
+            try {
+                const response = await fetch('/api/system/stats');
+                const data = await response.json();
+
+                if (!data.success) {
+                    console.error('Error loading stats');
+                    return;
+                }
+
+                // Update quick stats
+                const cpuUsage = data.cpu.usage_percent;
+                const ramUsage = data.ram.usage_percent;
+                const diskUsage = data.disk.usage_percent;
+
+                document.getElementById('cpuUsage').textContent = cpuUsage + '%';
+                document.getElementById('cpuTemp').textContent = data.cpu.temperature;
+                document.getElementById('cpuCount').textContent = data.cpu.count;
+                updateProgressBar('cpuProgress', cpuUsage);
+
+                document.getElementById('ramUsage').textContent = ramUsage + '%';
+                document.getElementById('ramDetail').textContent = data.ram.used_gb + ' / ' + data.ram.total_gb + ' GB';
+                document.getElementById('ramAvailable').textContent = data.ram.available_gb;
+                updateProgressBar('ramProgress', ramUsage);
+
+                document.getElementById('diskUsage').textContent = diskUsage + '%';
+                document.getElementById('diskDetail').textContent = data.disk.used_gb + ' / ' + data.disk.total_gb + ' GB';
+                document.getElementById('diskFree').textContent = data.disk.free_gb;
+                updateProgressBar('diskProgress', diskUsage);
+
+                document.getElementById('systemHost').textContent = data.system.hostname;
+                document.getElementById('systemOS').textContent = data.system.os;
+                document.getElementById('systemKernel').textContent = data.system.kernel;
+
+                const uptime = formatUptime(data.uptime.uptime_seconds);
+                document.getElementById('uptimeValue').textContent = uptime;
+                document.getElementById('bootTime').textContent = data.uptime.boot_time;
+
+                // Update detailed info
+                document.getElementById('detailHostname').textContent = data.system.hostname;
+                document.getElementById('detailOS').textContent = data.system.os;
+                document.getElementById('detailKernel').textContent = data.system.kernel;
+                document.getElementById('detailMachine').textContent = data.system.machine;
+                document.getElementById('detailCores').textContent = data.cpu.count;
+                document.getElementById('detailCPUFreq').textContent = data.cpu.frequency_current + ' MHz';
+                document.getElementById('detailCPUMax').textContent = data.cpu.frequency_max + ' MHz';
+                document.getElementById('detailTemp').textContent = data.cpu.temperature + '°C';
+                document.getElementById('detailDiskTotal').textContent = data.disk.total_gb + ' GB';
+                document.getElementById('detailDiskUsed').textContent = data.disk.used_gb + ' GB';
+                document.getElementById('detailDiskFree').textContent = data.disk.free_gb + ' GB';
+                document.getElementById('detailDiskPercent').textContent = diskUsage + '%';
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function updateProgressBar(elementId, percent) {
+            const element = document.getElementById(elementId);
+            const fill = element.querySelector('.progress-mini-fill');
+            fill.style.width = percent + '%';
+
+            // Change color based on usage
+            let colorClass = 'progress-good';
+            if (percent > 80) colorClass = 'progress-danger';
+            else if (percent > 60) colorClass = 'progress-warning';
+
+            fill.className = 'progress-mini-fill ' + colorClass;
+        }
+
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            return days + 'd ' + hours + 'h ' + minutes + 'm';
+        }
+
+        // Form Submit
+        document.getElementById('settingsForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveSettings();
+        });
+
+        // Save Settings
+        async function saveSettings() {
+            const settings = {
+                station_name: document.getElementById('stationName').value,
+                location: {
+                    latitude: parseFloat(document.getElementById('latitude').value),
+                    longitude: parseFloat(document.getElementById('longitude').value),
+                    address: document.getElementById('address').value
+                },
+                node1_id: document.getElementById('node1Id').value,
+                node2_id: document.getElementById('node2Id').value,
+                lora: {
+                    frequency: document.getElementById('loraFrequency').value,
+                    power: parseInt(document.getElementById('loraPower').value)
+                },
+                sensors: {
+                    temp_min: parseFloat(document.getElementById('tempMin').value),
+                    temp_max: parseFloat(document.getElementById('tempMax').value),
+                    read_interval: parseInt(document.getElementById('sensorInterval').value),
+                    send_interval: parseInt(document.getElementById('sendInterval').value)
+                },
+                admin: {
+                    email: document.getElementById('adminEmail').value,
+                    phone: document.getElementById('adminPhone').value
+                },
+                timezone: document.getElementById('timezone').value
+            };
+
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    AppUtils.showToast('✓ Cấu hình đã được lưu thành công', 'success');
+                } else {
+                    AppUtils.showToast('✗ Lỗi: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                AppUtils.showToast('✗ Lỗi khi lưu cấu hình', 'error');
+            }
+        }
+
+        // Test Connection
+        async function testConnection() {
+            const loading = AppUtils.showLoading(document.querySelector('.settings-section'));
+            try {
+                const response = await fetch('/api/system/test-connection');
+                const data = await response.json();
+                
+                if (data.success) {
+                    AppUtils.showToast('✓ Kết nối thành công', 'success');
+                } else {
+                    AppUtils.showToast('✗ Kết nối thất bại: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                AppUtils.showToast('✗ Lỗi khi kiểm tra kết nối', 'error');
+            } finally {
+                AppUtils.hideLoading(loading);
+            }
+        }
+    </script>
+</body>
+
+</html>
