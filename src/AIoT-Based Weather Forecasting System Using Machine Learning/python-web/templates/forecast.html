@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dự báo (ML) - AIoT Weather</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .forecast-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .forecast-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .forecast-time {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .forecast-icon {
+            font-size: 36px;
+            margin: 10px 0;
+        }
+
+        .forecast-temp {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 8px 0;
+        }
+
+        .forecast-details {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .confidence-badge {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .rain-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .rain-yes {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .rain-no {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        .summary-text {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .summary-detail {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .model-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="app-logo">
+                <span class="logo-icon">🌤️</span>
+                <div>
+                    <div class="app-title">AIoT Weather</div>
+                    <div class="app-subtitle">AIoT-ML</div>
+                </div>
+            </div>
+        </div>
+        <nav>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <span class="nav-icon">🏠</span>
+                        <span>Tổng quan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/charts" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Biểu đồ & Phân tích</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="/forecast" class="nav-link">
+                        <span class="nav-icon">🤖</span>
+                        <span>Dự báo (ML)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/ml-training" class="nav-link">
+                        <span class="nav-icon">🚀</span>
+                        <span>Huấn luyện ML</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/mysql" class="nav-link">
+                        <span class="nav-icon">💾</span>
+                        <span>Quản lý dữ liệu</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/settings" class="nav-link">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Cấu hình</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+                <h1 class="page-title">🤖 Dự báo Thời tiết (ML)</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="clock-display">
+                    <span class="clock-time" id="clockTime">00:00:00</span>
+                    <span class="clock-label">GMT+7</span>
+                </div>
+                <div class="status-badge connected" id="mysqlStatus">
+                    <span class="status-dot"></span> Kết nối: OK
+                </div>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content">
+            <!-- Summary Section -->
+            <section class="section">
+                <div class="summary-box" id="summaryBox">
+                    <div class="summary-icon" id="summaryIcon">🌤️</div>
+                    <div class="summary-text" id="summaryText">Đang tải dự báo...</div>
+                    <div class="summary-detail" id="summaryDetail">Vui lòng chờ trong giây lát</div>
+                </div>
+            </section>
+
+            <!-- Forecast Cards Grid -->
+            <section class="section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 class="section-title">Dự báo 24 giờ tới</h2>
+                    <button class="btn btn-primary" onclick="loadForecastData()" style="margin: 0;">
+                        🔄 Làm mới
+                    </button>
+                </div>
+                <div class="forecast-grid" id="forecastGrid">
+                    <div style="grid-column: 1/-1; text-align: center; padding: 30px;">
+                        <div class="loading"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Forecast Table -->
+            <section class="section">
+                <h2 class="section-title">Chi tiết dự báo</h2>
+                <div class="table-container">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>🌡️ Nhiệt độ</th>
+                                    <th>💧 Độ ẩm</th>
+                                    <th>📊 Áp suất</th>
+                                    <th>💨 AQI</th>
+                                    <th>🌧️ Mưa?</th>
+                                    <th>✅ Tin cậy</th>
+                                </tr>
+                            </thead>
+                            <tbody id="forecastTableBody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 30px;">
+                                        <div class="loading"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Statistics -->
+            <section class="section">
+                <h2 class="section-title">Thống kê dự báo</h2>
+                <div class="model-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Nhiệt độ trung bình</div>
+                        <div class="stat-value" id="statAvgTemp">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Độ ẩm trung bình</div>
+                        <div class="stat-value" id="statAvgHumidity">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Xác suất mưa</div>
+                        <div class="stat-value" id="statRainProb">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Nhiệt độ cao nhất</div>
+                        <div class="stat-value" id="statMaxTemp">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Nhiệt độ thấp nhất</div>
+                        <div class="stat-value" id="statMinTemp">--</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Model Info -->
+            <section class="section">
+                <h2 class="section-title">Thông tin Model ML</h2>
+                <div class="card">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <div class="form-group">
+                                <label class="form-label">Model đang sử dụng</label>
+                                <input type="text" class="form-input" id="modelName" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Trạng thái</label>
+                                <input type="text" class="form-input" id="modelStatus" disabled>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label class="form-label">Lần train gần nhất</label>
+                                <input type="text" class="form-input" id="lastTrained" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Độ chính xác</label>
+                                <input type="text" class="form-input" id="modelAccuracy" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label class="form-label">Models đã train</label>
+                        <div id="trainedModels" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <span class="tag">Chưa tải</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/forecast.js"></script>
+</body>
+
+</html>

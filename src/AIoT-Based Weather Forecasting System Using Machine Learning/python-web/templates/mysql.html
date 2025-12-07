@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý dữ liệu MySQL - AIoT Weather</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="app-logo">
+                <span class="logo-icon">🌤️</span>
+                <div>
+                    <div class="app-title">AIoT Weather</div>
+                    <div class="app-subtitle">AIoT-ML</div>
+                </div>
+            </div>
+        </div>
+        <nav>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <span class="nav-icon">🏠</span>
+                        <span>Tổng quan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/charts" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Biểu đồ & Phân tích</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/forecast" class="nav-link">
+                        <span class="nav-icon">🤖</span>
+                        <span>Dự báo (ML)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/ml-training" class="nav-link">
+                        <span class="nav-icon">🚀</span>
+                        <span>Huấn luyện ML</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/mysql" class="nav-link">
+                        <span class="nav-icon">💾</span>
+                        <span>Quản lý dữ liệu MySQL</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/settings" class="nav-link">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Cấu hình hệ thống</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+                <h1 class="page-title">Quản lý dữ liệu MySQL</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="clock-display">
+                    <span class="clock-time" id="clockTime">00:00:00</span>
+                    <span class="clock-label">GMT+7</span>
+                </div>
+                <div class="status-badge connected" id="mysqlStatus">
+                    <span class="status-dot"></span> MySQL: Connected
+                </div>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content">
+            <!-- Database Summary -->
+            <section class="section">
+                <h2 class="section-title">Tổng quan cơ sở dữ liệu</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Tổng số bản ghi</div>
+                        <div class="stat-value" id="totalRecords">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Dung lượng ước tính</div>
+                        <div class="stat-value" style="font-size: 18px;" id="storageSize">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Bản ghi mới nhất</div>
+                        <div class="stat-value" style="font-size: 14px;" id="latestRecord">--</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filter Controls -->
+            <section class="section">
+                <div class="filter-panel">
+                    <h3 class="section-title">Bộ lọc & Tìm kiếm</h3>
+
+                    <div class="filter-row">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label class="form-label">Khoảng thời gian</label>
+                            <div class="btn-group">
+                                <button class="btn btn-primary" onclick="setTimeFilter('today')">Hôm nay</button>
+                                <button class="btn btn-secondary" onclick="setTimeFilter('24h')">24 giờ qua</button>
+                                <button class="btn btn-secondary" onclick="setTimeFilter('7d')">7 ngày qua</button>
+                                <button class="btn btn-secondary" onclick="setTimeFilter('all')">Tất cả</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label class="form-label">Node</label>
+                            <select class="form-select" id="nodeFilter">
+                                <option value="all">Tất cả</option>
+                                <option value="node1">Node 1</option>
+                                <option value="node2">Node 2</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 2; margin-bottom: 0;">
+                            <label class="form-label">Tìm kiếm (ID hoặc thời gian)</label>
+                            <input type="text" class="form-input" id="searchInput"
+                                placeholder="Nhập ID hoặc thời gian...">
+                        </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <button class="btn btn-primary" onclick="loadTableData()">
+                            🔍 Làm mới dữ liệu
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Table -->
+            <section class="section">
+                <h2 class="section-title">Bảng dữ liệu</h2>
+                <div class="table-container">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Thời gian</th>
+                                    <th>Node</th>
+                                    <th>Nhiệt độ (°C)</th>
+                                    <th>Độ ẩm (%)</th>
+                                    <th>Áp suất (hPa)</th>
+                                    <th>CO₂ (ppm)</th>
+                                    <th>Bụi mịn (µg/m³)</th>
+                                    <th>AQI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTableBody">
+                                <tr>
+                                    <td colspan="9" style="text-align: center; padding: 30px;">
+                                        <div class="loading"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination">
+                        <button class="btn btn-secondary" onclick="previousPage()">← Trước</button>
+                        <span class="pagination-info" id="paginationInfo">Trang 1</span>
+                        <button class="btn btn-secondary" onclick="nextPage()">Sau →</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Cleanup -->
+            <section class="section">
+                <h2 class="section-title">Dọn dẹp dữ liệu</h2>
+                <div class="card">
+                    <div class="info-panel">
+                        <div class="info-panel-title">⚠️ Cảnh báo</div>
+                        <div class="info-panel-content">
+                            Việc xóa dữ liệu cũ sẽ giúp giảm dung lượng cơ sở dữ liệu. Tuy nhiên, dữ liệu đã xóa không
+                            thể khôi phục được.
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-20">
+                        <label class="form-label">Chọn khoảng thời gian cần xóa</label>
+                        <div class="form-radio">
+                            <input type="radio" name="deleteRange" value="7" id="delete7" checked>
+                            <label for="delete7">Xóa dữ liệu cũ hơn 7 ngày</label>
+                        </div>
+                        <div class="form-radio">
+                            <input type="radio" name="deleteRange" value="30" id="delete30">
+                            <label for="delete30">Xóa dữ liệu cũ hơn 30 ngày</label>
+                        </div>
+                        <div class="form-radio">
+                            <input type="radio" name="deleteRange" value="90" id="delete90">
+                            <label for="delete90">Xóa dữ liệu cũ hơn 90 ngày</label>
+                        </div>
+                    </div>
+
+                    <div class="mt-20">
+                        <button class="btn btn-danger" onclick="confirmDelete()">
+                            🗑️ Xóa dữ liệu cũ
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header" id="modalTitle">Xác nhận xóa dữ liệu</div>
+            <div class="modal-body" id="modalBody">Bạn có chắc chắn muốn xóa dữ liệu cũ không?</div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modalCancel">Hủy</button>
+                <button class="btn btn-danger" id="modalConfirm">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        let currentPage = 1;
+        let totalPages = 10;
+        let currentTimeFilter = 'today';
+        let tableData = null;
+
+        // Set time filter
+        function setTimeFilter(filter) {
+            currentTimeFilter = filter;
+            // Update button styles
+            document.querySelectorAll('.filter-row .btn-group .btn').forEach(btn => {
+                btn.className = 'btn btn-secondary';
+            });
+            event.target.className = 'btn btn-primary';
+        }
+
+        // Load table data
+        async function loadTableData() {
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px;"><div class="loading"></div></td></tr>';
+
+            try {
+                tableData = await AppUtils.fetchMySQLTable({
+                    timeFilter: currentTimeFilter,
+                    page: currentPage
+                });
+
+                // Update summary stats
+                document.getElementById('totalRecords').textContent = tableData.totalRecords.toLocaleString('vi-VN');
+                document.getElementById('storageSize').textContent = tableData.storageSize;
+                document.getElementById('latestRecord').textContent = tableData.latestRecord;
+
+                // Update table
+                tableBody.innerHTML = '';
+                tableData.records.forEach(record => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+            <td>${record.id}</td>
+            <td>${record.time}</td>
+            <td>${record.node}</td>
+            <td>${record.temperature}</td>
+            <td>${record.humidity}</td>
+            <td>${record.pressure}</td>
+            <td>${record.co2}</td>
+            <td>${record.dust}</td>
+            <td>${record.aqi}</td>
+          `;
+                    tableBody.appendChild(row);
+                });
+
+                // Update pagination
+                document.getElementById('paginationInfo').textContent = `Trang ${currentPage} / ${totalPages}`;
+
+                AppUtils.showToast('Đã tải dữ liệu thành công', 'success');
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--danger);">Lỗi: ${error.message}</td></tr>`;
+                AppUtils.showToast(error.message, 'error');
+            }
+        }
+
+        // Pagination
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadTableData();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadTableData();
+            }
+        }
+
+        // Confirm delete
+        function confirmDelete() {
+            const selectedRange = document.querySelector('input[name="deleteRange"]:checked').value;
+
+            AppUtils.showModal(
+                'Xác nhận xóa dữ liệu',
+                `Bạn có chắc chắn muốn xóa dữ liệu cũ hơn ${selectedRange} ngày khỏi MySQL không? Hành động này không thể hoàn tác.`,
+                () => {
+                    // Simulate delete operation
+                    setTimeout(() => {
+                        AppUtils.showToast(`Đã xóa dữ liệu cũ hơn ${selectedRange} ngày (giả lập)`, 'success');
+                        loadTableData();
+                    }, 500);
+                },
+                null
+            );
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTableData();
+        });
+    </script>
+    
+    <!-- Page-specific JavaScript -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/mysql.js"></script>
+</body>
+
+</html>

@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS sensor_data (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Create weather_forecasting table for OpenWeatherMap API data
-CREATE TABLE IF NOT EXISTS weather_forecasting (
+CREATE TABLE IF NOT EXISTS weather_api (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     wind_speed FLOAT NOT NULL DEFAULT 0 COMMENT 'Wind speed in m/s',
     rainfall FLOAT NOT NULL DEFAULT 0 COMMENT 'Rainfall in mm',

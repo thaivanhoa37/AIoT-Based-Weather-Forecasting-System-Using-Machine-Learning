@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biểu đồ & Phân tích - AIoT Weather</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="app-logo">
+                <span class="logo-icon">🌤️</span>
+                <div>
+                    <div class="app-title">AIoT Weather</div>
+                    <div class="app-subtitle">AIoT-ML</div>
+                </div>
+            </div>
+        </div>
+        <nav>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <span class="nav-icon">🏠</span>
+                        <span>Tổng quan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/charts" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Biểu đồ & Phân tích</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/forecast" class="nav-link">
+                        <span class="nav-icon">🤖</span>
+                        <span>Dự báo (ML)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/ml-training" class="nav-link">
+                        <span class="nav-icon">🚀</span>
+                        <span>Huấn luyện ML</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/mysql" class="nav-link">
+                        <span class="nav-icon">💾</span>
+                        <span>Quản lý dữ liệu MySQL</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/settings" class="nav-link">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Cấu hình hệ thống</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+                <h1 class="page-title">Biểu đồ & Phân tích</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="clock-display">
+                    <span class="clock-time" id="clockTime">00:00:00</span>
+                    <span class="clock-label">GMT+7</span>
+                </div>
+                <div class="status-badge connected" id="mysqlStatus">
+                    <span class="status-dot"></span> MySQL: Connected
+                </div>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content">
+            <!-- Filter Panel -->
+            <section class="section">
+                <div class="filter-panel">
+                    <h3 class="section-title">Bộ lọc dữ liệu</h3>
+
+                    <!-- Quick Time Range Buttons -->
+                    <div class="filter-row">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label class="form-label">Khoảng thời gian nhanh</label>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary" onclick="setTimeRange('today')" id="btnToday">Hôm
+                                    nay</button>
+                                <button class="btn btn-primary" onclick="setTimeRange('24h')" id="btn24h">24 giờ
+                                    qua</button>
+                                <button class="btn btn-secondary" onclick="setTimeRange('7d')" id="btn7d">7 ngày
+                                    qua</button>
+                                <button class="btn btn-secondary" onclick="setTimeRange('30d')" id="btn30d">30 ngày
+                                    qua</button>
+                                <button class="btn btn-secondary" onclick="setTimeRange('custom')" id="btnCustom">Tùy
+                                    chỉnh</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Date/Time Range -->
+                    <div class="filter-row" id="customRangeRow" style="display: none;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label class="form-label">📅 Từ ngày & giờ</label>
+                            <input type="datetime-local" class="form-input" id="startDateTime">
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label class="form-label">📅 Đến ngày & giờ</label>
+                            <input type="datetime-local" class="form-input" id="endDateTime">
+                        </div>
+                    </div>
+
+                    <!-- Node and Granularity -->
+                    <div class="filter-row">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label class="form-label">Node</label>
+                            <select class="form-select" id="nodeSelect">
+                                <option value="all">Tất cả</option>
+                                <option value="node1">Node 1</option>
+                                <option value="node2">Node 2</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label class="form-label">Độ chi tiết hiển thị</label>
+                            <select class="form-select" id="granularitySelect">
+                                <option value="hour">Theo giờ (chi tiết)</option>
+                                <option value="day">Theo ngày</option>
+                                <option value="week">Theo tuần</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="filter-row">
+                        <button class="btn btn-primary" onclick="applyFilters()">
+                            🔍 Áp dụng bộ lọc
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetFilters()">
+                            🔄 Đặt lại
+                        </button>
+                    </div>
+
+                    <!-- Time Range Info Display -->
+                    <div class="info-panel mt-10" id="timeRangeInfo" style="display: none;">
+                        <div class="info-panel-content">
+                            <strong>⏱️ Khoảng thời gian đang xem:</strong><br>
+                            <span id="timeRangeText"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- All Sensors Detailed Charts (Combined - No Separation) -->
+            <section class="section">
+                <h2 class="section-title">📊 Tất cả cảm biến - Xem chi tiết</h2>
+                <p class="section-subtitle">Hiển thị tất cả dữ liệu cảm biến IoT và API thời tiết trong một giao diện
+                    thống nhất</p>
+                <div id="allSensorsChartsGrid"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px;">
+                    <!-- Detailed charts will be populated by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Statistics Cards -->
+            <section class="section">
+                <h2 class="section-title">📈 Thống kê tổng hợp</h2>
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Stats will be populated by JavaScript -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        let currentTimeRange = '24h';
+        let chartsData = {};
+        let customStartDate = null;
+        let customEndDate = null;
+        let currentGranularity = 'hour';
+
+        // All sensors configuration (IoT + Weather API - NO SEPARATION)
+        const allSensors = [
+            { key: 'temperature', name: 'Nhiệt độ', unit: '°C', color: '#ff6b9d', icon: '🌡️' },
+            { key: 'humidity', name: 'Độ ẩm', unit: '%', color: '#4299e1', icon: '💧' },
+            { key: 'pressure', name: 'Áp suất', unit: 'hPa', color: '#f6ad55', icon: '🎯' },
+            { key: 'co2', name: 'CO₂', unit: 'ppm', color: '#68d391', icon: '☁️' },
+            { key: 'dust', name: 'Bụi mịn', unit: 'µg/m³', color: '#b794f4', icon: '😷' },
+            { key: 'windSpeed', name: 'Tốc độ gió', unit: 'km/h', color: '#90cdf4', icon: '🌬️' },
+            { key: 'rainfall', name: 'Lượng mưa', unit: 'mm', color: '#63b3ed', icon: '🌧️' },
+            { key: 'uvIndex', name: 'Chỉ số UV', unit: '', color: '#fbd38d', icon: '☀️' }
+        ];
+
+        // Initialize datetime inputs
+        function initializeDateTimeInputs() {
+            const now = new Date();
+            const endDateTime = document.getElementById('endDateTime');
+            const startDateTime = document.getElementById('startDateTime');
+
+            endDateTime.value = formatDateTimeLocal(now);
+            const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            startDateTime.value = formatDateTimeLocal(yesterday);
+        }
+
+        function formatDateTimeLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        // Set time range
+        function setTimeRange(range) {
+            currentTimeRange = range;
+
+            const buttons = ['btnToday', 'btn24h', 'btn7d', 'btn30d', 'btnCustom'];
+            buttons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.className = 'btn btn-secondary';
+            });
+
+            const btnMap = {
+                'today': 'btnToday',
+                '24h': 'btn24h',
+                '7d': 'btn7d',
+                '30d': 'btn30d',
+                'custom': 'btnCustom'
+            };
+
+            const selectedBtn = document.getElementById(btnMap[range]);
+            if (selectedBtn) selectedBtn.className = 'btn btn-primary';
+
+            const customRow = document.getElementById('customRangeRow');
+            customRow.style.display = range === 'custom' ? 'flex' : 'none';
+        }
+
+        // Reset filters
+        function resetFilters() {
+            setTimeRange('24h');
+            document.getElementById('nodeSelect').value = 'all';
+            document.getElementById('granularitySelect').value = 'hour';
+            document.getElementById('timeRangeInfo').style.display = 'none';
+            applyFilters();
+        }
+
+        // Apply filters
+        async function applyFilters() {
+            currentGranularity = document.getElementById('granularitySelect').value;
+
+            if (currentTimeRange === 'custom') {
+                const startInput = document.getElementById('startDateTime').value;
+                const endInput = document.getElementById('endDateTime').value;
+
+                if (!startInput || !endInput) {
+                    AppUtils.showToast('Vui lòng chọn đầy đủ ngày giờ bắt đầu và kết thúc', 'warning');
+                    return;
+                }
+
+                customStartDate = new Date(startInput);
+                customEndDate = new Date(endInput);
+
+                if (customStartDate >= customEndDate) {
+                    AppUtils.showToast('Ngày bắt đầu phải nhỏ hơn ngày kết thúc', 'error');
+                    return;
+                }
+
+                const infoPanel = document.getElementById('timeRangeInfo');
+                const infoText = document.getElementById('timeRangeText');
+                infoPanel.style.display = 'block';
+                infoText.innerHTML = `
+                    <strong>Từ:</strong> ${customStartDate.toLocaleString('vi-VN')}<br>
+                    <strong>Đến:</strong> ${customEndDate.toLocaleString('vi-VN')}<br>
+                    <strong>Tổng:</strong> ${Math.round((customEndDate - customStartDate) / (1000 * 60 * 60))} giờ
+                `;
+            } else {
+                document.getElementById('timeRangeInfo').style.display = 'none';
+            }
+
+            await loadChartsData();
+        }
+
+        // Generate weather API data
+        function generateWeatherAPIData(sensorKey, dataPoints) {
+            const data = [];
+            let baseValue;
+
+            switch (sensorKey) {
+                case 'windSpeed': baseValue = 12; break;
+                case 'rainfall': baseValue = 2; break;
+                case 'uvIndex': baseValue = 5; break;
+                default: baseValue = 10;
+            }
+
+            for (let i = 0; i < dataPoints; i++) {
+                const variation = (Math.random() - 0.5) * (baseValue * 0.4);
+                const value = Math.max(0, baseValue + variation);
+                const timestamp = new Date(Date.now() - (dataPoints - i) * 3600000);
+
+                const dateStr = timestamp.toLocaleDateString('vi-VN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                const timeStr = timestamp.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+
+                data.push({
+                    time: `${dateStr} ${timeStr}`,
+                    timestamp: timestamp,
+                    value: value.toFixed(1)
+                });
+            }
+
+            return data;
+        }
+
+        // Load all charts data
+        async function loadChartsData() {
+            const grid = document.getElementById('allSensorsChartsGrid');
+            const loading = AppUtils.showLoading(grid);
+
+            try {
+                // Fetch all data from API including IoT sensors and weather data
+                const allSensorKeys = ['temperature', 'humidity', 'pressure', 'co2', 'dust', 'wind_speed', 'rainfall', 'uv_index'];
+                const allData = await AppUtils.fetchChartsData(currentTimeRange, allSensorKeys);
+
+                // Initialize chartsData with proper mapping
+                chartsData = {};
+                
+                // Map sensor data (exact keys from API)
+                chartsData['temperature'] = allData.temperature || [];
+                chartsData['humidity'] = allData.humidity || [];
+                chartsData['pressure'] = allData.pressure || [];
+                chartsData['co2'] = allData.co2 || [];
+                chartsData['dust'] = allData.dust || [];
+                
+                // Map weather data (match sensor configuration keys)
+                chartsData['windSpeed'] = allData.wind_speed || [];
+                chartsData['rainfall'] = allData.rainfall || [];
+                chartsData['uvIndex'] = allData.uv_index || [];
+
+                // Debug: log data to console
+                console.log('Loaded charts data:', chartsData);
+                console.log('Temperature points:', chartsData.temperature.length);
+                console.log('Wind speed points:', chartsData.windSpeed.length);
+
+                // Draw all detailed charts
+                drawAllDetailedCharts();
+
+                // Update statistics
+                updateStatistics();
+
+                AppUtils.showToast('Đã cập nhật biểu đồ thành công', 'success');
+            } catch (error) {
+                console.error('Error loading charts:', error);
+                AppUtils.showToast('Lỗi: ' + error.message, 'error');
+            } finally {
+                AppUtils.hideLoading(loading);
+            }
+        }
+
+        // Draw all detailed charts in unified grid
+        function drawAllDetailedCharts() {
+            const grid = document.getElementById('allSensorsChartsGrid');
+            grid.innerHTML = '';
+
+            allSensors.forEach(sensor => {
+                // Create chart container
+                const container = document.createElement('div');
+                container.className = 'chart-container';
+
+                // Create header with title and current value
+                const header = document.createElement('div');
+                header.style.display = 'flex';
+                header.style.justifyContent = 'space-between';
+                header.style.alignItems = 'center';
+                header.style.marginBottom = '15px';
+
+                const title = document.createElement('h3');
+                title.className = 'chart-title';
+                title.innerHTML = `${sensor.icon} ${sensor.name}`;
+                title.style.margin = '0';
+                title.style.fontSize = '16px';
+
+                // Current value display
+                const valueDisplay = document.createElement('div');
+                valueDisplay.style.textAlign = 'right';
+
+                if (chartsData[sensor.key] && chartsData[sensor.key].length > 0) {
+                    const latest = chartsData[sensor.key][chartsData[sensor.key].length - 1];
+                    const currentVal = document.createElement('div');
+                    currentVal.style.fontSize = '24px';
+                    currentVal.style.fontWeight = 'bold';
+                    currentVal.style.color = sensor.color;
+                    currentVal.textContent = `${latest.value} ${sensor.unit}`;
+
+                    const updateTime = document.createElement('div');
+                    updateTime.style.fontSize = '11px';
+                    updateTime.style.color = 'var(--text-secondary)';
+                    updateTime.textContent = `Cập nhật: ${latest.time.split(' ')[1]}`;
+
+                    valueDisplay.appendChild(currentVal);
+                    valueDisplay.appendChild(updateTime);
+                }
+
+                header.appendChild(title);
+                header.appendChild(valueDisplay);
+
+                // Create canvas for chart
+                const canvas = document.createElement('canvas');
+                canvas.width = 700;
+                canvas.height = 280;
+                canvas.style.width = '100%';
+                canvas.style.height = 'auto';
+
+                container.appendChild(header);
+                container.appendChild(canvas);
+                grid.appendChild(container);
+
+                // Draw chart
+                if (chartsData[sensor.key]) {
+                    AppUtils.drawLineChart(canvas, chartsData[sensor.key], {
+                        color: sensor.color,
+                        padding: 60
+                    });
+                }
+            });
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = '';
+
+            allSensors.forEach(sensor => {
+                if (!chartsData[sensor.key]) return;
+
+                const values = chartsData[sensor.key].map(d => parseFloat(d.value));
+                const min = Math.min(...values).toFixed(1);
+                const max = Math.max(...values).toFixed(1);
+                const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card';
+                statCard.innerHTML = `
+                    <div class="stat-label">${sensor.icon} ${sensor.name}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                        <div>Min: <strong>${min} ${sensor.unit}</strong></div>
+                        <div>Max: <strong>${max} ${sensor.unit}</strong></div>
+                        <div>Avg: <strong>${avg} ${sensor.unit}</strong></div>
+                    </div>
+                `;
+                statsGrid.appendChild(statCard);
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDateTimeInputs();
+            loadChartsData();
+        });
+    </script>
+    
+    <!-- Page-specific JavaScript -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/charts.js"></script>
+</body>
+
+</html>

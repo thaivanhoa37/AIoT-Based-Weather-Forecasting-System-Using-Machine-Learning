@@ -1,0 +1,73 @@
+[
+  {
+    "timestamp": "05/12/2025 16:15:21",
+    "models_trained": [],
+    "data_points": 1000,
+    "accuracy": 0,
+    "metrics": {}
+  },
+  {
+    "timestamp": "05/12/2025 16:15:39",
+    "models_trained": [],
+    "data_points": 1000,
+    "accuracy": 0,
+    "metrics": {}
+  },
+  {
+    "timestamp": "05/12/2025 16:15:40",
+    "models_trained": [],
+    "data_points": 1000,
+    "accuracy": 0,
+    "metrics": {}
+  },
+  {
+    "timestamp": "2025-12-06T23:41:35.856093",
+    "models_trained": [
+      "temperature",
+      "humidity",
+      "aqi"
+    ],
+    "data_points": 721,
+    "accuracy": 0.0
+  },
+  {
+    "timestamp": "2025-12-06T23:41:51.297644",
+    "models_trained": [
+      "temperature",
+      "humidity",
+      "aqi"
+    ],
+    "data_points": 721,
+    "accuracy": 0.0
+  },
+  {
+    "timestamp": "2025-12-06T23:48:39.630522",
+    "models_trained": [
+      "temperature",
+      "humidity",
+      "aqi"
+    ],
+    "data_points": 700,
+    "accuracy": 75.0
+  },
+  {
+    "timestamp": "2025-12-06T23:49:32.623223",
+    "models_trained": [
+      "temperature",
+      "humidity",
+      "aqi"
+    ],
+    "data_points": 721,
+    "accuracy": 75.0
+  },
+  {
+    "timestamp": "2025-12-06T23:49:53.482164",
+    "models_trained": [
+      "temperature",
+      "humidity",
+      "aqi"
+    ],
+    "data_points": 721,
+    "accuracy": 75.0
+  }
+]

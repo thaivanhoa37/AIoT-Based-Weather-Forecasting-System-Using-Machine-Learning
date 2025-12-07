@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}Tổng quan - AIoT Weather{% endblock %}
+{% block page_title %}Tổng quan thời tiết{% endblock %}
+
+{% block content %}
+<!-- Current Weather Overview -->
+<section class="section">
+    <div class="weather-hero">
+        <div class="hero-content">
+            <div class="current-temp-display">
+                <div class="current-temp" id="currentTemp">--°C</div>
+                <div class="weather-description" id="weatherDesc">Đang tải...</div>
+            </div>
+            <div class="hero-info">
+                <div class="info-item">
+                    <span class="info-label">💧 Độ ẩm</span>
+                    <span class="info-value" id="heroHumidity">--%</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">💨 Gió</span>
+                    <span class="info-value" id="heroWind">--km/h</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">⏱️ Áp suất</span>
+                    <span class="info-value" id="heroPressure">--hPa</span>
+                </div>
+            </div>
+        </div>
+        <div class="location-info">
+            <span>📍 Quận 9, TP.HCM</span>
+            <span class="last-update" id="lastUpdate">Cập nhật lúc --</span>
+        </div>
+    </div>
+</section>
+
+<!-- Real-time IoT Sensor Data -->
+<section class="section">
+    <h2 class="section-title">📡 Dữ liệu cảm biến IoT (Thời gian thực)</h2>
+    <div class="cards-grid" id="iotDataCards">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon temp">🌡️</div>
+                <div class="card-label">Nhiệt độ</div>
+            </div>
+            <div class="card-value" id="tempValue">--<span class="card-unit">°C</span></div>
+            <div class="card-footer" id="tempTime">Đang tải...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon humidity">💧</div>
+                <div class="card-label">Độ ẩm</div>
+            </div>
+            <div class="card-value" id="humidityValue">--<span class="card-unit">%</span></div>
+            <div class="card-footer" id="humidityTime">Đang tải...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon pressure">⏱️</div>
+                <div class="card-label">Áp suất</div>
+            </div>
+            <div class="card-value" id="pressureValue">--<span class="card-unit">hPa</span></div>
+            <div class="card-footer" id="pressureTime">Đang tải...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon co2">💨</div>
+                <div class="card-label">CO₂</div>
+            </div>
+            <div class="card-value" id="co2Value">--<span class="card-unit">ppm</span></div>
+            <div class="card-footer" id="co2Time">Đang tải...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon dust">🌫️</div>
+                <div class="card-label">Bụi mịn</div>
+            </div>
+            <div class="card-value" id="dustValue">--<span class="card-unit">µg/m³</span></div>
+            <div class="card-footer" id="dustTime">Đang tải...</div>
+        </div>
+    </div>
+    <div class="text-center mt-10">
+        <button class="btn btn-primary" onclick="loadRealtimeData()">
+            🔄 Cập nhật dữ liệu
+        </button>
+    </div>
+</section>
+
+<!-- Weather API Data -->
+<section class="section">
+    <h2 class="section-title">🌍 Dữ liệu từ API Thời tiết</h2>
+    <div class="cards-grid" id="weatherApiCards">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon wind">🌬️</div>
+                <div class="card-label">Tốc độ gió</div>
+            </div>
+            <div class="card-value" id="windSpeedValue">--<span class="card-unit">km/h</span></div>
+            <div class="card-footer">Gió</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon rain">🌧️</div>
+                <div class="card-label">Lượng mưa</div>
+            </div>
+            <div class="card-value" id="rainfallValue">--<span class="card-unit">mm</span></div>
+            <div class="card-footer">Mưa</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon uv">☀️</div>
+                <div class="card-label">Chỉ số UV</div>
+            </div>
+            <div class="card-value" id="uvValue">--</div>
+            <div class="card-footer" id="uvLevel">--</div>
+        </div>
+    </div>
+</section>
+
+<!-- 7-Day Weather Forecast -->
+<section class="section">
+    <h2 class="section-title">📅 Dự báo 7 ngày</h2>
+    <p class="section-subtitle">Dự báo thời tiết trong 7 ngày tới từ API thời tiết</p>
+    <div class="forecast-grid-7day" id="forecast7DayGrid">
+        <!-- Will be populated by JavaScript -->
+    </div>
+</section>
+
+<!-- Today Hourly Forecast -->
+<section class="section">
+    <h2 class="section-title">📈 Dự báo theo giờ (24 giờ)</h2>
+    <p class="section-subtitle">Dự báo thời tiết chi tiết từng giờ trong 24 giờ tới</p>
+    <div class="forecast-scroll-container">
+        <div class="forecast-grid-hourly" id="forecastHourlyGrid">
+            <!-- Will be populated by JavaScript -->
+        </div>
+    </div>
+</section>
+
+<!-- System Status -->
+<section class="section">
+    <h2 class="section-title">⚙️ Trạng thái hệ thống</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📡</div>
+            <div class="stat-label">Cảm biến hoạt động</div>
+            <div class="stat-details">
+                <div class="stat-row">
+                    <span class="stat-label-small">Số lượng</span>
+                    <span class="stat-value-small" id="activeSensors">5</span>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">💾</div>
+            <div class="stat-label">Bản ghi dữ liệu</div>
+            <div class="stat-details">
+                <div class="stat-row">
+                    <span class="stat-label-small">Hôm nay</span>
+                    <span class="stat-value-small" id="recordsToday">--</span>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-label">Cập nhật lần cuối</div>
+            <div class="stat-details">
+                <div class="stat-row">
+                    <span class="stat-label-small">Thời gian</span>
+                    <span class="stat-value-small" id="lastDataTime">--</span>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✓</div>
+            <div class="stat-label">Trạng thái</div>
+            <div class="stat-details">
+                <div class="stat-row">
+                    <span class="stat-label-small">Hệ thống</span>
+                    <span class="stat-value-small" style="color: #48bb78;" id="systemStatus">Hoạt động</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Page-specific JavaScript
+    let trendData = {
+        temperature: [],
+        humidity: [],
+        co2: [],
+        dust: []
+    };
+
+    // Generate 7-day forecast data
+    function generateForecast7Day() {
+        const forecast = [];
+        const weatherConditions = ['Nắng', 'Mây', 'Mưa', 'Nắng', 'Mây', 'Mưa', 'Nắng'];
+        const icons = ['☀️', '☁️', '🌧️', '☀️', '☁️', '🌧️', '☀️'];
+        const today = new Date();
+        const currentDayOfWeek = today.getDay();
+        let daysUntilMonday = (1 - currentDayOfWeek + 7) % 7;
+        if (daysUntilMonday === 0) daysUntilMonday = 7;
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() + daysUntilMonday);
+
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            const dayOfWeek = date.getDay();
+            const dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+            const dayName = dayNames[dayOfWeek];
+            const monthDay = date.toLocaleDateString('vi-VN', { month: '2-digit', day: '2-digit' });
+
+            forecast.push({
+                date: `${dayName}, ${monthDay}`,
+                condition: weatherConditions[i],
+                icon: icons[i],
+                tempMax: 28 + Math.random() * 5,
+                tempMin: 22 + Math.random() * 3,
+                humidity: 65 + Math.random() * 20,
+                windSpeed: 10 + Math.random() * 8,
+                rainChance: Math.random() * 100
+            });
+        }
+        return forecast;
+    }
+
+    function generateForecastHourly() {
+        const forecast = [];
+        const conditions = ['Nắng', 'Mây', 'Mưa nhẹ', 'Nắng'];
+        const icons = ['☀️', '☁️', '🌧️', '☀️'];
+
+        for (let i = 0; i < 24; i++) {
+            const time = new Date();
+            time.setHours(i);
+
+            forecast.push({
+                time: time.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                hour: i,
+                condition: conditions[Math.floor(Math.random() * conditions.length)],
+                icon: icons[Math.floor(Math.random() * icons.length)],
+                temp: 24 + Math.random() * 6,
+                humidity: 60 + Math.random() * 30,
+                windSpeed: 8 + Math.random() * 10,
+                rainChance: Math.random() * 100
+            });
+        }
+        return forecast;
+    }
+
+    function displayForecast7Day() {
+        const forecast = generateForecast7Day();
+        const grid = document.getElementById('forecast7DayGrid');
+        grid.innerHTML = '';
+
+        forecast.forEach(day => {
+            const card = document.createElement('div');
+            card.className = 'forecast-card-7day';
+            card.innerHTML = `
+                <div class="forecast-date">${day.date}</div>
+                <div class="forecast-icon" style="font-size: 32px;">${day.icon}</div>
+                <div class="forecast-condition">${day.condition}</div>
+                <div class="forecast-temp">
+                    <span class="temp-max">${day.tempMax.toFixed(0)}°</span>
+                    <span class="temp-min">${day.tempMin.toFixed(0)}°</span>
+                </div>
+                <div class="forecast-details">
+                    <span>💧 ${day.humidity.toFixed(0)}%</span>
+                    <span>💨 ${day.windSpeed.toFixed(0)}km/h</span>
+                </div>
+                <div class="forecast-rain">☔ ${day.rainChance.toFixed(0)}%</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function displayForecastHourly() {
+        const forecast = generateForecastHourly();
+        const grid = document.getElementById('forecastHourlyGrid');
+        grid.innerHTML = '';
+
+        forecast.forEach((hour, index) => {
+            const card = document.createElement('div');
+            card.className = 'forecast-card-hourly';
+            if (index === new Date().getHours()) {
+                card.classList.add('current-hour');
+            }
+            card.innerHTML = `
+                <div class="forecast-hour">${hour.time}</div>
+                <div class="forecast-icon" style="font-size: 28px;">${hour.icon}</div>
+                <div class="forecast-temp-main">${hour.temp.toFixed(0)}°C</div>
+                <div class="forecast-condition-small">${hour.condition}</div>
+                <div class="forecast-details-small">
+                    <span>💧 ${hour.humidity.toFixed(0)}%</span>
+                </div>
+                <div class="forecast-details-small">
+                    <span>💨 ${hour.windSpeed.toFixed(0)}km/h</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        addScrollButtons();
+    }
+
+    function addScrollButtons() {
+        const container = document.querySelector('.forecast-scroll-container');
+        if (!container) return;
+
+        const existingBtn = container.querySelectorAll('.scroll-btn');
+        existingBtn.forEach(btn => btn.remove());
+
+        const leftBtn = document.createElement('button');
+        leftBtn.className = 'scroll-btn scroll-left';
+        leftBtn.innerHTML = '❮';
+        leftBtn.onclick = () => {
+            const grid = document.getElementById('forecastHourlyGrid');
+            grid.parentElement.scrollBy({ left: -300, behavior: 'smooth' });
+        };
+
+        const rightBtn = document.createElement('button');
+        rightBtn.className = 'scroll-btn scroll-right';
+        rightBtn.innerHTML = '❯';
+        rightBtn.onclick = () => {
+            const grid = document.getElementById('forecastHourlyGrid');
+            grid.parentElement.scrollBy({ left: 300, behavior: 'smooth' });
+        };
+
+        container.appendChild(leftBtn);
+        container.appendChild(rightBtn);
+    }
+
+    // Load realtime data using API
+    async function loadRealtimeData() {
+        const cards = document.getElementById('iotDataCards');
+        const loading = AppUtils.showLoading(cards);
+
+        try {
+            // Fetch from API endpoint
+            const response = await fetch('/api/realtime-data');
+            if (!response.ok) throw new Error('Failed to fetch data');
+            const data = await response.json();
+
+            // Update hero section
+            document.getElementById('currentTemp').textContent = `${data.temperature}°C`;
+            document.getElementById('weatherDesc').textContent = 'Thời tiết hiện tại';
+            document.getElementById('heroHumidity').textContent = `${data.humidity}%`;
+            document.getElementById('heroWind').textContent = `${data.wind_speed}km/h`;
+            document.getElementById('heroPressure').textContent = `${data.pressure}hPa`;
+            document.getElementById('lastUpdate').textContent = `Cập nhật lúc ${data.timestamp}`;
+
+            // Update IoT data cards
+            document.getElementById('tempValue').innerHTML = `${data.temperature}<span class="card-unit">°C</span>`;
+            document.getElementById('humidityValue').innerHTML = `${data.humidity}<span class="card-unit">%</span>`;
+            document.getElementById('pressureValue').innerHTML = `${data.pressure}<span class="card-unit">hPa</span>`;
+            document.getElementById('co2Value').innerHTML = `${data.co2}<span class="card-unit">ppm</span>`;
+            document.getElementById('dustValue').innerHTML = `${data.dust}<span class="card-unit">µg/m³</span>`;
+
+            // Update timestamps
+            const timestamp = `Cập nhật: ${data.timestamp}`;
+            document.getElementById('tempTime').textContent = timestamp;
+            document.getElementById('humidityTime').textContent = timestamp;
+            document.getElementById('pressureTime').textContent = timestamp;
+            document.getElementById('co2Time').textContent = timestamp;
+            document.getElementById('dustTime').textContent = timestamp;
+
+            // Update weather API data
+            document.getElementById('windSpeedValue').innerHTML = `${data.wind_speed}<span class="card-unit">km/h</span>`;
+            document.getElementById('rainfallValue').innerHTML = `${data.rainfall}<span class="card-unit">mm</span>`;
+            document.getElementById('uvValue').textContent = data.uv_index;
+            document.getElementById('uvLevel').textContent = AppUtils.getUVLevel(data.uv_index);
+
+            // Update system status via API
+            const statsResponse = await fetch('/api/system-stats');
+            if (statsResponse.ok) {
+                const stats = await statsResponse.json();
+                document.getElementById('lastDataTime').textContent = stats.last_update;
+                document.getElementById('recordsToday').textContent = stats.records_today;
+                document.getElementById('activeSensors').textContent = stats.active_sensors;
+            }
+
+            AppUtils.showToast('Đã cập nhật dữ liệu thành công', 'success');
+        } catch (error) {
+            console.error('Error loading data:', error);
+            AppUtils.showToast('Lỗi khi tải dữ liệu: ' + error.message, 'error');
+        } finally {
+            AppUtils.hideLoading(loading);
+        }
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+        loadRealtimeData();
+        displayForecast7Day();
+        displayForecastHourly();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadRealtimeData, 30000);
+    });
+</script>
+
+<script src="/static/js/index.js"></script>
+{% endblock %}

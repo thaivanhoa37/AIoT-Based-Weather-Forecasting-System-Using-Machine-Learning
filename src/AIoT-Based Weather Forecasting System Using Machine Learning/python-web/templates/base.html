@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AIoT Weather{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="app-logo">
+                <span class="logo-icon">🌤️</span>
+                <div>
+                    <div class="app-title">AIoT Weather</div>
+                    <div class="app-subtitle">AIoT-ML</div>
+                </div>
+            </div>
+        </div>
+        <nav>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">
+                        <span class="nav-icon">🏠</span>
+                        <span>Tổng quan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/charts" class="nav-link {% if request.url.path == '/charts' %}active{% endif %}">
+                        <span class="nav-icon">📊</span>
+                        <span>Biểu đồ & Phân tích</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/forecast" class="nav-link {% if request.url.path == '/forecast' %}active{% endif %}">
+                        <span class="nav-icon">🤖</span>
+                        <span>Dự báo (ML)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/ml-training" class="nav-link {% if request.url.path == '/ml-training' %}active{% endif %}">
+                        <span class="nav-icon">🚀</span>
+                        <span>Huấn luyện ML</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/mysql" class="nav-link {% if request.url.path == '/mysql' %}active{% endif %}">
+                        <span class="nav-icon">💾</span>
+                        <span>Quản lý dữ liệu MySQL</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/settings" class="nav-link {% if request.url.path == '/settings' %}active{% endif %}">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Cấu hình hệ thống</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+                <h1 class="page-title">{% block page_title %}AIoT Weather System{% endblock %}</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="clock-display">
+                    <span class="clock-time" id="clockTime">00:00:00</span>
+                    <span class="clock-label">GMT+7</span>
+                </div>
+                <div class="status-badge connected" id="mysqlStatus">
+                    <span class="status-dot"></span> MySQL: Connected
+                </div>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

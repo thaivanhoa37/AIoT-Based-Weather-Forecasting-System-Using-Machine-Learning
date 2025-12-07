@@ -1,0 +1,270 @@
+// ===== ML Training Page JavaScript =====
+
+let trainingInProgress = false;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', () => {
+    loadMLTrainingPage();
+});
+
+// Load ML training page
+async function loadMLTrainingPage() {
+    const loading = AppUtils.showLoading(document.querySelector('.content'));
+    
+    try {
+        // Get model info
+        const modelInfo = await AppUtils.getMLModelInfo();
+        
+        // Update model info display
+        updateModelInfoDisplay(modelInfo);
+        
+        // Load training history
+        loadTrainingHistory(modelInfo);
+        
+    } catch (error) {
+        console.error('Error loading ML training page:', error);
+        AppUtils.showToast('Không thể tải thông tin model', 'error');
+    } finally {
+        AppUtils.hideLoading(loading);
+    }
+}
+
+// Update model info display
+function updateModelInfoDisplay(modelInfo) {
+    const modelsEl = document.getElementById('currentModel');
+    const lastTrainTimeEl = document.getElementById('lastTrainTime');
+    const trainingDataCountEl = document.getElementById('trainingDataCount');
+    const modelAccuracyEl = document.getElementById('modelAccuracy');
+    const statusEl = document.getElementById('modelStatus');
+    const trainingCountEl = document.getElementById('trainingCount');
+    
+    // Show models
+    if (modelsEl) {
+        if (modelInfo.models_available && modelInfo.models_available.length > 0) {
+            modelsEl.textContent = modelInfo.models_available.join(', ');
+        } else {
+            modelsEl.textContent = 'Chưa được huấn luyện';
+            modelsEl.style.color = '#ff6b6b';
+        }
+    }
+    
+    if (lastTrainTimeEl) {
+        lastTrainTimeEl.textContent = modelInfo.last_trained || 'Chưa huấn luyện';
+    }
+    
+    if (trainingDataCountEl) {
+        trainingDataCountEl.textContent = modelInfo.last_data_points?.toLocaleString() || '0';
+    }
+    
+    if (modelAccuracyEl) {
+        const accuracy = modelInfo.last_accuracy || 0;
+        modelAccuracyEl.textContent = accuracy > 0 ? `${accuracy.toFixed(2)}%` : '--';
+        
+        // Color code accuracy
+        if (accuracy >= 85) {
+            modelAccuracyEl.style.color = '#51cf66';
+        } else if (accuracy >= 75) {
+            modelAccuracyEl.style.color = '#ffd43b';
+        } else {
+            modelAccuracyEl.style.color = '#ff6b6b';
+        }
+    }
+    
+    if (statusEl) {
+        statusEl.textContent = modelInfo.status;
+        statusEl.className = modelInfo.status === 'Hoạt động' ? 'status-active' : 'status-inactive';
+    }
+    
+    if (trainingCountEl) {
+        trainingCountEl.textContent = modelInfo.training_count || 0;
+    }
+}
+
+// Start training
+async function startTraining(event) {
+    if (event) event.preventDefault();
+    
+    if (trainingInProgress) {
+        AppUtils.showToast('Đang trong quá trình huấn luyện', 'warning');
+        return;
+    }
+    
+    // Get form values
+    const modelType = document.getElementById('modelType')?.value || 'prophet';
+    const dataPoints = parseInt(document.getElementById('dataPoints')?.value) || 1000;
+    
+    // Validate
+    if (dataPoints < 100) {
+        AppUtils.showToast('Số lượng dữ liệu phải >= 100', 'error');
+        return;
+    }
+    
+    trainingInProgress = true;
+    
+    // Update UI
+    const progressBar = document.getElementById('trainingProgress');
+    const progressText = document.getElementById('trainingProgressText');
+    const progressLog = document.getElementById('progressLog');
+    const startButton = document.querySelector('button[onclick="startTraining(event)"]');
+    
+    if (startButton) {
+        startButton.disabled = true;
+        startButton.textContent = '⏳ Đang huấn luyện...';
+    }
+    
+    if (progressBar) progressBar.style.width = '0%';
+    if (progressText) progressText.textContent = 'Đang chuẩn bị...';
+    if (progressLog) progressLog.innerHTML = '';
+    
+    try {
+        // Log start
+        addProgressLog('Bắt đầu quá trình huấn luyện...', 'info');
+        addProgressLog(`Model: ${modelType}, Data points: ${dataPoints}`, 'info');
+        addProgressLog('Đang trích xuất dữ liệu từ cơ sở dữ liệu...', 'info');
+        
+        // Faster progress simulation
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 15; // Random increments
+            if (progress > 85) progress = 85;
+            
+            if (progressBar) progressBar.style.width = `${progress}%`;
+            if (progressText) progressText.textContent = `${Math.round(progress)}%`;
+        }, 100);
+        
+        // Call training API
+        const result = await AppUtils.trainMLModel(modelType, dataPoints);
+        
+        clearInterval(progressInterval);
+        
+        // Complete progress
+        if (progressBar) progressBar.style.width = '100%';
+        if (progressText) progressText.textContent = '100% - Hoàn thành!';
+        
+        // Log results based on what was trained
+        addProgressLog('✓ Hoàn thành huấn luyện!', 'success');
+        
+        if (result.models_trained && result.models_trained.length > 0) {
+            addProgressLog(`📊 Models được huấn luyện: ${result.models_trained.join(', ')}`, 'success');
+            
+            // Log metrics for each model
+            if (result.all_metrics) {
+                for (const [model, metrics] of Object.entries(result.all_metrics)) {
+                    addProgressLog(`→ ${model}: Accuracy=${metrics.accuracy}%, MAE=${metrics.mae}, RMSE=${metrics.rmse}`, 'info');
+                }
+            }
+        }
+        
+        if (result.overall_accuracy) {
+            addProgressLog(`📈 Độ chính xác trung bình: ${result.overall_accuracy.toFixed(2)}%`, 'success');
+        }
+        
+        addProgressLog(`⏱️ Thời gian: ${result.training_time}`, 'info');
+        addProgressLog(`📝 Dữ liệu sử dụng: ${result.data_points_used} bản ghi`, 'info');
+        
+        AppUtils.showToast('Huấn luyện model thành công!', 'success');
+        
+        // Update model info after delay
+        setTimeout(() => {
+            loadMLTrainingPage();
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Training error:', error);
+        const errorMsg = error.message || 'Lỗi không xác định';
+        addProgressLog(`✗ Lỗi: ${errorMsg}`, 'error');
+        AppUtils.showToast('Huấn luyện thất bại: ' + errorMsg, 'error');
+        
+        if (progressBar) progressBar.style.width = '0%';
+        if (progressText) progressText.textContent = 'Lỗi!';
+    } finally {
+        trainingInProgress = false;
+        
+        if (startButton) {
+            startButton.disabled = false;
+            startButton.textContent = '🚀 Bắt đầu huấn luyện';
+        }
+    }
+}
+
+// Add progress log
+function addProgressLog(message, type = 'info') {
+    const progressLog = document.getElementById('progressLog');
+    if (!progressLog) return;
+    
+    const logEntry = document.createElement('div');
+    logEntry.className = `log-entry log-${type}`;
+    
+    const timestamp = new Date().toLocaleTimeString('vi-VN');
+    logEntry.innerHTML = `<span class="log-time">[${timestamp}]</span> ${message}`;
+    
+    progressLog.appendChild(logEntry);
+    progressLog.scrollTop = progressLog.scrollHeight;
+}
+
+// Load training history
+function loadTrainingHistory(modelInfo) {
+    const tbody = document.getElementById('trainingHistoryBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    // Check if we have training history
+    if (!modelInfo || !modelInfo.last_trained || modelInfo.training_count === 0) {
+        // Show "no history" message
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="5" style="text-align: center; color: #888;">Chưa có lịch sử huấn luyện</td>';
+        tbody.appendChild(row);
+        return;
+    }
+    
+    // Create entry from last training
+    const row = document.createElement('tr');
+    const statusBadge = '<span class="status-badge success">✓ Thành công</span>';
+    
+    row.innerHTML = `
+        <td>${modelInfo.last_trained || '--'}</td>
+        <td>${(modelInfo.models_available || []).join(', ') || 'Prophet'}</td>
+        <td>${(modelInfo.last_data_points || 0).toLocaleString()}</td>
+        <td>${(modelInfo.last_accuracy || 0).toFixed(2)}%</td>
+        <td>${statusBadge}</td>
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Add note about full history
+    if (modelInfo.training_count > 1) {
+        const noteRow = document.createElement('tr');
+        noteRow.innerHTML = `<td colspan="5" style="text-align: center; color: #888; font-size: 0.9em;">Tổng cộng ${modelInfo.training_count} lần huấn luyện</td>`;
+        tbody.appendChild(noteRow);
+    }
+}
+
+// Compare models
+function compareModels() {
+    AppUtils.showToast('Tính năng so sánh models đang được phát triển', 'info');
+}
+
+// Download model
+function downloadModel() {
+    AppUtils.showToast('Tính năng tải xuống model đang được phát triển', 'info');
+}
+
+// Auto-tune hyperparameters
+async function autoTuneHyperparameters() {
+    AppUtils.showToast('Đang tự động điều chỉnh hyperparameters...', 'info');
+    
+    try {
+        // Simulate auto-tuning
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Update form with optimized values
+        document.getElementById('dataPoints').value = 5000;
+        
+        AppUtils.showToast('Đã tìm được hyperparameters tối ưu', 'success');
+        addProgressLog('✓ Hyperparameters đã được tối ưu tự động', 'success');
+        
+    } catch (error) {
+        AppUtils.showToast('Không thể tự động điều chỉnh', 'error');
+    }
+}

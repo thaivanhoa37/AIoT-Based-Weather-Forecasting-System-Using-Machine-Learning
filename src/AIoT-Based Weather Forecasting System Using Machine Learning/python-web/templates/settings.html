@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cấu hình hệ thống - AIoT Weather</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="app-logo">
+                <span class="logo-icon">🌤️</span>
+                <div>
+                    <div class="app-title">AIoT Weather</div>
+                    <div class="app-subtitle">AIoT-ML</div>
+                </div>
+            </div>
+        </div>
+        <nav>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <span class="nav-icon">🏠</span>
+                        <span>Tổng quan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/charts" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>Biểu đồ & Phân tích</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/forecast" class="nav-link">
+                        <span class="nav-icon">🤖</span>
+                        <span>Dự báo (ML)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/ml-training" class="nav-link">
+                        <span class="nav-icon">🚀</span>
+                        <span>Huấn luyện ML</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/mysql" class="nav-link">
+                        <span class="nav-icon">💾</span>
+                        <span>Quản lý dữ liệu MySQL</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/settings" class="nav-link">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Cấu hình hệ thống</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+                <h1 class="page-title">Cấu hình hệ thống</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="clock-display">
+                    <span class="clock-time" id="clockTime">00:00:00</span>
+                    <span class="clock-label">GMT+7</span>
+                </div>
+                <div class="status-badge connected" id="mysqlStatus">
+                    <span class="status-dot"></span> MySQL: Connected
+                </div>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content">
+            <!-- IoT Station Configuration -->
+            <section class="section">
+                <h2 class="section-title">Cấu hình trạm IoT</h2>
+                <div class="card">
+                    <form id="iotConfigForm" onsubmit="saveIoTConfig(event)">
+                        <div class="form-group">
+                            <label class="form-label">Tên trạm</label>
+                            <input type="text" class="form-input" id="stationName"
+                                value="Trạm tầm Công nghệ cao, Quận 9">
+                        </div>
+
+                        <div class="filter-row">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">ID Node 1</label>
+                                <input type="text" class="form-input" id="node1Id" value="NODE_001">
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">ID Node 2</label>
+                                <input type="text" class="form-input" id="node2Id" value="NODE_002">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Chu kỳ gửi dữ liệu (giây)</label>
+                            <input type="number" class="form-input" id="dataInterval" value="60" min="10" max="3600">
+                        </div>
+
+                        <h3 class="section-subtitle mt-20">Ngưỡng cảnh báo</h3>
+
+                        <div class="filter-row">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">Nhiệt độ tối đa (°C)</label>
+                                <input type="number" class="form-input" id="maxTemp" value="40" step="0.1">
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">Độ ẩm tối đa (%)</label>
+                                <input type="number" class="form-input" id="maxHumidity" value="90">
+                            </div>
+                        </div>
+
+                        <div class="filter-row">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">CO₂ tối đa (ppm)</label>
+                                <input type="number" class="form-input" id="maxCO2" value="1000">
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">Bụi mịn tối đa (µg/m³)</label>
+                                <input type="number" class="form-input" id="maxDust" value="50" step="0.1">
+                            </div>
+                        </div>
+
+                        <div class="form-checkbox mt-10">
+                            <input type="checkbox" id="enableAlerts" checked>
+                            <label for="enableAlerts">Gửi cảnh báo khi vượt ngưỡng</label>
+                        </div>
+
+                        <div class="mt-20">
+                            <button type="submit" class="btn btn-primary">💾 Lưu cấu hình IoT</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Weather API Configuration -->
+            <section class="section">
+                <h2 class="section-title">Cấu hình API Thời tiết</h2>
+                <div class="card">
+                    <form id="apiConfigForm" onsubmit="saveAPIConfig(event)">
+                        <div class="form-group">
+                            <label class="form-label">API Key (OpenWeatherMap)</label>
+                            <input type="password" class="form-input" id="apiKey" value="your_api_key_here"
+                                placeholder="Nhập API key...">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Thành phố hoặc tọa độ</label>
+                            <input type="text" class="form-input" id="location" value="Ho Chi Minh City, VN">
+                            <small style="color: var(--text-secondary); font-size: 12px;">
+                                Ví dụ: "Hanoi, VN" hoặc "lat=10.8231&lon=106.6297"
+                            </small>
+                        </div>
+
+                        <div class="mt-20">
+                            <button type="submit" class="btn btn-primary">💾 Lưu cấu hình API</button>
+                            <button type="button" class="btn btn-secondary" onclick="testAPIConnection()">
+                                🔌 Kiểm tra kết nối API
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ML Configuration -->
+            <section class="section">
+                <h2 class="section-title">⚙️ Cấu hình và Huấn luyện Model</h2>
+                
+                <!-- ML Configuration Card -->
+                <div class="card">
+                    <h3 class="section-subtitle">Cấu hình Model</h3>
+                    <form id="mlConfigForm" onsubmit="saveMLConfig(event)">
+                        <div class="filter-row">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">🤖 Model dự báo</label>
+                                <select class="form-select" id="mlModel">
+                                    <option value="prophet" selected>Prophet (Facebook)</option>
+                                    <option value="lstm">LSTM (Deep Learning)</option>
+                                    <option value="arima">ARIMA</option>
+                                </select>
+                                <small style="color: var(--text-secondary); font-size: 11px; margin-top: 5px; display: block;">
+                                    Chọn model phù hợp với dữ liệu của bạn
+                                </small>
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">⏰ Lịch train tự động</label>
+                                <select class="form-select" id="trainSchedule">
+                                    <option value="6">Mỗi 6 giờ</option>
+                                    <option value="12" selected>Mỗi 12 giờ</option>
+                                    <option value="24">Mỗi 24 giờ</option>
+                                    <option value="0">Không tự động</option>
+                                </select>
+                                <small style="color: var(--text-secondary); font-size: 11px; margin-top: 5px; display: block;">
+                                    Tần suất tự động train lại model
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="mt-20">
+                            <button type="submit" class="btn btn-primary">💾 Lưu cấu hình ML</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Model Status Card -->
+                <div class="card mt-20">
+                    <h3 class="section-subtitle">📊 Trạng thái Model hiện tại</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div class="stat-info-box">
+                            <div class="stat-info-label">Model đang dùng</div>
+                            <div class="stat-info-value" id="currentModel">Prophet</div>
+                        </div>
+                        <div class="stat-info-box">
+                            <div class="stat-info-label">Lần train gần nhất</div>
+                            <div class="stat-info-value" id="lastTrainTime">--</div>
+                        </div>
+                        <div class="stat-info-box">
+                            <div class="stat-info-label">Dữ liệu đã dùng</div>
+                            <div class="stat-info-value" id="trainingDataCount">0</div>
+                        </div>
+                        <div class="stat-info-box">
+                            <div class="stat-info-label">Độ chính xác (RMSE)</div>
+                            <div class="stat-info-value" id="modelAccuracy">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training Section Card -->
+                <div class="card mt-20">
+                    <h3 class="section-subtitle">🚀 Huấn luyện Model</h3>
+                    
+                    <div class="info-panel">
+                        <div class="info-panel-content">
+                            <strong>ℹ️ Thông tin:</strong> Quá trình huấn luyện sẽ sử dụng dữ liệu từ MySQL, tiền xử lý, 
+                            xây dựng model và đánh giá hiệu suất. Thời gian có thể từ vài phút đến vài giờ tùy vào dung lượng dữ liệu.
+                        </div>
+                    </div>
+
+                    <div class="training-options mt-20">
+                        <div class="form-group">
+                            <label class="form-label">📁 Nguồn dữ liệu</label>
+                            <select class="form-select" id="dataSource">
+                                <option value="mysql" selected>MySQL Local</option>
+                                <option value="firebase">Firebase Realtime Database</option>
+                                <option value="csv">CSV File</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-row mt-10">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">📅 Khoảng thời gian dữ liệu</label>
+                                <input type="number" class="form-input" id="trainingDays" value="30" min="7" max="365">
+                                <small style="color: var(--text-secondary); font-size: 11px; margin-top: 5px; display: block;">
+                                    Số ngày dữ liệu quá khứ
+                                </small>
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">🎯 Biến dự báo</label>
+                                <select class="form-select" id="targetVariable">
+                                    <option value="temp" selected>Nhiệt độ (°C)</option>
+                                    <option value="humidity">Độ ẩm (%)</option>
+                                    <option value="pressure">Áp suất (hPa)</option>
+                                    <option value="all">Tất cả biến</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="filter-row mt-10">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">🔧 Tỷ lệ train/test</label>
+                                <select class="form-select" id="testRatio">
+                                    <option value="0.2" selected>80/20 (Khuyến nghị)</option>
+                                    <option value="0.15">85/15</option>
+                                    <option value="0.25">75/25</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label class="form-label">⚡ Khả năng GPU</label>
+                                <div style="display: flex; gap: 10px; margin-top: 10px; align-items: center;">
+                                    <input type="checkbox" id="useGPU">
+                                    <label for="useGPU" style="margin: 0;">Sử dụng GPU nếu có</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-20" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary" onclick="startTraining()" style="flex: 1; min-width: 200px;">
+                            🚀 Bắt đầu Train Model
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="previewTrainingData()" style="flex: 1; min-width: 200px;">
+                            👁️ Xem trước dữ liệu
+                        </button>
+                    </div>
+
+                    <!-- Training Progress Section -->
+                    <div id="mlTrainingProgress" class="hidden mt-20">
+                        <h4 style="margin-bottom: 15px; color: var(--text);">📈 Tiến trình huấn luyện</h4>
+                        
+                        <div class="progress-container">
+                            <div class="progress-bar-large">
+                                <div class="progress-fill-large" id="mlProgressFill" style="width: 0%;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                                <p id="mlTrainingStatus" style="font-size: 14px; font-weight: 600; color: var(--text); margin: 0;">
+                                    Đang chuẩn bị...
+                                </p>
+                                <span id="trainingPercentage" style="font-size: 14px; font-weight: 600; color: var(--accent);">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="training-steps mt-20">
+                            <div class="training-step" id="step-1">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-label">Tải dữ liệu từ MySQL</span>
+                                <span class="step-status"></span>
+                            </div>
+                            <div class="training-step" id="step-2">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-label">Tiền xử lý & làm sạch dữ liệu</span>
+                                <span class="step-status"></span>
+                            </div>
+                            <div class="training-step" id="step-3">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-label">Xây dựng model</span>
+                                <span class="step-status"></span>
+                            </div>
+                            <div class="training-step" id="step-4">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-label">Đánh giá hiệu suất</span>
+                                <span class="step-status"></span>
+                            </div>
+                            <div class="training-step" id="step-5">
+                                <span class="step-icon">⏳</span>
+                                <span class="step-label">Lưu model</span>
+                                <span class="step-status"></span>
+                            </div>
+                        </div>
+
+                        <div id="trainingResults" class="hidden mt-20">
+                            <h4 style="margin-bottom: 15px; color: var(--text);">📋 Kết quả huấn luyện</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                                <div class="result-box">
+                                    <div class="result-label">RMSE</div>
+                                    <div class="result-value" id="resultRMSE">--</div>
+                                </div>
+                                <div class="result-box">
+                                    <div class="result-label">MAE</div>
+                                    <div class="result-value" id="resultMAE">--</div>
+                                </div>
+                                <div class="result-box">
+                                    <div class="result-label">R² Score</div>
+                                    <div class="result-value" id="resultR2">--</div>
+                                </div>
+                                <div class="result-box">
+                                    <div class="result-label">Thời gian</div>
+                                    <div class="result-value" id="resultTime">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- UI Preferences -->
+            <section class="section">
+                <h2 class="section-title">Giao diện & hệ thống</h2>
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">Giao diện</label>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="darkModeToggle">
+                            <label for="darkModeToggle">Chế độ tối (Dark Mode)</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="sidebarToggle" checked>
+                            <label for="sidebarToggle">Hiển thị sidebar mặc định</label>
+                        </div>
+                    </div>
+
+                    <h3 class="section-subtitle mt-20">Thông tin Raspberry Pi</h3>
+                    <div class="info-panel">
+                        <div class="info-panel-content">
+                            <div style="margin-bottom: 8px;">
+                                <strong>Local IP:</strong> 192.168.1.100
+                            </div>
+                            <div style="margin-bottom: 8px;">
+                                <strong>Trạng thái server:</strong> <span style="color: var(--accent);">✓ Đang
+                                    chạy</span>
+                            </div>
+                            <div>
+                                <strong>Hệ điều hành:</strong> Raspberry Pi OS (Debian)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Save IoT Configuration
+        function saveIoTConfig(event) {
+            event.preventDefault();
+
+            const config = {
+                stationName: document.getElementById('stationName').value,
+                node1Id: document.getElementById('node1Id').value,
+                node2Id: document.getElementById('node2Id').value,
+                dataInterval: document.getElementById('dataInterval').value,
+                maxTemp: document.getElementById('maxTemp').value,
+                maxHumidity: document.getElementById('maxHumidity').value,
+                maxCO2: document.getElementById('maxCO2').value,
+                maxDust: document.getElementById('maxDust').value,
+                enableAlerts: document.getElementById('enableAlerts').checked,
+            };
+
+            console.log('IoT Config:', config);
+            AppUtils.showToast('Đã lưu cấu hình trạm IoT thành công', 'success');
+        }
+
+        // Save API Configuration
+        function saveAPIConfig(event) {
+            event.preventDefault();
+
+            const config = {
+                apiKey: document.getElementById('apiKey').value,
+                location: document.getElementById('location').value,
+            };
+
+            console.log('API Config:', config);
+            AppUtils.showToast('Đã lưu cấu hình API thành công', 'success');
+        }
+
+        // Test API Connection
+        async function testAPIConnection() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading"></div> Đang kiểm tra...';
+
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            btn.disabled = false;
+            btn.innerHTML = '🔌 Kiểm tra kết nối API';
+            AppUtils.showToast('Kết nối API thành công (giả lập)', 'success');
+        }
+
+        // Save ML Configuration
+        function saveMLConfig(event) {
+            event.preventDefault();
+
+            const config = {
+                mlModel: document.getElementById('mlModel').value,
+                trainSchedule: document.getElementById('trainSchedule').value,
+            };
+
+            console.log('ML Config:', config);
+            AppUtils.showToast('Đã lưu cấu hình ML thành công', 'success');
+        }
+
+        // Start Training
+        async function startTraining() {
+            const progressDiv = document.getElementById('mlTrainingProgress');
+            const resultsDiv = document.getElementById('trainingResults');
+            
+            progressDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+            
+            // Get form values
+            const config = {
+                dataSource: document.getElementById('dataSource').value,
+                trainingDays: document.getElementById('trainingDays').value,
+                targetVariable: document.getElementById('targetVariable').value,
+                testRatio: document.getElementById('testRatio').value,
+                useGPU: document.getElementById('useGPU').checked,
+                model: document.getElementById('mlModel').value,
+            };
+
+            console.log('Training Config:', config);
+
+            // Simulate training steps
+            const steps = [
+                { progress: 15, text: 'Tải dữ liệu từ MySQL...', stepId: 1 },
+                { progress: 35, text: 'Tiền xử lý & làm sạch dữ liệu...', stepId: 2 },
+                { progress: 60, text: 'Xây dựng model ' + document.getElementById('mlModel').value + '...', stepId: 3 },
+                { progress: 85, text: 'Đánh giá hiệu suất model...', stepId: 4 },
+                { progress: 100, text: 'Lưu model thành công!', stepId: 5 }
+            ];
+
+            let currentStep = 0;
+            const startTime = Date.now();
+
+            for (const step of steps) {
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                
+                // Update progress
+                const progressFill = document.getElementById('mlProgressFill');
+                const statusText = document.getElementById('mlTrainingStatus');
+                const percentageSpan = document.querySelector('#trainingPercentage');
+                
+                progressFill.style.width = step.progress + '%';
+                statusText.textContent = step.text;
+                percentageSpan.textContent = step.progress + '%';
+
+                // Mark step as completed
+                markStepAsCompleted(step.stepId);
+                
+                currentStep++;
+            }
+
+            // Show results
+            setTimeout(() => {
+                displayTrainingResults(startTime);
+                resultsDiv.classList.remove('hidden');
+                AppUtils.showToast('✓ Huấn luyện model thành công!', 'success');
+                
+                // Update current model info
+                document.getElementById('currentModel').textContent = 
+                    document.getElementById('mlModel').value.toUpperCase();
+                document.getElementById('lastTrainTime').textContent = 
+                    new Date().toLocaleString('vi-VN');
+                document.getElementById('trainingDataCount').textContent = 
+                    (parseInt(config.trainingDays) * 24).toLocaleString('vi-VN');
+            }, 800);
+        }
+
+        // Mark step as completed
+        function markStepAsCompleted(stepId) {
+            const stepElement = document.getElementById('step-' + stepId);
+            if (stepElement) {
+                stepElement.classList.remove('active');
+                stepElement.classList.add('completed');
+                
+                // Update next step to active (if exists)
+                const nextStep = document.getElementById('step-' + (stepId + 1));
+                if (nextStep) {
+                    nextStep.classList.add('active');
+                }
+            }
+        }
+
+        // Display training results
+        function displayTrainingResults(startTime) {
+            const endTime = Date.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            
+            // Simulate random metrics
+            const rmse = (Math.random() * 0.5 + 0.3).toFixed(3);
+            const mae = (Math.random() * 0.4 + 0.2).toFixed(3);
+            const r2 = (Math.random() * 0.15 + 0.85).toFixed(3);
+            
+            document.getElementById('resultRMSE').textContent = rmse + '°C';
+            document.getElementById('resultMAE').textContent = mae + '°C';
+            document.getElementById('resultR2').textContent = r2;
+            document.getElementById('resultTime').textContent = duration + 's';
+            
+            // Update model accuracy
+            document.getElementById('modelAccuracy').textContent = 
+                (parseFloat(r2) * 100).toFixed(1) + '%';
+        }
+
+        // Preview training data
+        function previewTrainingData() {
+            const dataSource = document.getElementById('dataSource').value;
+            const trainingDays = document.getElementById('trainingDays').value;
+            const targetVariable = document.getElementById('targetVariable').value;
+            
+            AppUtils.showToast(
+                `📊 Xem trước dữ liệu:\n` +
+                `Nguồn: ${dataSource}\n` +
+                `Thời gian: ${trainingDays} ngày gần nhất\n` +
+                `Biến: ${targetVariable}`,
+                'info'
+            );
+            
+            // In a real implementation, this would open a modal with data preview
+            console.log('Preview data - Source:', dataSource, 'Days:', trainingDays, 'Target:', targetVariable);
+        }
+
+        // Manual Train (legacy)
+        async function manualTrain() {
+            const progressDiv = document.getElementById('mlTrainingProgress');
+            const progressFill = document.getElementById('mlProgressFill');
+            const statusText = document.getElementById('mlTrainingStatus');
+
+            progressDiv.classList.remove('hidden');
+            progressFill.style.width = '0%';
+            statusText.textContent = 'Đang chuẩn bị dữ liệu...';
+
+            const steps = [
+                { progress: 20, text: 'Đang tải dữ liệu từ MySQL...' },
+                { progress: 40, text: 'Đang tiền xử lý dữ liệu...' },
+                { progress: 60, text: 'Đang train model...' },
+                { progress: 80, text: 'Đang đánh giá model...' },
+                { progress: 100, text: 'Hoàn thành!' }
+            ];
+
+            for (const step of steps) {
+                await new Promise(resolve => setTimeout(resolve, 800));
+                progressFill.style.width = step.progress + '%';
+                statusText.textContent = step.text;
+            }
+
+            setTimeout(() => {
+                progressDiv.classList.add('hidden');
+                AppUtils.showToast('Train model thành công! (giả lập)', 'success');
+            }, 1000);
+        }
+
+        // Sync UI preferences with current state
+        function syncUIPreferences() {
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('darkModeToggle').checked = isDark;
+
+            const sidebarOpen = !document.getElementById('sidebar').classList.contains('collapsed');
+            document.getElementById('sidebarToggle').checked = sidebarOpen;
+
+            // Listen for changes
+            document.getElementById('darkModeToggle').addEventListener('change', (e) => {
+                if (e.target.checked !== isDark) {
+                    document.getElementById('themeToggle').click();
+                }
+            });
+
+            document.getElementById('sidebarToggle').addEventListener('change', (e) => {
+                localStorage.setItem('sidebarOpen', e.target.checked);
+                AppUtils.showToast('Cài đặt sidebar sẽ áp dụng khi tải lại trang', 'success');
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            syncUIPreferences();
+        });
+    </script>
+    
+    <!-- Page-specific JavaScript -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/settings.js"></script>
+</body>
+
+</html>
