@@ -1,18 +1,21 @@
 // ===== MySQL Management Page JavaScript =====
+// Full-featured database management interface
 
 let currentPage = 0;
 let pageSize = 50;
 let totalRecords = 0;
-
 let mysqlRefreshInterval = null;
+let currentTimeFilter = 'all';
+let currentNodeFilter = 'all';
 
-// Initialize page
+// ===== Initialization =====
 document.addEventListener('DOMContentLoaded', () => {
-    loadMySQLPage();
+    initializeMySQLPage();
+    loadTableData();
     
-    // Auto-refresh every 15 seconds (reduced to prevent jank)
+    // Auto-refresh every 15 seconds
     mysqlRefreshInterval = setInterval(() => {
-        loadMySQLPage();
+        loadTableData();
     }, 15000);
 });
 
@@ -23,93 +26,188 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-// Load MySQL page - Real-time from database
-async function loadMySQLPage() {
-    // Prevent concurrent updates
-    if (window.AppState && window.AppState.updateInProgress) return;
+function initializeMySQLPage() {
+    // Initialize event listeners
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchData();
+            }
+        });
+    }
+
+    // Initialize node filter
+    const nodeFilter = document.getElementById('nodeFilter');
+    if (nodeFilter) {
+        nodeFilter.addEventListener('change', (e) => {
+            currentNodeFilter = e.target.value;
+            currentPage = 0;
+            loadTableData();
+        });
+    }
+}
+
+// ===== Time Filter Management =====
+function setTimeFilter(filter) {
+    currentTimeFilter = filter;
+    currentPage = 0;
+    
+    // Update button styles
+    document.querySelectorAll('.filter-row .btn-group .btn').forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+    });
+    
+    // Mark current filter as active
+    const activeBtn = Array.from(document.querySelectorAll('.filter-row .btn-group .btn'))
+        .find(btn => btn.textContent.toLowerCase().includes(getFilterLabel(filter).toLowerCase()));
+    if (activeBtn) {
+        activeBtn.classList.remove('btn-secondary');
+        activeBtn.classList.add('btn-primary');
+    }
+    
+    loadTableData();
+}
+
+function getFilterLabel(filter) {
+    const labels = {
+        'today': 'Hôm nay',
+        '24h': '24 giờ qua',
+        '7d': '7 ngày qua',
+        'all': 'Tất cả'
+    };
+    return labels[filter] || filter;
+}
+
+// ===== Data Loading =====
+async function loadTableData() {
+    if (window.AppState?.updateInProgress) return;
     if (window.AppState) window.AppState.updateInProgress = true;
     
-    const loading = AppUtils.showLoading(document.querySelector('.content'), true);
-    
+    const tableBody = document.getElementById('dataTableBody');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px;"><div class="loading"></div></td></tr>';
+
     try {
-        // Fetch real-time data directly from SQL
-        const data = await AppUtils.fetchMySQLTable({
+        const data = await fetchMySQLTableData({
             limit: pageSize,
-            offset: currentPage * pageSize
+            offset: currentPage * pageSize,
+            timeFilter: currentTimeFilter,
+            nodeFilter: currentNodeFilter
         });
-        
+
         if (!data) throw new Error('Không có dữ liệu');
-        
-        // Update summary
+
+        // Update summary stats
         updateDatabaseSummary(data);
-        
+
         // Update table
         updateDataTable(data.records);
-        
+
         // Update pagination
         totalRecords = data.totalRecords;
         updatePagination();
-        
+
+        // Ẩn thông báo load thành công để tránh giật
+        // AppUtils.showToast('Đã tải dữ liệu thành công', 'success');
     } catch (error) {
-        console.error('Error loading MySQL page:', error);
-        // Only show error once per minute
-        const now = Date.now();
-        if (!window.lastMySQLError || now - window.lastMySQLError > 60000) {
-            AppUtils.showToast('Không thể tải dữ liệu MySQL', 'error');
-            window.lastMySQLError = now;
-        }
+        console.error('Error loading MySQL data:', error);
+        tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--danger);">Lỗi: ${error.message}</td></tr>`;
+        AppUtils.showToast('Không thể tải dữ liệu', 'error');
     } finally {
-        AppUtils.hideLoading(loading);
         if (window.AppState) window.AppState.updateInProgress = false;
     }
 }
 
-// Update database summary
+async function fetchMySQLTableData(filters) {
+    try {
+        // Apply time filter offset
+        let daysOffset = 0;
+        switch(filters.timeFilter) {
+            case 'today': daysOffset = 0; break;
+            case '24h': daysOffset = 1; break;
+            case '7d': daysOffset = 7; break;
+            default: daysOffset = 999;
+        }
+
+        const response = await fetch(`/api/sensor-data/history?limit=${filters.limit}&offset=${filters.offset}&days=${daysOffset}`);
+        if (!response.ok) throw new Error('API Error');
+        const data = await response.json();
+        
+        const statsResponse = await fetch('/api/system-stats');
+        const stats = await statsResponse.json();
+        
+        return {
+            records: data.records.map((r, idx) => ({
+                id: r.id || (10000 + idx),
+                time: formatDateTime(r.timestamp),
+                node: r.node_id || 'Node 1',
+                temperature: (r.temperature || 0).toFixed(1),
+                humidity: (r.humidity || 0).toFixed(1),
+                pressure: (r.pressure || 0).toFixed(1),
+                co2: (r.co2 || 0).toFixed(0),
+                dust: (r.dust || 0).toFixed(1),
+                aqi: Math.round(r.aqi || 0)
+            })),
+            totalRecords: stats.sensor_records || data.total || 0,
+            storageSize: stats.database_size || '0 MB',
+            latestRecord: stats.last_update || '--'
+        };
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        throw error;
+    }
+}
+
+function formatDateTime(timestamp) {
+    if (!timestamp) return '--';
+    try {
+        const date = new Date(timestamp);
+        return date.toLocaleString('vi-VN');
+    } catch {
+        return timestamp;
+    }
+}
+
+// ===== UI Updates =====
 function updateDatabaseSummary(data) {
     const totalRecordsEl = document.getElementById('totalRecords');
     const storageSizeEl = document.getElementById('storageSize');
     const latestRecordEl = document.getElementById('latestRecord');
     
-    if (totalRecordsEl) totalRecordsEl.textContent = data.totalRecords?.toLocaleString() || '--';
-    if (storageSizeEl) storageSizeEl.textContent = data.storageSize || '--';
-    if (latestRecordEl) latestRecordEl.textContent = data.latestRecord || '--';
+    if (totalRecordsEl) {
+        totalRecordsEl.textContent = (data.totalRecords || 0).toLocaleString('vi-VN');
+    }
+    if (storageSizeEl) {
+        storageSizeEl.textContent = data.storageSize || '--';
+    }
+    if (latestRecordEl) {
+        latestRecordEl.textContent = data.latestRecord || '--';
+    }
 }
 
-// Update data table
 function updateDataTable(records) {
     const tbody = document.getElementById('dataTableBody');
     if (!tbody) return;
     
     if (!records || records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Không có dữ liệu</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">Không có dữ liệu</td></tr>';
         return;
     }
-    
-    // Smooth update - only update if different
-    const existingRows = tbody.querySelectorAll('tr');
-    const needsUpdate = existingRows.length !== records.length;
-    
-    if (!needsUpdate && existingRows.length > 0) {
-        // Check first row to see if data changed
-        const firstRow = existingRows[0];
-        const firstRecord = records[0];
-        const firstId = firstRow.querySelector('td')?.textContent;
-        if (firstId === String(firstRecord.id)) {
-            return; // No update needed
-        }
-    }
-    
-    // Update with fade effect
+
+    // Clear with fade effect
     tbody.style.opacity = '0.5';
     
     setTimeout(() => {
         tbody.innerHTML = '';
         
-        records.forEach(record => {
+        records.forEach((record, index) => {
             const row = document.createElement('tr');
             row.style.opacity = '0';
             
-            const aqiLevel = AppUtils.getAQILevel(record.aqi);
+            const aqiLevel = getAQILevel(record.aqi);
             
             row.innerHTML = `
                 <td>${record.id}</td>
@@ -129,26 +227,25 @@ function updateDataTable(records) {
             
             tbody.appendChild(row);
             
-            // Fade in
+            // Fade in with stagger
             setTimeout(() => {
                 row.style.transition = 'opacity 0.3s ease';
                 row.style.opacity = '1';
-            }, 10);
+            }, index * 30);
         });
         
         tbody.style.opacity = '1';
     }, 150);
 }
 
-// Update pagination
 function updatePagination() {
     const paginationInfo = document.getElementById('paginationInfo');
     if (paginationInfo) {
         const start = currentPage * pageSize + 1;
         const end = Math.min((currentPage + 1) * pageSize, totalRecords);
-        paginationInfo.textContent = `${start}-${end} / ${totalRecords.toLocaleString()}`;
+        paginationInfo.textContent = `${start}-${end} / ${totalRecords.toLocaleString('vi-VN')}`;
     }
-    
+
     // Update button states
     const prevBtn = document.querySelector('button[onclick="previousPage()"]');
     const nextBtn = document.querySelector('button[onclick="nextPage()"]');
@@ -157,158 +254,319 @@ function updatePagination() {
     if (nextBtn) nextBtn.disabled = (currentPage + 1) * pageSize >= totalRecords;
 }
 
-// Previous page
+function getAQILevel(aqi) {
+    const value = parseInt(aqi) || 0;
+    if (value <= 50) return { label: 'Tốt', color: '#4ade80' };
+    if (value <= 100) return { label: 'Chấp nhận được', color: '#fbbf24' };
+    if (value <= 150) return { label: 'Nhạy cảm', color: '#f97316' };
+    if (value <= 200) return { label: 'Không lành mạnh', color: '#ef4444' };
+    if (value <= 300) return { label: 'Rất không lành mạnh', color: '#991b1b' };
+    return { label: 'Nguy hiểm', color: '#7c2d12' };
+}
+
+// ===== Pagination =====
 function previousPage() {
     if (currentPage > 0) {
         currentPage--;
-        loadMySQLPage();
+        loadTableData();
     }
 }
 
-// Next page
 function nextPage() {
     if ((currentPage + 1) * pageSize < totalRecords) {
         currentPage++;
-        loadMySQLPage();
+        loadTableData();
     }
 }
 
-// Refresh data
-function refreshData() {
+// ===== Search & Filter =====
+function searchData() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput?.value.trim();
+    
+    if (!searchTerm) {
+        AppUtils.showToast('Vui lòng nhập từ khóa tìm kiếm', 'warning');
+        return;
+    }
+
     currentPage = 0;
-    loadMySQLPage();
-    AppUtils.showToast('Đã làm mới dữ liệu', 'success');
+    loadTableData();
 }
 
-// Export database
-async function exportDatabase() {
-    const format = prompt('Chọn định dạng xuất (csv/json/excel):', 'csv');
+// ===== Data Export =====
+async function showExportDialog() {
+    const format = prompt('Chọn định dạng xuất dữ liệu:\ncsv - CSV file\njson - JSON format\nexcel - Excel file', 'csv');
     
-    if (!format || !['csv', 'json', 'excel'].includes(format.toLowerCase())) {
+    if (!format) return;
+    
+    const validFormats = ['csv', 'json', 'excel'];
+    if (!validFormats.includes(format.toLowerCase())) {
         AppUtils.showToast('Định dạng không hợp lệ', 'error');
         return;
     }
-    
-    const loading = AppUtils.showLoading(document.querySelector('.content'));
+
+    await exportDatabase(format.toLowerCase());
+}
+
+async function exportDatabase(format = 'csv') {
+    const loading = AppUtils.showLoading(document.querySelector('.content'), true);
     
     try {
-        const result = await AppUtils.exportData(format.toLowerCase(), 'sensor_data', 10000);
-        
-        if (result.success) {
-            AppUtils.showToast(`Đã xuất ${result.records_count} bản ghi`, 'success');
+        const result = await fetch(`/api/database/export?format=${format}&table=sensor_data&limit=10000`)
+            .then(r => {
+                if (!r.ok) throw new Error('Export failed');
+                return r.json();
+            });
+
+        if (result.success || result.records_count) {
+            AppUtils.showToast(`Đã xuất ${result.records_count || 0} bản ghi`, 'success');
             
-            // Trigger download (simplified)
-            const dataStr = JSON.stringify(result.data, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `export_${new Date().toISOString().split('T')[0]}.${format}`;
-            a.click();
+            // Generate download
+            let content = '';
+            const filename = `sensor_data_${new Date().toISOString().split('T')[0]}.${format}`;
+            
+            if (format === 'json') {
+                content = JSON.stringify(result.data, null, 2);
+            } else if (format === 'csv') {
+                content = convertToCSV(result.data);
+            } else if (format === 'excel') {
+                content = JSON.stringify(result.data, null, 2);
+            }
+
+            downloadFile(content, filename, format);
         }
     } catch (error) {
         console.error('Export error:', error);
-        AppUtils.showToast('Không thể xuất dữ liệu', 'error');
+        AppUtils.showToast('Không thể xuất dữ liệu: ' + error.message, 'error');
     } finally {
         AppUtils.hideLoading(loading);
     }
 }
 
-// Backup database
-async function backupDatabase() {
+function convertToCSV(data) {
+    if (!Array.isArray(data) || data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csv = [
+        headers.join(','),
+        ...data.map(row => 
+            headers.map(header => {
+                const value = row[header];
+                return typeof value === 'string' && value.includes(',') 
+                    ? `"${value}"` 
+                    : value;
+            }).join(',')
+        )
+    ];
+    
+    return csv.join('\n');
+}
+
+function downloadFile(content, filename, format) {
+    const mimeType = {
+        'csv': 'text/csv',
+        'json': 'application/json',
+        'excel': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    }[format] || 'text/plain';
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+// ===== Database Backup =====
+function confirmBackup() {
     AppUtils.showModal(
         'Xác nhận sao lưu',
-        'Bạn có chắc muốn tạo bản sao lưu cơ sở dữ liệu?',
-        async () => {
-            const loading = AppUtils.showLoading(document.querySelector('.content'));
-            
-            try {
-                const result = await AppUtils.backupDatabase();
-                
-                if (result.success) {
-                    AppUtils.showToast(`Đã tạo backup: ${result.backup_file}`, 'success');
-                }
-            } catch (error) {
-                console.error('Backup error:', error);
-                AppUtils.showToast('Không thể tạo backup', 'error');
-            } finally {
-                AppUtils.hideLoading(loading);
-            }
-        }
+        'Tạo bản sao lưu cơ sở dữ liệu? Quá trình này có thể mất vài phút.',
+        backupDatabase
     );
 }
 
-// Clear database
-function clearDatabase() {
-    const table = prompt('Xóa bảng nào? (sensor_data/weather_forecasting/all):', 'sensor_data');
+async function backupDatabase() {
+    const loading = AppUtils.showLoading(document.querySelector('.content'), true);
     
-    if (!table || !['sensor_data', 'weather_forecasting', 'all'].includes(table)) {
-        AppUtils.showToast('Tên bảng không hợp lệ', 'error');
+    try {
+        const result = await fetch('/api/database/backup', { method: 'POST' })
+            .then(r => {
+                if (!r.ok) throw new Error('Backup failed');
+                return r.json();
+            });
+
+        if (result.success) {
+            AppUtils.showToast(`Đã tạo backup: ${result.backup_file}`, 'success');
+        }
+    } catch (error) {
+        console.error('Backup error:', error);
+        AppUtils.showToast('Không thể tạo backup: ' + error.message, 'error');
+    } finally {
+        AppUtils.hideLoading(loading);
+    }
+}
+
+// ===== Data Cleanup =====
+function confirmDelete() {
+    const selectedRange = document.querySelector('input[name="deleteRange"]:checked');
+    if (!selectedRange) {
+        AppUtils.showToast('Vui lòng chọn khoảng thời gian', 'warning');
         return;
     }
-    
+
+    const days = selectedRange.value;
+    const dayText = `${days} ngày`;
+
     AppUtils.showModal(
         'Xác nhận xóa dữ liệu',
-        `CẢNH BÁO: Bạn sắp xóa toàn bộ dữ liệu trong bảng "${table}". Hành động này KHÔNG THỂ HOÀN TÁC. Bạn có chắc chắn muốn tiếp tục?`,
-        async () => {
-            const loading = AppUtils.showLoading(document.querySelector('.content'));
-            
-            try {
-                const result = await AppUtils.clearDatabase(table, true);
-                
-                if (result.success) {
-                    AppUtils.showToast('Đã xóa dữ liệu thành công', 'success');
-                    loadMySQLPage();
-                }
-            } catch (error) {
-                console.error('Clear error:', error);
-                AppUtils.showToast('Không thể xóa dữ liệu', 'error');
-            } finally {
-                AppUtils.hideLoading(loading);
-            }
-        }
+        `CẢNH BÁO: Bạn sắp xóa dữ liệu cũ hơn ${dayText} khỏi database. Hành động này KHÔNG THỂ HOÀN TÁC. Bạn có chắc chắn?`,
+        () => deleteOldData(days)
     );
 }
 
-// Search data
-function searchData(event) {
-    if (event) event.preventDefault();
-    
-    const searchTerm = document.getElementById('searchInput')?.value;
-    const startDate = document.getElementById('searchStartDate')?.value;
-    const endDate = document.getElementById('searchEndDate')?.value;
-    
-    if (!searchTerm && !startDate && !endDate) {
-        AppUtils.showToast('Vui lòng nhập điều kiện tìm kiếm', 'warning');
-        return;
-    }
-    
-    // In real implementation, pass filter parameters to API
-    AppUtils.showToast('Đang tìm kiếm...', 'info');
-    
-    // Reset to first page and reload
-    currentPage = 0;
-    loadMySQLPage();
-}
-
-// Optimize database
-async function optimizeDatabase() {
+function clearAllData() {
     AppUtils.showModal(
-        'Tối ưu hóa database',
-        'Quá trình này sẽ tối ưu hóa bảng và index. Bạn có muốn tiếp tục?',
-        async () => {
-            const loading = AppUtils.showLoading(document.querySelector('.content'));
-            
-            try {
-                // Simulate optimization
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                AppUtils.showToast('Database đã được tối ưu hóa', 'success');
-            } catch (error) {
-                AppUtils.showToast('Không thể tối ưu hóa', 'error');
-            } finally {
-                AppUtils.hideLoading(loading);
+        'Xác nhận xóa toàn bộ dữ liệu',
+        '⚠️ CẢNH BÁO NGUY HIỂM: Bạn sắp xóa TẤT CẢ dữ liệu trong database. Hành động này KHÔNG THỂ HOÀN TÁC. Nhập "XÁC NHẬN" để tiếp tục.',
+        () => {
+            const confirm = prompt('Nhập "XÁC NHẬN" để tiếp tục xóa toàn bộ dữ liệu:');
+            if (confirm === 'XÁC NHẬN') {
+                deleteAllData();
+            } else {
+                AppUtils.showToast('Hủy xóa dữ liệu', 'info');
             }
         }
     );
+}
+
+async function deleteOldData(days) {
+    const loading = AppUtils.showLoading(document.querySelector('.content'), true);
+    
+    try {
+        const result = await fetch(`/api/database/delete-old?days=${days}`, { method: 'DELETE' })
+            .then(r => {
+                if (!r.ok) throw new Error('Delete failed');
+                return r.json();
+            });
+
+        if (result.success) {
+            AppUtils.showToast(`Đã xóa ${result.deleted_records || 0} bản ghi`, 'success');
+            currentPage = 0;
+            loadTableData();
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        AppUtils.showToast('Không thể xóa dữ liệu: ' + error.message, 'error');
+    } finally {
+        AppUtils.hideLoading(loading);
+    }
+}
+
+async function deleteAllData() {
+    const loading = AppUtils.showLoading(document.querySelector('.content'), true);
+    
+    try {
+        const result = await fetch('/api/database/clear?table=sensor_data&confirm=true', { method: 'DELETE' })
+            .then(r => {
+                if (!r.ok) throw new Error('Clear failed');
+                return r.json();
+            });
+
+        if (result.success) {
+            AppUtils.showToast('Đã xóa toàn bộ dữ liệu', 'success');
+            currentPage = 0;
+            loadTableData();
+        }
+    } catch (error) {
+        console.error('Clear error:', error);
+        AppUtils.showToast('Không thể xóa dữ liệu: ' + error.message, 'error');
+    } finally {
+        AppUtils.hideLoading(loading);
+    }
+}
+
+// ===== Database Optimization =====
+function confirmOptimize() {
+    AppUtils.showModal(
+        'Tối ưu hóa Database',
+        'Quá trình tối ưu hóa sẽ tái tổ chức các bảng và index. Bạn có muốn tiếp tục?',
+        optimizeDatabase
+    );
+}
+
+async function optimizeDatabase() {
+    const loading = AppUtils.showLoading(document.querySelector('.content'), true);
+    
+    try {
+        const result = await fetch('/api/database/optimize', { method: 'POST' })
+            .then(r => {
+                if (!r.ok) throw new Error('Optimize failed');
+                return r.json();
+            });
+
+        if (result.success) {
+            AppUtils.showToast(result.message || 'Database đã được tối ưu hóa', 'success');
+        }
+    } catch (error) {
+        console.error('Optimize error:', error);
+        AppUtils.showToast('Không thể tối ưu hóa: ' + error.message, 'error');
+    } finally {
+        AppUtils.hideLoading(loading);
+    }
+}
+
+// ===== Statistics =====
+function showStatistics() {
+    AppUtils.showModal(
+        'Thống kê Cơ sở dữ liệu',
+        'Đang tải dữ liệu thống kê...',
+        null
+    );
+
+    // Fetch statistics
+    fetch('/api/database/statistics')
+        .then(r => r.json())
+        .then(data => {
+            let statsHTML = '<div style="text-align: left; font-size: 14px;">';
+            
+            if (data.tables) {
+                statsHTML += '<h4>📊 Thông tin Bảng:</h4>';
+                for (const [tableName, tableInfo] of Object.entries(data.tables)) {
+                    statsHTML += `
+                        <div style="margin: 10px 0;">
+                            <strong>${tableName}:</strong><br/>
+                            Số bản ghi: ${tableInfo.row_count || 0}<br/>
+                            Dung lượng: ${tableInfo.data_length || '0'} MB<br/>
+                            Index: ${tableInfo.index_length || '0'} MB
+                        </div>
+                    `;
+                }
+            }
+            
+            if (data.summary) {
+                statsHTML += '<h4>📈 Tóm tắt:</h4>';
+                statsHTML += `
+                    <div>
+                        Tổng dung lượng: ${data.summary.total_size || '0'} MB<br/>
+                        Tổng bản ghi: ${data.summary.total_records || 0}<br/>
+                        Lần cập nhật cuối: ${data.summary.last_update || '--'}
+                    </div>
+                `;
+            }
+            
+            statsHTML += '</div>';
+            
+            // Update modal with stats
+            const modalBody = document.getElementById('modalBody');
+            if (modalBody) {
+                modalBody.innerHTML = statsHTML;
+            }
+        })
+        .catch(error => {
+            AppUtils.showToast('Không thể tải thống kê: ' + error.message, 'error');
+        });
 }

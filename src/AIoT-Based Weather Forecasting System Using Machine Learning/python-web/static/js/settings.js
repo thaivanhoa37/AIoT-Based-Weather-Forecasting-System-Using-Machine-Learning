@@ -42,13 +42,19 @@ function populateSettingsForm(settings) {
     
     // Location settings
     if (settings.location) {
+        const nameEl = document.getElementById('locationName');
         const latEl = document.getElementById('latitude');
         const lonEl = document.getElementById('longitude');
-        const addressEl = document.getElementById('address');
+        const addressEl = document.getElementById('locationAddress');
+        const altEl = document.getElementById('altitude');
+        const tzEl = document.getElementById('timezone');
         
+        if (nameEl) nameEl.value = settings.location.name || '';
         if (latEl) latEl.value = settings.location.latitude || '';
         if (lonEl) lonEl.value = settings.location.longitude || '';
         if (addressEl) addressEl.value = settings.location.address || '';
+        if (altEl) altEl.value = settings.location.altitude || '';
+        if (tzEl) tzEl.value = settings.location.timezone || 'Asia/Ho_Chi_Minh';
     }
     
     // MQTT settings
@@ -130,18 +136,33 @@ async function saveLocationConfig(event) {
     
     const latitude = parseFloat(document.getElementById('latitude')?.value);
     const longitude = parseFloat(document.getElementById('longitude')?.value);
-    const address = document.getElementById('address')?.value;
+    const address = document.getElementById('locationAddress')?.value;
+    const name = document.getElementById('locationName')?.value;
+    const altitude = parseFloat(document.getElementById('altitude')?.value) || 0;
+    const timezone = document.getElementById('timezone')?.value || 'Asia/Ho_Chi_Minh';
     
     const newSettings = {
         ...currentSettings,
         location: {
+            name,
             latitude,
             longitude,
-            address
+            address,
+            altitude,
+            timezone
         }
     };
     
     await saveSettings(newSettings, 'Đã lưu cấu hình vị trí');
+    
+    // Update location display on index page
+    localStorage.setItem('locationName', name);
+    window.dispatchEvent(new CustomEvent('locationUpdated', { detail: { name, latitude, longitude, address } }));
+}
+
+// Alias function for saveLocationConfig
+async function saveLocationSettings(event) {
+    return saveLocationConfig(event);
 }
 
 // Save MQTT config
@@ -328,6 +349,202 @@ function exportSettings() {
     a.click();
     
     AppUtils.showToast('Đã xuất cài đặt', 'success');
+}
+
+// Get device location using Geolocation API
+async function getDeviceLocation() {
+    const loading = AppUtils.showLoading(document.querySelector('.content'));
+    
+    console.log('Attempting to get device location...');
+    console.log('Navigator geolocation available:', !!navigator.geolocation);
+    
+    if (!navigator.geolocation) {
+        AppUtils.showToast('⚠️ Thiết bị này không hỗ trợ Geolocation. Vui lòng nhập tọa độ thủ công', 'warning');
+        AppUtils.hideLoading(loading);
+        return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            console.log('Geolocation success:', position);
+            const { latitude, longitude, altitude } = position.coords;
+            
+            // Update form fields
+            document.getElementById('latitude').value = latitude.toFixed(6);
+            document.getElementById('longitude').value = longitude.toFixed(6);
+            if (altitude) {
+                document.getElementById('altitude').value = altitude.toFixed(1);
+            }
+            
+            // Try to reverse geocode to get address
+            try {
+                const address = await reverseGeocode(latitude, longitude);
+                if (address) {
+                    document.getElementById('locationAddress').value = address;
+                    
+                    // Extract district/province info for location name
+                    const locationName = extractLocationName(address);
+                    if (locationName) {
+                        document.getElementById('locationName').value = locationName;
+                    }
+                }
+            } catch (error) {
+                console.error('Reverse geocoding error:', error);
+                // Still show success if we got coordinates
+            }
+            
+            AppUtils.showToast(`✓ Đã lấy vị trí: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, 'success');
+            AppUtils.hideLoading(loading);
+        },
+        (error) => {
+            console.error('Geolocation error:', error);
+            let message = 'Không thể lấy vị trí';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message = 'Vui lòng cho phép truy cập vị trí trong cài đặt trình duyệt';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = 'GPS không có sẵn. Vui lòng nhập tọa độ thủ công';
+                    break;
+                case error.TIMEOUT:
+                    message = 'Hết thời gian chờ GPS (>10s). Vui lòng nhập tọa độ thủ công';
+                    break;
+            }
+            AppUtils.showToast(message, 'warning');
+            AppUtils.hideLoading(loading);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+        }
+    );
+}
+
+// Search location by name using Nominatim API
+async function searchLocationByName() {
+    const searchInput = document.getElementById('searchLocationInput');
+    const locationName = searchInput.value.trim();
+    
+    if (!locationName) {
+        AppUtils.showToast('⚠️ Vui lòng nhập tên địa điểm', 'warning');
+        return;
+    }
+    
+    const loading = AppUtils.showLoading(document.querySelector('.content'));
+    
+    try {
+        console.log('Searching location:', locationName);
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}&limit=1&countrycodes=vn`,
+            {
+                headers: {
+                    'Accept-Language': 'vi'
+                }
+            }
+        );
+        
+        if (!response.ok) throw new Error('Search failed');
+        
+        const data = await response.json();
+        console.log('Search results:', data);
+        
+        if (data && data.length > 0) {
+            const location = data[0];
+            const lat = parseFloat(location.lat);
+            const lon = parseFloat(location.lon);
+            
+            // Update form fields
+            document.getElementById('latitude').value = lat.toFixed(6);
+            document.getElementById('longitude').value = lon.toFixed(6);
+            document.getElementById('locationName').value = locationName;
+            
+            // Get full address using reverse geocoding
+            try {
+                const address = await reverseGeocode(lat, lon);
+                if (address) {
+                    document.getElementById('locationAddress').value = address;
+                }
+            } catch (error) {
+                console.error('Error getting address:', error);
+                // Use the display name from search result
+                document.getElementById('locationAddress').value = location.display_name || locationName;
+            }
+            
+            AppUtils.showToast(`✓ Tìm thấy: ${locationName} (${lat.toFixed(4)}, ${lon.toFixed(4)})`, 'success');
+        } else {
+            AppUtils.showToast('✗ Không tìm thấy địa điểm. Vui lòng thử tên khác', 'warning');
+        }
+    } catch (error) {
+        console.error('Search location error:', error);
+        AppUtils.showToast('✗ Lỗi khi tìm kiếm: ' + error.message, 'error');
+    } finally {
+        AppUtils.hideLoading(loading);
+    }
+}
+
+// Reverse geocode using OpenStreetMap Nominatim API (free, no API key needed)
+async function reverseGeocode(latitude, longitude) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+            {
+                headers: {
+                    'Accept-Language': 'vi'
+                }
+            }
+        );
+        
+        if (!response.ok) throw new Error('Reverse geocoding failed');
+        
+        const data = await response.json();
+        
+        if (data.address) {
+            // Build address from components
+            const { address } = data;
+            const parts = [];
+            
+            // Add street if available
+            if (address.road) parts.push(address.road);
+            
+            // Add ward
+            if (address.suburb || address.village) {
+                parts.push(address.suburb || address.village);
+            }
+            
+            // Add district
+            if (address.county) parts.push(address.county);
+            
+            // Add province
+            if (address.state) parts.push(address.state);
+            
+            return parts.join(', ');
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        return null;
+    }
+}
+
+// Extract location name (district/province) from address
+function extractLocationName(address) {
+    if (!address) return null;
+    
+    const parts = address.split(',').map(p => p.trim());
+    
+    // Usually the last parts are district and province
+    // Try to get "District, Province" format
+    if (parts.length >= 2) {
+        // Get last 2 meaningful parts
+        const filtered = parts.filter(p => p.length > 0);
+        if (filtered.length >= 2) {
+            return filtered.slice(-2).join(', ');
+        }
+    }
+    
+    return null;
 }
 
 // Import settings

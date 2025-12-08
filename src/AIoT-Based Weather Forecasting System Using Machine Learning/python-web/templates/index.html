@@ -28,7 +28,7 @@
             </div>
         </div>
         <div class="location-info">
-            <span>📍 Quận 9, TP.HCM</span>
+            <span id="locationDisplay">📍 Quận 9, TP.HCM</span>
             <span class="last-update" id="lastUpdate">Cập nhật lúc --</span>
         </div>
     </div>
@@ -398,8 +398,41 @@
         }
     }
 
+    // Load location settings
+    async function loadLocationSettings() {
+        try {
+            const settingsResponse = await fetch('/api/settings');
+            if (settingsResponse.ok) {
+                const settings = await settingsResponse.json();
+                if (settings.location && settings.location.name) {
+                    document.getElementById('locationDisplay').textContent = `📍 ${settings.location.name}`;
+                    localStorage.setItem('locationName', settings.location.name);
+                } else {
+                    const savedLocation = localStorage.getItem('locationName');
+                    if (savedLocation) {
+                        document.getElementById('locationDisplay').textContent = `📍 ${savedLocation}`;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading location:', error);
+            // Use saved location from localStorage
+            const savedLocation = localStorage.getItem('locationName');
+            if (savedLocation) {
+                document.getElementById('locationDisplay').textContent = `📍 ${savedLocation}`;
+            }
+        }
+    }
+
+    // Listen for location updates from settings page
+    window.addEventListener('locationUpdated', (event) => {
+        const { name } = event.detail;
+        document.getElementById('locationDisplay').textContent = `📍 ${name}`;
+    });
+
     // Initialize page
     document.addEventListener('DOMContentLoaded', () => {
+        loadLocationSettings();
         loadRealtimeData();
         displayForecast7Day();
         displayForecastHourly();

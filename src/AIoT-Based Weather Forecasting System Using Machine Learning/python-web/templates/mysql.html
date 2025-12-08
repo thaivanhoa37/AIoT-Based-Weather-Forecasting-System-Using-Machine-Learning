@@ -180,6 +180,37 @@
                 </div>
             </section>
 
+            <!-- Data Management Tools -->
+            <section class="section">
+                <h2 class="section-title">Công cụ quản lý dữ liệu</h2>
+                <div class="tool-grid">
+                    <div class="tool-card">
+                        <div class="tool-icon">📊</div>
+                        <div class="tool-name">Xuất dữ liệu</div>
+                        <div class="tool-description">Xuất dữ liệu sang CSV, JSON hoặc Excel</div>
+                        <button class="btn btn-primary" onclick="showExportDialog()">Xuất</button>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-icon">💾</div>
+                        <div class="tool-name">Sao lưu</div>
+                        <div class="tool-description">Tạo bản sao lưu cơ sở dữ liệu</div>
+                        <button class="btn btn-primary" onclick="confirmBackup()">Sao lưu</button>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-icon">🔧</div>
+                        <div class="tool-name">Tối ưu hóa</div>
+                        <div class="tool-description">Tối ưu hóa bảng và index</div>
+                        <button class="btn btn-primary" onclick="confirmOptimize()">Tối ưu</button>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-icon">📈</div>
+                        <div class="tool-name">Thống kê</div>
+                        <div class="tool-description">Xem thống kê chi tiết</div>
+                        <button class="btn btn-primary" onclick="showStatistics()">Xem</button>
+                    </div>
+                </div>
+            </section>
+
             <!-- Data Cleanup -->
             <section class="section">
                 <h2 class="section-title">Dọn dẹp dữ liệu</h2>
@@ -212,6 +243,9 @@
                         <button class="btn btn-danger" onclick="confirmDelete()">
                             🗑️ Xóa dữ liệu cũ
                         </button>
+                        <button class="btn btn-danger" style="background-color: #dc3545; margin-left: 10px;" onclick="clearAllData()">
+                            🗑️ Xóa tất cả dữ liệu
+                        </button>
                     </div>
                 </div>
             </section>
@@ -234,106 +268,76 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="/static/js/app.js"></script>
-    <script>
-        let currentPage = 1;
-        let totalPages = 10;
-        let currentTimeFilter = 'today';
-        let tableData = null;
-
-        // Set time filter
-        function setTimeFilter(filter) {
-            currentTimeFilter = filter;
-            // Update button styles
-            document.querySelectorAll('.filter-row .btn-group .btn').forEach(btn => {
-                btn.className = 'btn btn-secondary';
-            });
-            event.target.className = 'btn btn-primary';
+    <style>
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
-        // Load table data
-        async function loadTableData() {
-            const tableBody = document.getElementById('dataTableBody');
-            tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px;"><div class="loading"></div></td></tr>';
-
-            try {
-                tableData = await AppUtils.fetchMySQLTable({
-                    timeFilter: currentTimeFilter,
-                    page: currentPage
-                });
-
-                // Update summary stats
-                document.getElementById('totalRecords').textContent = tableData.totalRecords.toLocaleString('vi-VN');
-                document.getElementById('storageSize').textContent = tableData.storageSize;
-                document.getElementById('latestRecord').textContent = tableData.latestRecord;
-
-                // Update table
-                tableBody.innerHTML = '';
-                tableData.records.forEach(record => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-            <td>${record.id}</td>
-            <td>${record.time}</td>
-            <td>${record.node}</td>
-            <td>${record.temperature}</td>
-            <td>${record.humidity}</td>
-            <td>${record.pressure}</td>
-            <td>${record.co2}</td>
-            <td>${record.dust}</td>
-            <td>${record.aqi}</td>
-          `;
-                    tableBody.appendChild(row);
-                });
-
-                // Update pagination
-                document.getElementById('paginationInfo').textContent = `Trang ${currentPage} / ${totalPages}`;
-
-                AppUtils.showToast('Đã tải dữ liệu thành công', 'success');
-            } catch (error) {
-                tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--danger);">Lỗi: ${error.message}</td></tr>`;
-                AppUtils.showToast(error.message, 'error');
-            }
+        .tool-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
         }
 
-        // Pagination
-        function previousPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                loadTableData();
-            }
+        .tool-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
         }
 
-        function nextPage() {
-            if (currentPage < totalPages) {
-                currentPage++;
-                loadTableData();
-            }
+        .tool-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
         }
 
-        // Confirm delete
-        function confirmDelete() {
-            const selectedRange = document.querySelector('input[name="deleteRange"]:checked').value;
-
-            AppUtils.showModal(
-                'Xác nhận xóa dữ liệu',
-                `Bạn có chắc chắn muốn xóa dữ liệu cũ hơn ${selectedRange} ngày khỏi MySQL không? Hành động này không thể hoàn tác.`,
-                () => {
-                    // Simulate delete operation
-                    setTimeout(() => {
-                        AppUtils.showToast(`Đã xóa dữ liệu cũ hơn ${selectedRange} ngày (giả lập)`, 'success');
-                        loadTableData();
-                    }, 500);
-                },
-                null
-            );
+        .tool-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
         }
 
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', () => {
-            loadTableData();
-        });
-    </script>
-    
+        .tool-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            min-height: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        body.dark-mode .tool-card {
+            background: var(--dark-card-bg);
+        }
+    </style>
+
     <!-- Page-specific JavaScript -->
     <script src="/static/js/app.js"></script>
     <script src="/static/js/mysql.js"></script>

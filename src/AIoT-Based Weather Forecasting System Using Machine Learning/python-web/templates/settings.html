@@ -760,6 +760,19 @@
                         </div>
 
                         <div class="form-group">
+                            <button class="btn-secondary" type="button" onclick="getDeviceLocation()" style="width: 100%; margin-bottom: 15px;">
+                                📍 Lấy vị trí từ thiết bị (GPS)
+                            </button>
+                        </div>
+
+                        <div class="form-group">
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <input type="text" class="form-control" id="searchLocationInput" placeholder="VD: Đà Nẵng, Hà Nội, Sài Gòn..." style="flex: 1;">
+                                <button class="btn-secondary" type="button" onclick="searchLocationByName()" style="white-space: nowrap;">🔍 Tìm kiếm</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <label class="form-label">Độ cao (m)</label>
                             <input type="number" class="form-control" id="altitude" placeholder="0" step="0.1">
                         </div>
@@ -904,6 +917,16 @@
             refreshSystemStats(); // Load initial system stats
             setInterval(refreshSystemStats, 3000); // Auto-refresh
             checkDatabaseStatus();
+            
+            // Add Enter key event to search location input
+            const searchInput = document.getElementById('searchLocationInput');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        searchLocationByName();
+                    }
+                });
+            }
         });
 
         // Theme
@@ -1280,8 +1303,6 @@
                     const bootTime = new Date(Date.now() - uptime * 1000);
                     const bootTimeStr = bootTime.toLocaleString('vi-VN');
                     document.getElementById('bootTime').textContent = bootTimeStr;
-
-                    AppUtils.showToast('✓ Cập nhật thông tin hệ thống', 'success');
                 } else {
                     AppUtils.showToast('✗ Không thể tải thông tin', 'error');
                 }
@@ -1290,9 +1311,6 @@
                 AppUtils.showToast('✗ Lỗi khi cập nhật thông tin', 'error');
             }
         }
-
-        // Auto-refresh system stats every 3 seconds
-        setInterval(refreshSystemStats, 3000);
     </script>
 </body>
 

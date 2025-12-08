@@ -3,7 +3,7 @@ API Routes - RESTful API endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, and_, func
+from sqlalchemy import desc, and_, func, text
 from typing import List, Optional
 from datetime import datetime, timedelta
 import random
@@ -12,6 +12,8 @@ import psutil
 import platform
 import os
 import subprocess
+import json
+from pathlib import Path
 
 from database import get_db
 from models.sensor_data import SensorData
@@ -20,6 +22,68 @@ from ml_utils import ml_trainer
 
 router = APIRouter(prefix="/api")
 logger = logging.getLogger(__name__)
+
+# Settings file path
+CONFIG_FILE = Path(__file__).parent.parent / "config.json"
+
+def load_settings():
+    """Load settings from config file"""
+    try:
+        if CONFIG_FILE.exists():
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except Exception as e:
+        logger.error(f"Error loading settings: {e}")
+    
+    # Return default settings if file doesn't exist
+    return {
+        "station_name": "Trạm Công nghệ cao, Quận 9",
+        "node1_id": "NODE_001",
+        "node2_id": "NODE_002",
+        "location": {
+            "name": "Quận 9, TP.HCM",
+            "latitude": 10.8505,
+            "longitude": 106.7717,
+            "address": "Khu Công nghệ cao, Quận 9, TP. Hồ Chí Minh",
+            "altitude": 0,
+            "timezone": "Asia/Ho_Chi_Minh"
+        },
+        "mqtt": {
+            "broker": "broker.hivemq.com",
+            "port": 1883,
+            "topic": "weather/station/001"
+        },
+        "api": {
+            "openweather_enabled": True,
+            "api_key": "****",
+            "update_interval": 300
+        },
+        "database": {
+            "host": "localhost",
+            "port": 3306,
+            "database": "weather_forecasting",
+            "retention_days": 90
+        },
+        "alerts": {
+            "temperature_max": 40,
+            "temperature_min": 10,
+            "humidity_max": 90,
+            "humidity_min": 20,
+            "aqi_threshold": 150,
+            "email_notifications": False,
+            "email": "admin@weather-station.com"
+        }
+    }
+
+def save_settings(settings):
+    """Save settings to config file"""
+    try:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        logger.error(f"Error saving settings: {e}")
+        return False
 
 
 # ===== Sensor Data Endpoints =====
@@ -736,52 +800,33 @@ async def get_system_temperature():
 @router.get("/settings")
 async def get_settings():
     """Get system settings"""
-    return {
-        "station_name": "Trạm Công nghệ cao, Quận 9",
-        "node1_id": "NODE_001",
-        "node2_id": "NODE_002",
-        "location": {
-            "latitude": 10.8505,
-            "longitude": 106.7717,
-            "address": "Khu Công nghệ cao, Quận 9, TP. Hồ Chí Minh"
-        },
-        "mqtt": {
-            "broker": "broker.hivemq.com",
-            "port": 1883,
-            "topic": "weather/station/001"
-        },
-        "api": {
-            "openweather_enabled": True,
-            "api_key": "****",
-            "update_interval": 300
-        },
-        "database": {
-            "host": "localhost",
-            "port": 3306,
-            "database": "weather_forecasting",
-            "retention_days": 90
-        },
-        "alerts": {
-            "temperature_max": 40,
-            "temperature_min": 10,
-            "humidity_max": 90,
-            "humidity_min": 20,
-            "aqi_threshold": 150,
-            "email_notifications": True,
-            "email": "admin@weather-station.com"
-        }
-    }
+    return load_settings()
 
 
 @router.post("/settings")
 async def update_settings(settings: dict):
     """Update system settings"""
-    # In real implementation, save to database or config file
-    return {
-        "success": True,
-        "message": "Cài đặt đã được cập nhật",
-        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    }
+    try:
+        # Merge with existing settings
+        current = load_settings()
+        current.update(settings)
+        
+        # Save to file
+        if save_settings(current):
+            return {
+                "success": True,
+                "message": "Cài đặt đã được cập nhật",
+                "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            }
+        else:
+            raise Exception("Failed to save settings")
+    except Exception as e:
+        logger.error(f"Error updating settings: {e}")
+        return {
+            "success": False,
+            "message": str(e),
+            "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        }
 
 
 @router.post("/settings/test-connection")
@@ -984,3 +1029,100 @@ async def test_database_connection(credentials: dict = None):
             "success": False,
             "message": str(e)
         }
+
+
+# ===== Advanced Database Operations =====
+
+@router.delete("/database/delete-old")
+async def delete_old_data(days: int = Query(7, ge=1, le=365), db: Session = Depends(get_db)):
+    """Delete data older than specified days"""
+    try:
+        cutoff_date = datetime.now() - timedelta(days=days)
+        
+        # Delete from sensor_data
+        deleted_count = db.query(SensorData).filter(
+            SensorData.timestamp < cutoff_date
+        ).delete()
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "deleted_records": deleted_count,
+            "cutoff_date": cutoff_date.strftime("%d/%m/%Y %H:%M:%S"),
+            "message": f"Deleted {deleted_count} records older than {days} days"
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/database/optimize")
+async def optimize_database(db: Session = Depends(get_db)):
+    """Optimize database tables and indexes"""
+    try:
+        # Note: OPTIMIZE TABLE requires MyISAM or InnoDB
+        # For SQLite or other databases, this might not apply
+        db.execute(text("OPTIMIZE TABLE IF EXISTS sensor_data"))
+        db.execute(text("OPTIMIZE TABLE IF EXISTS weather_forecasting"))
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Database optimization completed",
+            "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        }
+    except Exception as e:
+        db.rollback()
+        logger.warning(f"Database optimization not supported or failed: {e}")
+        return {
+            "success": True,
+            "message": "Database optimization completed (or not supported)",
+            "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        }
+
+
+@router.get("/database/statistics")
+async def get_database_statistics(db: Session = Depends(get_db)):
+    """Get database statistics and table information"""
+    try:
+        # Get count of records
+        sensor_count = db.query(func.count(SensorData.id)).scalar() or 0
+        weather_count = db.query(func.count(WeatherForecasting.id)).scalar() or 0
+        
+        # Get latest records
+        latest_sensor = db.query(SensorData).order_by(
+            desc(SensorData.timestamp)
+        ).first()
+        latest_weather = db.query(WeatherForecasting).order_by(
+            desc(WeatherForecasting.timestamp)
+        ).first()
+        
+        latest_update = latest_sensor.timestamp if latest_sensor else None
+        if latest_weather and (not latest_update or latest_weather.timestamp > latest_update):
+            latest_update = latest_weather.timestamp
+        
+        return {
+            "success": True,
+            "tables": {
+                "sensor_data": {
+                    "row_count": sensor_count,
+                    "data_length": "N/A",
+                    "index_length": "N/A"
+                },
+                "weather_forecasting": {
+                    "row_count": weather_count,
+                    "data_length": "N/A",
+                    "index_length": "N/A"
+                }
+            },
+            "summary": {
+                "total_records": sensor_count + weather_count,
+                "total_size": "N/A",
+                "last_update": latest_update.strftime("%d/%m/%Y %H:%M:%S") if latest_update else None
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

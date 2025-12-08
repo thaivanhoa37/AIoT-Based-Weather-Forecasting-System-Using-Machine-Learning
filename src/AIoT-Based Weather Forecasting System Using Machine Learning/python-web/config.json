@@ -1,0 +1,45 @@
+{
+  "station_name": "Trạm Công nghệ cao, Quận 9",
+  "node1_id": "NODE_001",
+  "node2_id": "NODE_002",
+  "location": {
+    "name": "Đà Nẵng",
+    "address": "24 Lê Thiện Trị",
+    "latitude": null,
+    "longitude": null,
+    "altitude": null,
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "mqtt": {
+    "broker": "broker.hivemq.com",
+    "port": 1883,
+    "topic": "weather/station/001"
+  },
+  "api": {
+    "openweather_enabled": true,
+    "api_key": "****",
+    "update_interval": 300
+  },
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "database": "weather_forecasting",
+    "retention_days": 90
+  },
+  "alerts": {
+    "temperature_max": 40,
+    "temperature_min": 10,
+    "humidity_max": 90,
+    "humidity_min": 20,
+    "aqi_threshold": 150,
+    "email_notifications": false,
+    "email": "admin@weather-station.com"
+  },
+  "mysql": {
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "1",
+    "db": "weather_forecasting"
+  }
+}
