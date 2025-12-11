@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Huấn luyện Model ML - AIoT Weather</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/i18n.js"></script>
     <style>
         /* ML Training Page Styles - Phù hợp với dự án */
         
@@ -550,37 +551,37 @@
                 <li class="nav-item">
                     <a href="/" class="nav-link">
                         <span class="nav-icon">🏠</span>
-                        <span>Tổng quan</span>
+                        <span data-i18n="nav.overview">Tổng quan</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/charts" class="nav-link">
                         <span class="nav-icon">📊</span>
-                        <span>Biểu đồ & Phân tích</span>
+                        <span data-i18n="nav.charts">Biểu đồ & Phân tích</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/forecast" class="nav-link">
                         <span class="nav-icon">🤖</span>
-                        <span>Dự báo (ML)</span>
+                        <span data-i18n="nav.forecast">Dự báo (ML)</span>
                     </a>
                 </li>
                 <li class="nav-item active">
                     <a href="/ml-training" class="nav-link">
                         <span class="nav-icon">🚀</span>
-                        <span>Huấn luyện ML</span>
+                        <span data-i18n="nav.mlTraining">Huấn luyện ML</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/mysql" class="nav-link">
                         <span class="nav-icon">💾</span>
-                        <span>Quản lý dữ liệu</span>
+                        <span data-i18n="nav.mysql">Quản lý dữ liệu</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/settings" class="nav-link">
                         <span class="nav-icon">⚙️</span>
-                        <span>Cấu hình</span>
+                        <span data-i18n="nav.settings">Cấu hình</span>
                     </a>
                 </li>
             </ul>
@@ -593,7 +594,7 @@
         <header class="topbar">
             <div class="topbar-left">
                 <button class="hamburger-btn" id="hamburgerBtn">☰</button>
-                <h1 class="page-title">🚀 Huấn luyện Model ML</h1>
+                <h1 class="page-title">🚀 <span data-i18n="mlTraining.pageTitle">Huấn luyện Model ML</span></h1>
             </div>
             <div class="topbar-right">
                 <div class="clock-display">
@@ -601,8 +602,29 @@
                     <span class="clock-label">GMT+7</span>
                 </div>
                 <div class="status-badge connected" id="mysqlStatus">
-                    <span class="status-dot"></span> Kết nối: OK
+                    <span class="status-dot"></span> <span data-i18n="common.active">Kết nối: OK</span>
                 </div>
+                <!-- Language Switcher -->
+                <button class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language">
+                    <span class="lang-flag-toggle" id="langFlagVi">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="24" height="16">
+                            <rect width="30" height="20" fill="#da251d"/>
+                            <polygon points="15,4 11.47,14.85 20.71,8.15 9.29,8.15 18.53,14.85" fill="#ff0"/>
+                        </svg>
+                    </span>
+                    <span class="lang-separator">|</span>
+                    <span class="lang-flag-toggle" id="langFlagEn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="24" height="16">
+                            <clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+                            <clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+                            <g clip-path="url(#s)"><path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></g>
+                        </svg>
+                    </span>
+                </button>
                 <button class="theme-toggle" id="themeToggle">🌙</button>
             </div>
         </header>
@@ -612,33 +634,33 @@
         <!-- Hero Section -->
             <section class="section">
                 <div class="training-hero">
-                    <h1>🚀 Huấn luyện Model Dự báo</h1>
-                    <p>Sử dụng Machine Learning để dự báo chính xác thời tiết từ dữ liệu cảm biến IoT</p>
+                    <h1>🚀 <span data-i18n="mlTrainingExt.heroTitle">Huấn luyện Model Dự báo</span></h1>
+                    <p data-i18n="mlTrainingExt.heroDesc">Sử dụng Machine Learning để dự báo chính xác thời tiết từ dữ liệu cảm biến IoT</p>
                 </div>
             </section>
 
             <!-- Quick Stats -->
             <section class="section">
-                <h2 class="section-title">📊 Thông tin hiện tại</h2>
+                <h2 class="section-title">📊 <span data-i18n="mlTrainingExt.currentInfo">Thông tin hiện tại</span></h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">🤖</div>
-                        <div class="stat-label">Model</div>
+                        <div class="stat-label" data-i18n="mlTrainingExt.model">Model</div>
                         <div class="stat-value" id="currentModelType">Prophet</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">📅</div>
-                        <div class="stat-label">Huấn luyện gần nhất</div>
+                        <div class="stat-label" data-i18n="mlTrainingExt.lastTrain">Huấn luyện gần nhất</div>
                         <div class="stat-value" id="lastTrainTime">--</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">📈</div>
-                        <div class="stat-label">R² Score</div>
+                        <div class="stat-label" data-i18n="mlTrainingExt.r2Score">R² Score</div>
                         <div class="stat-value" id="modelAccuracy">--</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">📁</div>
-                        <div class="stat-label">Dữ liệu</div>
+                        <div class="stat-label" data-i18n="mlTrainingExt.dataLabel">Dữ liệu</div>
                         <div class="stat-value" id="trainingDataCount">0</div>
                     </div>
                 </div>
@@ -646,50 +668,50 @@
 
             <!-- Training Configuration -->
             <section class="section">
-                <h2 class="section-title">⚙️ Cấu hình & Bắt đầu</h2>
+                <h2 class="section-title">⚙️ <span data-i18n="mlTrainingExt.configStart">Cấu hình & Bắt đầu</span></h2>
                 <div class="form-section">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label class="form-label">🤖 Chọn Model</label>
+                            <label class="form-label">🤖 <span data-i18n="mlTrainingExt.selectModel">Chọn Model</span></label>
                             <select class="form-select" id="modelType" onchange="updateCurrentModel()">
-                                <option value="prophet">Prophet (Khuyến nghị)</option>
-                                <option value="lstm">LSTM (Deep Learning)</option>
+                                <option value="prophet" data-i18n="mlTrainingExt.prophetRecommend">Prophet (Khuyến nghị)</option>
+                                <option value="lstm" data-i18n="mlTrainingExt.lstmDeep">LSTM (Deep Learning)</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">📊 Số lượng dữ liệu</label>
+                            <label class="form-label">📊 <span data-i18n="mlTrainingExt.dataAmount">Số lượng dữ liệu</span></label>
                             <input type="number" class="form-input" id="dataPoints" value="5000" min="100" max="20000">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">🎯 Biến dự báo</label>
+                            <label class="form-label">🎯 <span data-i18n="mlTrainingExt.targetVar">Biến dự báo</span></label>
                             <select class="form-select" id="targetSelect" disabled>
-                                <option value="all" selected>Tất cả (nhiệt độ, độ ẩm, AQI, áp suất)</option>
+                                <option value="all" selected data-i18n="mlTrainingExt.targetAll">Tất cả (nhiệt độ, độ ẩm, AQI, áp suất)</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">🔀 Tỷ lệ Train/Test</label>
+                            <label class="form-label">🔀 <span data-i18n="mlTrainingExt.trainTestRatio">Tỷ lệ Train/Test</span></label>
                             <select class="form-select" id="testRatioSelect" disabled>
-                                <option value="0.2" selected>80/20 (Mặc định)</option>
+                                <option value="0.2" selected data-i18n="mlTrainingExt.ratioDefault">80/20 (Mặc định)</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="btn-group">
-                        <button class="btn btn-primary" onclick="startTraining(event)">🚀 Bắt đầu huấn luyện</button>
-                        <button class="btn btn-secondary" onclick="compareModels()">📊 So sánh Models</button>
+                        <button class="btn btn-primary" onclick="startTraining(event)">🚀 <span data-i18n="mlTrainingExt.startTraining">Bắt đầu huấn luyện</span></button>
+                        <button class="btn btn-secondary" onclick="compareModels()">📊 <span data-i18n="mlTrainingExt.modelComparison">So sánh Models</span></button>
                     </div>
                 </div>
             </section>
 
             <!-- Progress Section -->
             <section class="section" id="progressSection">
-                <h2 class="section-title">📈 Tiến trình huấn luyện</h2>
+                <h2 class="section-title">📈 <span data-i18n="mlTrainingExt.trainingProgress">Tiến trình huấn luyện</span></h2>
                 <div class="progress-card active" id="progressCard">
                     <div class="progress-bar">
                         <div class="progress-fill" id="trainingProgress" style="width: 0%;"></div>
                     </div>
                     <div class="progress-info">
-                        <div class="progress-text" id="trainingProgressText">Sẵn sàng huấn luyện</div>
+                        <div class="progress-text" id="trainingProgressText" data-i18n="mlTrainingExt.trainingStatus">Sẵn sàng huấn luyện</div>
                         <div class="progress-percent" id="progressPercent">0%</div>
                     </div>
 
@@ -698,7 +720,7 @@
 
                     <!-- Results -->
                     <div id="resultsSection" style="display: none; margin-top: 20px;">
-                        <h3 style="margin-bottom: 15px; color: var(--text); font-size: 15px;">✅ Kết quả huấn luyện</h3>
+                        <h3 style="margin-bottom: 15px; color: var(--text); font-size: 15px;">✅ <span data-i18n="mlTrainingExt.results">Kết quả huấn luyện</span></h3>
                         <div class="results-grid">
                             <div class="result-item">
                                 <div class="result-label">Model Type</div>
@@ -731,8 +753,8 @@
 
             <!-- Model Selection -->
             <section class="section">
-                <h2 class="section-title">🤖 Các Model hỗ trợ</h2>
-                <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;">So sánh các model và chọn model phù hợp với nhu cầu của bạn.</p>
+                <h2 class="section-title">🤖 Supported Models</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;" data-i18n="mlTrainingExt.modelComparison">So sánh các model và chọn model phù hợp với nhu cầu của bạn.</p>
                 <div class="model-grid">
                     <div class="model-item selected" onclick="selectModel('prophet')" id="model-prophet">
                         <span class="model-icon">📈</span>
@@ -758,12 +780,12 @@
 
             <!-- Auto Training Scheduler -->
             <section class="section">
-                <h2 class="section-title">⏰ Tự động huấn luyện (Auto-Training)</h2>
+                <h2 class="section-title">⏰ <span data-i18n="mlTrainingExt.autoScheduler">Tự động huấn luyện (Auto-Training)</span></h2>
                 <div class="form-section">
                     <div class="auto-train-status" id="autoTrainStatus">
                         <div class="status-indicator" id="autoTrainIndicator">
                             <span class="status-dot off"></span>
-                            <span class="status-text">Đang tải...</span>
+                            <span class="status-text" data-i18n="common.loading">Đang tải...</span>
                         </div>
                     </div>
 
@@ -813,13 +835,13 @@
 
                     <div class="btn-group" style="margin-top: 20px;">
                         <button class="btn btn-primary" id="btnToggleAutoTrain" onclick="toggleAutoTrain()">
-                            ▶️ Bật Auto-Training
+                            ▶️ <span data-i18n="mlTrainingExt.enableAutoTrain">Bật Auto-Training</span>
                         </button>
                         <button class="btn btn-secondary" onclick="saveAutoTrainSettings()">
-                            💾 Lưu cài đặt
+                            💾 <span data-i18n="common.save">Lưu cài đặt</span>
                         </button>
                         <button class="btn btn-warning" onclick="runAutoTrainNow()">
-                            ⚡ Chạy ngay
+                            ⚡ <span data-i18n="mlTrainingExt.trainNow">Chạy ngay</span>
                         </button>
                     </div>
                 </div>

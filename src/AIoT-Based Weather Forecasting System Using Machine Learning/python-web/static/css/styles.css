@@ -348,6 +348,61 @@ body {
     transition: background 0.2s ease;
 }
 
+/* ===== Language Switcher - Simple Toggle ===== */
+.lang-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg);
+    border: 2px solid var(--border-color);
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.lang-toggle-btn:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 15px var(--shadow);
+    transform: translateY(-2px);
+}
+
+.lang-toggle-btn:active {
+    transform: translateY(0);
+}
+
+.lang-flag-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    opacity: 0.4;
+    filter: grayscale(70%);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.lang-flag-toggle svg {
+    display: block;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.lang-flag-toggle.active {
+    opacity: 1;
+    filter: grayscale(0%);
+    transform: scale(1.2);
+}
+
+.lang-separator {
+    color: var(--border-color);
+    font-size: 16px;
+    font-weight: 300;
+}
+
 .theme-toggle:hover {
     background: var(--border);
 }

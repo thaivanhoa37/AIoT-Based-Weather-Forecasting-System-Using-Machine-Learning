@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AIoT Weather{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/i18n.js"></script>
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -26,37 +27,37 @@
                 <li class="nav-item">
                     <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">
                         <span class="nav-icon">🏠</span>
-                        <span>Tổng quan</span>
+                        <span data-i18n="nav.overview">Tổng quan</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/charts" class="nav-link {% if request.url.path == '/charts' %}active{% endif %}">
                         <span class="nav-icon">📊</span>
-                        <span>Biểu đồ & Phân tích</span>
+                        <span data-i18n="nav.charts">Biểu đồ & Phân tích</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/forecast" class="nav-link {% if request.url.path == '/forecast' %}active{% endif %}">
                         <span class="nav-icon">🤖</span>
-                        <span>Dự báo (ML)</span>
+                        <span data-i18n="nav.forecast">Dự báo (ML)</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/ml-training" class="nav-link {% if request.url.path == '/ml-training' %}active{% endif %}">
                         <span class="nav-icon">🚀</span>
-                        <span>Huấn luyện ML</span>
+                        <span data-i18n="nav.mlTraining">Huấn luyện ML</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/mysql" class="nav-link {% if request.url.path == '/mysql' %}active{% endif %}">
                         <span class="nav-icon">💾</span>
-                        <span>Quản lý dữ liệu MySQL</span>
+                        <span data-i18n="nav.mysql">Quản lý dữ liệu MySQL</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/settings" class="nav-link {% if request.url.path == '/settings' %}active{% endif %}">
                         <span class="nav-icon">⚙️</span>
-                        <span>Cấu hình hệ thống</span>
+                        <span data-i18n="nav.settings">Cấu hình hệ thống</span>
                     </a>
                 </li>
             </ul>
@@ -79,6 +80,27 @@
                 <div class="status-badge connected" id="mysqlStatus">
                     <span class="status-dot"></span> MySQL: Connected
                 </div>
+                <!-- Language Switcher - Simple Toggle -->
+                <button class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language / Chuyển ngôn ngữ">
+                    <span class="lang-flag-toggle" id="langFlagVi">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="24" height="16">
+                            <rect width="30" height="20" fill="#da251d"/>
+                            <polygon points="15,4 11.47,14.85 20.71,8.15 9.29,8.15 18.53,14.85" fill="#ff0"/>
+                        </svg>
+                    </span>
+                    <span class="lang-separator">|</span>
+                    <span class="lang-flag-toggle" id="langFlagEn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="24" height="16">
+                            <clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+                            <clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+                            <g clip-path="url(#s)"><path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></g>
+                        </svg>
+                    </span>
+                </button>
                 <button class="theme-toggle" id="themeToggle">🌙</button>
             </div>
         </header>

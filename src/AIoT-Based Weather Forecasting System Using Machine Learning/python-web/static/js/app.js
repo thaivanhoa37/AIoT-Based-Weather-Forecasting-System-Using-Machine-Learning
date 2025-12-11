@@ -68,7 +68,56 @@ document.addEventListener('DOMContentLoaded', () => {
     initClock();
     initMySQLStatus();
     highlightActiveNav();
+    initLanguageSwitcher();
 });
+
+// ===== Language Switcher =====
+function initLanguageSwitcher() {
+    // Initialize i18n system if available
+    if (typeof i18n !== 'undefined' && typeof i18n.init === 'function') {
+        i18n.init();
+    }
+    // Update active flag indicator on load
+    updateLanguageFlags();
+}
+
+function toggleLanguage() {
+    const currentLang = localStorage.getItem('language') || 'vi';
+    const newLang = currentLang === 'vi' ? 'en' : 'vi';
+    
+    // Save new language
+    localStorage.setItem('language', newLang);
+    
+    // Update flags visual
+    updateLanguageFlags();
+    
+    // Update page content using i18n
+    if (typeof i18n !== 'undefined') {
+        i18n.switchLanguage(newLang);
+    }
+    
+    // Show toast notification
+    if (typeof showToast === 'function') {
+        const msg = newLang === 'vi' ? '🇻🇳 Đã chuyển sang Tiếng Việt' : '🇬🇧 Switched to English';
+        showToast(msg, 'success');
+    }
+}
+
+function updateLanguageFlags() {
+    const currentLang = localStorage.getItem('language') || 'vi';
+    const flagVi = document.getElementById('langFlagVi');
+    const flagEn = document.getElementById('langFlagEn');
+    
+    if (flagVi && flagEn) {
+        if (currentLang === 'vi') {
+            flagVi.classList.add('active');
+            flagEn.classList.remove('active');
+        } else {
+            flagVi.classList.remove('active');
+            flagEn.classList.add('active');
+        }
+    }
+}
 
 // ===== Theme Toggle =====
 function initTheme() {

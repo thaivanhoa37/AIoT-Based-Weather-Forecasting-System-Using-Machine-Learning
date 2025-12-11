@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dự báo (ML) - AIoT Weather</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/i18n.js"></script>
     <style>
         /* Forecast Grid Container - Scroll horizontal */
         .forecast-grid-container {
@@ -393,37 +394,37 @@
                 <li class="nav-item">
                     <a href="/" class="nav-link">
                         <span class="nav-icon">🏠</span>
-                        <span>Tổng quan</span>
+                        <span data-i18n="nav.overview">Tổng quan</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/charts" class="nav-link">
                         <span class="nav-icon">📊</span>
-                        <span>Biểu đồ & Phân tích</span>
+                        <span data-i18n="nav.charts">Biểu đồ & Phân tích</span>
                     </a>
                 </li>
                 <li class="nav-item active">
                     <a href="/forecast" class="nav-link">
                         <span class="nav-icon">🤖</span>
-                        <span>Dự báo (ML)</span>
+                        <span data-i18n="nav.forecast">Dự báo (ML)</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/ml-training" class="nav-link">
                         <span class="nav-icon">🚀</span>
-                        <span>Huấn luyện ML</span>
+                        <span data-i18n="nav.mlTraining">Huấn luyện ML</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/mysql" class="nav-link">
                         <span class="nav-icon">💾</span>
-                        <span>Quản lý dữ liệu</span>
+                        <span data-i18n="nav.mysql">Quản lý dữ liệu</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/settings" class="nav-link">
                         <span class="nav-icon">⚙️</span>
-                        <span>Cấu hình</span>
+                        <span data-i18n="nav.settings">Cấu hình</span>
                     </a>
                 </li>
             </ul>
@@ -436,7 +437,7 @@
         <header class="topbar">
             <div class="topbar-left">
                 <button class="hamburger-btn" id="hamburgerBtn">☰</button>
-                <h1 class="page-title">🤖 Dự báo Thời tiết (ML)</h1>
+                <h1 class="page-title">🤖 <span data-i18n="forecast.pageTitle">Dự báo Thời tiết (ML)</span></h1>
             </div>
             <div class="topbar-right">
                 <div class="clock-display">
@@ -444,8 +445,29 @@
                     <span class="clock-label">GMT+7</span>
                 </div>
                 <div class="status-badge connected" id="mysqlStatus">
-                    <span class="status-dot"></span> Kết nối: OK
+                    <span class="status-dot"></span> <span data-i18n="common.active">Kết nối: OK</span>
                 </div>
+                <!-- Language Switcher -->
+                <button class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language">
+                    <span class="lang-flag-toggle" id="langFlagVi">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="24" height="16">
+                            <rect width="30" height="20" fill="#da251d"/>
+                            <polygon points="15,4 11.47,14.85 20.71,8.15 9.29,8.15 18.53,14.85" fill="#ff0"/>
+                        </svg>
+                    </span>
+                    <span class="lang-separator">|</span>
+                    <span class="lang-flag-toggle" id="langFlagEn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="24" height="16">
+                            <clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+                            <clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+                            <g clip-path="url(#s)"><path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></g>
+                        </svg>
+                    </span>
+                </button>
                 <button class="theme-toggle" id="themeToggle">🌙</button>
             </div>
         </header>
@@ -456,17 +478,17 @@
             <section class="section">
                 <div class="summary-box" id="summaryBox">
                     <div class="summary-icon" id="summaryIcon">🌤️</div>
-                    <div class="summary-text" id="summaryText">Đang tải dự báo...</div>
-                    <div class="summary-detail" id="summaryDetail">Vui lòng chờ trong giây lát</div>
+                    <div class="summary-text" id="summaryText" data-i18n="forecastExt.loadingForecast">Đang tải dự báo...</div>
+                    <div class="summary-detail" id="summaryDetail" data-i18n="forecastExt.pleaseWait">Vui lòng chờ trong giây lát</div>
                 </div>
             </section>
 
             <!-- Forecast Cards Grid -->
             <section class="section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                    <h2 class="section-title">📅 Dự báo 24 giờ tới</h2>
+                    <h2 class="section-title">📅 <span data-i18n="forecastExt.forecast24h">Dự báo 24 giờ tới</span></h2>
                     <button class="btn btn-primary" onclick="loadForecastData()" style="margin: 0;">
-                        🔄 Làm mới
+                        🔄 <span data-i18n="forecastExt.refreshBtn">Làm mới</span>
                     </button>
                 </div>
                 <div class="forecast-grid-container" id="forecastGridContainer">
@@ -480,19 +502,19 @@
 
             <!-- Forecast Table -->
             <section class="section">
-                <h2 class="section-title">📊 Chi tiết dự báo</h2>
+                <h2 class="section-title">📊 <span data-i18n="forecastExt.forecastDetail">Chi tiết dự báo</span></h2>
                 <div class="table-container">
                     <div class="table-wrapper">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Thời gian</th>
-                                    <th>🌡️ Nhiệt độ (°C)</th>
-                                    <th>💧 Độ ẩm (%)</th>
-                                    <th>📊 Áp suất (mb)</th>
-                                    <th>💨 AQI</th>
-                                    <th>🌧️ Mưa?</th>
-                                    <th>✅ Tin cậy (%)</th>
+                                    <th data-i18n="forecastExt.tableTime">Thời gian</th>
+                                    <th>🌡️ <span data-i18n="forecastExt.tableTemp">Nhiệt độ (°C)</span></th>
+                                    <th>💧 <span data-i18n="forecastExt.tableHumidity">Độ ẩm (%)</span></th>
+                                    <th>📊 <span data-i18n="forecastExt.tablePressure">Áp suất (mb)</span></th>
+                                    <th>💨 <span data-i18n="forecastExt.tableAqi">AQI</span></th>
+                                    <th>🌧️ <span data-i18n="forecastExt.tableRain">Mưa?</span></th>
+                                    <th>✅ <span data-i18n="forecastExt.tableConfidence">Tin cậy (%)</span></th>
                                 </tr>
                             </thead>
                             <tbody id="forecastTableBody">
@@ -509,26 +531,26 @@
 
             <!-- Statistics -->
             <section class="section">
-                <h2 class="section-title">📈 Thống kê dự báo</h2>
+                <h2 class="section-title">📈 <span data-i18n="forecastExt.forecastStats">Thống kê dự báo</span></h2>
                 <div class="model-stats">
                     <div class="stat-item">
-                        <div class="stat-label">🌡️ Nhiệt độ TB</div>
+                        <div class="stat-label">🌡️ <span data-i18n="forecastExt.avgTemp">Nhiệt độ TB</span></div>
                         <div class="stat-value" id="statAvgTemp">--</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-label">💧 Độ ẩm TB</div>
+                        <div class="stat-label">💧 <span data-i18n="forecastExt.avgHumidity">Độ ẩm TB</span></div>
                         <div class="stat-value" id="statAvgHumidity">--</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-label">⛈️ Xác suất mưa</div>
+                        <div class="stat-label">⛈️ <span data-i18n="forecastExt.rainProb">Xác suất mưa</span></div>
                         <div class="stat-value" id="statRainProb">--</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-label">🔥 Nhiệt độ cao</div>
+                        <div class="stat-label">🔥 <span data-i18n="forecastExt.maxTemp">Nhiệt độ cao</span></div>
                         <div class="stat-value" id="statMaxTemp">--</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-label">❄️ Nhiệt độ thấp</div>
+                        <div class="stat-label">❄️ <span data-i18n="forecastExt.minTemp">Nhiệt độ thấp</span></div>
                         <div class="stat-value" id="statMinTemp">--</div>
                     </div>
                 </div>
@@ -536,34 +558,34 @@
 
             <!-- Model Info -->
             <section class="section">
-                <h2 class="section-title">🤖 Thông tin Model ML</h2>
+                <h2 class="section-title">🤖 <span data-i18n="forecastExt.modelInfo">Thông tin Model ML</span></h2>
                 <div class="card">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div>
                             <div class="form-group">
-                                <label class="form-label">📌 Model đang sử dụng</label>
+                                <label class="form-label">📌 <span data-i18n="forecastExt.modelUsing">Model đang sử dụng</span></label>
                                 <input type="text" class="form-input" id="modelName" disabled>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">✅ Trạng thái</label>
+                                <label class="form-label">✅ <span data-i18n="forecastExt.modelStatusLabel">Trạng thái</span></label>
                                 <input type="text" class="form-input" id="modelStatus" disabled>
                             </div>
                         </div>
                         <div>
                             <div class="form-group">
-                                <label class="form-label">📅 Lần train gần nhất</label>
+                                <label class="form-label">📅 <span data-i18n="forecastExt.lastTrained">Lần train gần nhất</span></label>
                                 <input type="text" class="form-input" id="lastTrained" disabled>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">🎯 Độ chính xác</label>
+                                <label class="form-label">🎯 <span data-i18n="forecastExt.accuracyLabel">Độ chính xác</span></label>
                                 <input type="text" class="form-input" id="modelAccuracy" disabled>
                             </div>
                         </div>
                     </div>
                     <div class="form-group" style="margin-top: 20px;">
-                        <label class="form-label">🏆 Models đã train</label>
+                        <label class="form-label">🏆 <span data-i18n="forecastExt.trainedModels">Models đã train</span></label>
                         <div id="trainedModels" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <span class="tag">Chưa tải</span>
+                            <span class="tag" data-i18n="forecastExt.notLoaded">Chưa tải</span>
                         </div>
                     </div>
                 </div>

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cấu hình hệ thống - AIoT Weather</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/i18n.js"></script>
     <style>
         /* ===== Custom Settings Styles ===== */
 
@@ -554,37 +555,37 @@
                 <li class="nav-item">
                     <a href="/" class="nav-link">
                         <span class="nav-icon">🏠</span>
-                        <span>Tổng quan</span>
+                        <span data-i18n="nav.overview">Tổng quan</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/charts" class="nav-link">
                         <span class="nav-icon">📊</span>
-                        <span>Biểu đồ & Phân tích</span>
+                        <span data-i18n="nav.charts">Biểu đồ & Phân tích</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/forecast" class="nav-link">
                         <span class="nav-icon">🤖</span>
-                        <span>Dự báo (ML)</span>
+                        <span data-i18n="nav.forecast">Dự báo (ML)</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/ml-training" class="nav-link">
                         <span class="nav-icon">🚀</span>
-                        <span>Huấn luyện ML</span>
+                        <span data-i18n="nav.mlTraining">Huấn luyện ML</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/mysql" class="nav-link">
                         <span class="nav-icon">💾</span>
-                        <span>Quản lý dữ liệu</span>
+                        <span data-i18n="nav.mysql">Quản lý dữ liệu</span>
                     </a>
                 </li>
                 <li class="nav-item active">
                     <a href="/settings" class="nav-link">
                         <span class="nav-icon">⚙️</span>
-                        <span>Cấu hình</span>
+                        <span data-i18n="nav.settings">Cấu hình</span>
                     </a>
                 </li>
             </ul>
@@ -597,13 +598,34 @@
         <header class="topbar">
             <div class="topbar-left">
                 <button class="hamburger-btn" id="hamburgerBtn">☰</button>
-                <h1 class="page-title">⚙️ Cấu hình hệ thống</h1>
+                <h1 class="page-title">⚙️ <span data-i18n="settings.pageTitle">Cấu hình hệ thống</span></h1>
             </div>
             <div class="topbar-right">
                 <div class="clock-display">
                     <span class="clock-time" id="clockTime">00:00:00</span>
                     <span class="clock-label">GMT+7</span>
                 </div>
+                <!-- Language Switcher -->
+                <button class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language">
+                    <span class="lang-flag-toggle" id="langFlagVi">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="24" height="16">
+                            <rect width="30" height="20" fill="#da251d"/>
+                            <polygon points="15,4 11.47,14.85 20.71,8.15 9.29,8.15 18.53,14.85" fill="#ff0"/>
+                        </svg>
+                    </span>
+                    <span class="lang-separator">|</span>
+                    <span class="lang-flag-toggle" id="langFlagEn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="24" height="16">
+                            <clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+                            <clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+                            <g clip-path="url(#s)"><path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></g>
+                        </svg>
+                    </span>
+                </button>
                 <button class="theme-toggle" id="themeToggle">🌙</button>
             </div>
         </header>
@@ -613,8 +635,8 @@
             <!-- Banner -->
             <section class="section">
                 <div class="settings-banner">
-                    <h2>⚙️ Cấu hình hệ thống AIoT</h2>
-                    <p>Quản lý thiết bị, kết nối, vị trí, và các tham số hệ thống</p>
+                    <h2>⚙️ <span data-i18n="settingsExt.bannerTitle">Cấu hình hệ thống AIoT</span></h2>
+                    <p data-i18n="settingsExt.bannerDesc">Quản lý thiết bị, kết nối, vị trí, và các tham số hệ thống</p>
                 </div>
             </section>
 
@@ -626,8 +648,8 @@
                         <div class="settings-card-header">
                             <div class="settings-card-icon">🖥️</div>
                             <div>
-                                <div class="settings-card-title">Thông số Raspberry Pi</div>
-                                <div class="settings-card-subtitle">RAM, CPU, GPU & Nhiệt độ</div>
+                                <div class="settings-card-title" data-i18n="settingsExt.rpiStats">Thông số Raspberry Pi</div>
+                                <div class="settings-card-subtitle" data-i18n="settingsExt.rpiSubtitle">RAM, CPU, GPU & Nhiệt độ</div>
                             </div>
                         </div>
 
@@ -635,15 +657,15 @@
                         <div class="system-stat-item">
                             <div class="stat-label">
                                 <span class="stat-icon">⚙️</span>
-                                <span>CPU Usage</span>
+                                <span data-i18n="settingsExt.cpuUsage">CPU Usage</span>
                             </div>
                             <div class="stat-value" id="cpuUsage">--</div>
                             <div class="progress-bar">
                                 <div class="progress-fill cpu-progress" id="cpuProgressBar"></div>
                             </div>
                             <div class="stat-detail">
-                                Cores: <span id="cpuCores">--</span> | 
-                                Freq: <span id="cpuFreq">--</span> MHz
+                                <span data-i18n="settingsExt.cores">Cores</span>: <span id="cpuCores">--</span> | 
+                                <span data-i18n="settingsExt.freq">Freq</span>: <span id="cpuFreq">--</span> MHz
                             </div>
                         </div>
 
@@ -651,15 +673,15 @@
                         <div class="system-stat-item">
                             <div class="stat-label">
                                 <span class="stat-icon">💾</span>
-                                <span>Memory (RAM)</span>
+                                <span data-i18n="settingsExt.memory">Memory (RAM)</span>
                             </div>
                             <div class="stat-value" id="ramUsage">--</div>
                             <div class="progress-bar">
                                 <div class="progress-fill ram-progress" id="ramProgressBar"></div>
                             </div>
                             <div class="stat-detail">
-                                Used: <span id="ramUsed">--</span> MB | 
-                                Total: <span id="ramTotal">--</span> MB
+                                <span data-i18n="settingsExt.used">Used</span>: <span id="ramUsed">--</span> MB | 
+                                <span data-i18n="settingsExt.total">Total</span>: <span id="ramTotal">--</span> MB
                             </div>
                         </div>
 
@@ -667,14 +689,14 @@
                         <div class="system-stat-item">
                             <div class="stat-label">
                                 <span class="stat-icon">🎮</span>
-                                <span>GPU Memory</span>
+                                <span data-i18n="settingsExt.gpuMemory">GPU Memory</span>
                             </div>
                             <div class="stat-value" id="gpuMem">--</div>
                             <div class="progress-bar">
                                 <div class="progress-fill gpu-progress" id="gpuProgressBar"></div>
                             </div>
                             <div class="stat-detail">
-                                Allocated: <span id="gpuAllocated">--</span> MB
+                                <span data-i18n="settingsExt.allocated">Allocated</span>: <span id="gpuAllocated">--</span> MB
                             </div>
                         </div>
 
@@ -682,14 +704,14 @@
                         <div class="system-stat-item">
                             <div class="stat-label">
                                 <span class="stat-icon">🌡️</span>
-                                <span>CPU Temperature</span>
+                                <span data-i18n="settingsExt.cpuTemp">CPU Temperature</span>
                             </div>
                             <div class="stat-value temp-danger" id="cpuTemp">-- °C</div>
                             <div class="progress-bar">
                                 <div class="progress-fill temp-progress" id="tempProgressBar"></div>
                             </div>
                             <div class="stat-detail">
-                                Status: <span id="tempStatus" class="temp-status-good">✓ Normal</span>
+                                <span data-i18n="settingsExt.tempStatus">Status</span>: <span id="tempStatus" class="temp-status-good">✓ <span data-i18n="settingsExt.tempGood">Normal</span></span>
                             </div>
                         </div>
 
@@ -697,15 +719,15 @@
                         <div class="system-stat-item">
                             <div class="stat-label">
                                 <span class="stat-icon">💿</span>
-                                <span>Storage</span>
+                                <span data-i18n="settingsExt.storage">Storage</span>
                             </div>
                             <div class="stat-value" id="storageUsage">--</div>
                             <div class="progress-bar">
                                 <div class="progress-fill storage-progress" id="storageProgressBar"></div>
                             </div>
                             <div class="stat-detail">
-                                Used: <span id="storageUsed">--</span> GB | 
-                                Total: <span id="storageTotal">--</span> GB
+                                <span data-i18n="settingsExt.used">Used</span>: <span id="storageUsed">--</span> GB | 
+                                <span data-i18n="settingsExt.total">Total</span>: <span id="storageTotal">--</span> GB
                             </div>
                         </div>
 
@@ -713,15 +735,15 @@
                         <div class="system-stat-item">
                             <div class="stat-label">
                                 <span class="stat-icon">⏱️</span>
-                                <span>System Uptime</span>
+                                <span data-i18n="settingsExt.uptime">System Uptime</span>
                             </div>
                             <div class="stat-value" id="uptimeValue">-- h</div>
                             <div class="stat-detail">
-                                Boot time: <span id="bootTime">--</span>
+                                <span data-i18n="settingsExt.bootTime">Boot time</span>: <span id="bootTime">--</span>
                             </div>
                         </div>
 
-                        <button class="btn-save" onclick="refreshSystemStats()" style="margin-top: 20px;">🔄 Làm mới</button>
+                        <button class="btn-save" onclick="refreshSystemStats()" style="margin-top: 20px;">🔄 <span data-i18n="common.refresh">Làm mới</span></button>
                     </div>
 
                     <!-- Cấu hình vị trí -->
@@ -729,66 +751,66 @@
                         <div class="settings-card-header">
                             <div class="settings-card-icon">📍</div>
                             <div>
-                                <div class="settings-card-title">Cấu hình vị trí</div>
-                                <div class="settings-card-subtitle">Tọa độ GPS & Địa chỉ</div>
+                                <div class="settings-card-title" data-i18n="settingsExt.locationConfig">Cấu hình vị trí</div>
+                                <div class="settings-card-subtitle" data-i18n="settingsExt.locationSubtitle">Tọa độ GPS & Địa chỉ</div>
                             </div>
                         </div>
 
                         <div class="info-box">
-                            📌 Nhập tên địa điểm và lấy tọa độ tự động
+                            📌 <span data-i18n="settingsExt.locationHint">Nhập tên địa điểm và lấy tọa độ tự động</span>
                         </div>
 
                         <!-- Bước 1: Tìm kiếm vị trí -->
                         <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color);">
-                            <label class="form-label" style="margin-bottom: 12px;">🔍 Bước 1: Tìm kiếm vị trí</label>
+                            <label class="form-label" style="margin-bottom: 12px;">🔍 <span data-i18n="settingsExt.step1">Bước 1: Tìm kiếm vị trí</span></label>
                             
                             <!-- Tùy chọn: Sử dụng vị trí hiện tại -->
                             <div style="margin-bottom: 15px;">
                                 <button class="btn-secondary" type="button" onclick="useCurrentLocation()" style="width: 100%; white-space: nowrap;">
-                                    📍 Sử dụng vị trí hiện tại (GPS)
+                                    📍 <span data-i18n="settingsExt.useCurrentLocation">Sử dụng vị trí hiện tại (GPS)</span>
                                 </button>
                             </div>
 
                             <!-- Hoặc tìm kiếm theo tên -->
                             <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
                                 <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
-                                <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">HOẶC</span>
+                                <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;" data-i18n="settingsExt.or">HOẶC</span>
                                 <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
                             </div>
 
                             <div style="display: flex; gap: 10px;">
-                                <input type="text" class="form-control" id="locationName" placeholder="VD: Sài Gòn, Hà Nội, Đà Nẵng..." style="flex: 1;">
-                                <button class="btn-secondary" type="button" onclick="getLocationFromName()" style="white-space: nowrap; min-width: 120px;">🔍 Tìm kiếm</button>
+                                <input type="text" class="form-control" id="locationName" placeholder="VD: Sài Gòn, Hà Nội, Đà Nẵng..." data-i18n-placeholder="settingsExt.searchPlaceholder" style="flex: 1;">
+                                <button class="btn-secondary" type="button" onclick="getLocationFromName()" style="white-space: nowrap; min-width: 120px;">🔍 <span data-i18n="settingsExt.searchBtn">Tìm kiếm</span></button>
                             </div>
                         </div>
 
                         <!-- Bước 2: Thông tin chi tiết -->
                         <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color);">
-                            <label class="form-label" style="margin-bottom: 12px;">📋 Bước 2: Thông tin chi tiết</label>
+                            <label class="form-label" style="margin-bottom: 12px;">📋 <span data-i18n="settingsExt.step2">Bước 2: Thông tin chi tiết</span></label>
                             
                             <div class="form-group">
-                                <label class="form-label">Địa chỉ đầy đủ</label>
-                                <input type="text" class="form-control" id="locationAddress" placeholder="Ví dụ: 123 Nguyễn Huệ, Q1, TP.HCM">
+                                <label class="form-label" data-i18n="settingsExt.fullAddress">Địa chỉ đầy đủ</label>
+                                <input type="text" class="form-control" id="locationAddress" placeholder="Ví dụ: 123 Nguyễn Huệ, Q1, TP.HCM" data-i18n-placeholder="settingsExt.addressPlaceholder">
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">Vĩ độ (Latitude)</label>
+                                    <label class="form-label" data-i18n="settingsExt.latitude">Vĩ độ (Latitude)</label>
                                     <input type="number" class="form-control" id="latitude" placeholder="10.773" step="0.0001" readonly style="background: var(--bg); cursor: not-allowed; opacity: 0.8;">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Kinh độ (Longitude)</label>
+                                    <label class="form-label" data-i18n="settingsExt.longitude">Kinh độ (Longitude)</label>
                                     <input type="number" class="form-control" id="longitude" placeholder="106.700" step="0.0001" readonly style="background: var(--bg); cursor: not-allowed; opacity: 0.8;">
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">Độ cao (m)</label>
+                                    <label class="form-label" data-i18n="settingsExt.altitude">Độ cao (m)</label>
                                     <input type="number" class="form-control" id="altitude" placeholder="0" step="0.1">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Múi giờ</label>
+                                    <label class="form-label" data-i18n="settingsExt.timezone">Múi giờ</label>
                                     <select class="form-control" id="timezone">
                                         <option value="Asia/Ho_Chi_Minh" selected>GMT+7 (Việt Nam)</option>
                                         <option value="Asia/Bangkok">GMT+7 (Bangkok)</option>
@@ -800,7 +822,7 @@
 
                         <!-- Bước 3: Lưu -->
                         <div class="btn-container">
-                            <button class="btn-save" onclick="saveLocationSettings()">💾 Lưu cài đặt vị trí</button>
+                            <button class="btn-save" onclick="saveLocationSettings()">💾 <span data-i18n="settingsExt.saveLocation">Lưu cài đặt vị trí</span></button>
                         </div>
                     </div>
 
@@ -809,22 +831,22 @@
                         <div class="settings-card-header">
                             <div class="settings-card-icon">💾</div>
                             <div>
-                                <div class="settings-card-title">Kết nối MySQL</div>
-                                <div class="settings-card-subtitle">Cơ sở dữ liệu</div>
+                                <div class="settings-card-title" data-i18n="settingsExt.mysqlConfig">Kết nối MySQL</div>
+                                <div class="settings-card-subtitle" data-i18n="settingsExt.mysqlSubtitle">Cơ sở dữ liệu</div>
                             </div>
                         </div>
 
                         <div class="info-box">
-                            💡 Nhập thông tin kết nối MySQL. Nhấn "Kiểm tra" để xác minh kết nối trước khi lưu.
+                            💡 <span data-i18n="settingsExt.mysqlHint">Nhập thông tin kết nối MySQL. Nhấn "Kiểm tra" để xác minh kết nối trước khi lưu.</span>
                         </div>
 
                         <!-- Trạng thái kết nối -->
                         <div class="form-group" style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color);">
-                            <label class="form-label">📊 Trạng thái kết nối hiện tại</label>
+                            <label class="form-label">📊 <span data-i18n="settingsExt.connectionStatus">Trạng thái kết nối hiện tại</span></label>
                             <div style="margin-top: 8px;">
                                 <span class="status-badge" id="dbStatus">
                                     <span class="status-dot"></span>
-                                    <span>Đang kiểm tra...</span>
+                                    <span data-i18n="settingsExt.checking">Đang kiểm tra...</span>
                                 </span>
                             </div>
                             <div id="dbStatusDetails" style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);"></div>
@@ -832,45 +854,45 @@
 
                         <!-- Thông tin kết nối -->
                         <div style="margin-bottom: 20px;">
-                            <label class="form-label" style="margin-bottom: 15px;">⚙️ Thông tin kết nối</label>
+                            <label class="form-label" style="margin-bottom: 15px;">⚙️ <span data-i18n="settingsExt.connectionInfo">Thông tin kết nối</span></label>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">Host</label>
+                                    <label class="form-label" data-i18n="settingsExt.host">Host</label>
                                     <input type="text" class="form-control" id="mysqlHost" placeholder="localhost" value="localhost">
-                                    <div class="form-label-note">VD: localhost, 127.0.0.1, mysql.example.com</div>
+                                    <div class="form-label-note" data-i18n="settingsExt.hostNote">VD: localhost, 127.0.0.1, mysql.example.com</div>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">Port</label>
+                                    <label class="form-label" data-i18n="settingsExt.port">Port</label>
                                     <input type="number" class="form-control" id="mysqlPort" placeholder="3306" value="3306">
-                                    <div class="form-label-note">Mặc định: 3306</div>
+                                    <div class="form-label-note" data-i18n="settingsExt.portNote">Mặc định: 3306</div>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Username</label>
+                                <label class="form-label" data-i18n="settingsExt.username">Username</label>
                                 <input type="text" class="form-control" id="mysqlUser" placeholder="root">
-                                <div class="form-label-note">Tên đăng nhập MySQL</div>
+                                <div class="form-label-note" data-i18n="settingsExt.usernameNote">Tên đăng nhập MySQL</div>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Password</label>
+                                <label class="form-label" data-i18n="settingsExt.password">Password</label>
                                 <input type="password" class="form-control" id="mysqlPass" placeholder="••••••••">
-                                <div class="form-label-note">Mật khẩu (để trống nếu không có)</div>
+                                <div class="form-label-note" data-i18n="settingsExt.passwordNote">Mật khẩu (để trống nếu không có)</div>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Database</label>
+                                <label class="form-label" data-i18n="settingsExt.database">Database</label>
                                 <input type="text" class="form-control" id="mysqlDb" placeholder="sensor_data">
-                                <div class="form-label-note">Tên cơ sở dữ liệu</div>
+                                <div class="form-label-note" data-i18n="settingsExt.databaseNote">Tên cơ sở dữ liệu</div>
                             </div>
                         </div>
 
                         <!-- Nút hành động -->
                         <div class="btn-container">
-                            <button class="btn-secondary" type="button" onclick="testMysqlConnection()" style="flex: 1;">🔗 Kiểm tra kết nối</button>
-                            <button class="btn-save" type="button" onclick="saveMysqlSettings()" style="flex: 1;">💾 Lưu cài đặt</button>
+                            <button class="btn-secondary" type="button" onclick="testMysqlConnection()" style="flex: 1;">🔗 <span data-i18n="settingsExt.testConnection">Kiểm tra kết nối</span></button>
+                            <button class="btn-save" type="button" onclick="saveMysqlSettings()" style="flex: 1;">💾 <span data-i18n="settingsExt.saveSettings">Lưu cài đặt</span></button>
                         </div>
                     </div>
 
@@ -879,52 +901,52 @@
                         <div class="settings-card-header">
                             <div class="settings-card-icon">⚡</div>
                             <div>
-                                <div class="settings-card-title">Điều khiển hệ thống</div>
-                                <div class="settings-card-subtitle">Quản lý server & thiết bị</div>
+                                <div class="settings-card-title" data-i18n="settingsExt.systemControl">Điều khiển hệ thống</div>
+                                <div class="settings-card-subtitle" data-i18n="settingsExt.controlSubtitle">Quản lý server & thiết bị</div>
                             </div>
                         </div>
 
                         <div class="info-box warning" style="margin-bottom: 20px;">
-                            ⚠️ Các hành động dưới đây sẽ ảnh hưởng đến hệ thống. Hãy cẩn thận!
+                            ⚠️ <span data-i18n="settingsExt.warningActions">Các hành động dưới đây sẽ ảnh hưởng đến hệ thống. Hãy cẩn thận!</span>
                         </div>
 
                         <div class="system-control-group">
                             <div class="control-item">
-                                <div class="control-label">🔄 Khởi động lại Server Web</div>
-                                <p class="control-desc">Restart ứng dụng web, dữ liệu được lưu giữ</p>
-                                <button class="btn-control danger" onclick="restartWebServer()">🔄 Restart Web</button>
+                                <div class="control-label">🔄 <span data-i18n="settingsExt.restartApp">Khởi động lại Server Web</span></div>
+                                <p class="control-desc" data-i18n="settingsExt.restartAppDesc">Restart ứng dụng web, dữ liệu được lưu giữ</p>
+                                <button class="btn-control danger" onclick="restartWebServer()">🔄 <span data-i18n="settingsExt.restartAppBtn">Restart Web</span></button>
                             </div>
 
                             <div class="control-divider"></div>
 
                             <div class="control-item">
-                                <div class="control-label">🔌 Khởi động lại Raspberry Pi</div>
-                                <p class="control-desc">Restart toàn bộ hệ thống (mất kết nối tạm thời)</p>
-                                <button class="btn-control danger" onclick="rebootRaspberryPi()">🔌 Reboot Pi</button>
+                                <div class="control-label">🔌 <span data-i18n="settingsExt.restartPi">Khởi động lại Raspberry Pi</span></div>
+                                <p class="control-desc" data-i18n="settingsExt.restartPiDesc">Restart toàn bộ hệ thống (mất kết nối tạm thời)</p>
+                                <button class="btn-control danger" onclick="rebootRaspberryPi()">🔌 <span data-i18n="settingsExt.restartPiBtn">Reboot Pi</span></button>
                             </div>
 
                             <div class="control-divider"></div>
 
                             <div class="control-item">
-                                <div class="control-label">🧹 Xóa Cache & Logs</div>
-                                <p class="control-desc">Xóa bộ nhớ đệm và các file log cũ</p>
-                                <button class="btn-control warning" onclick="clearCacheLogs()">🧹 Xóa Cache</button>
+                                <div class="control-label">🧹 <span data-i18n="settingsExt.clearCache">Clear Cache & Logs</span></div>
+                                <p class="control-desc" data-i18n="settingsExt.clearCacheDesc">Xóa bộ nhớ đệm và các file log cũ</p>
+                                <button class="btn-control warning" onclick="clearCacheLogs()">🧹 <span data-i18n="settingsExt.clearCacheBtn">Clear Cache</span></button>
                             </div>
 
                             <div class="control-divider"></div>
 
                             <div class="control-item">
-                                <div class="control-label">💾 Sao lưu cơ sở dữ liệu</div>
-                                <p class="control-desc">Tạo backup của dữ liệu hiện tại</p>
-                                <button class="btn-control info" onclick="backupDatabase()">💾 Backup DB</button>
+                                <div class="control-label">💾 <span data-i18n="settingsExt.backupDb">Sao lưu cơ sở dữ liệu</span></div>
+                                <p class="control-desc" data-i18n="settingsExt.backupDbDesc">Tạo backup của dữ liệu hiện tại</p>
+                                <button class="btn-control info" onclick="backupDatabase()">💾 <span data-i18n="settingsExt.backupDbBtn">Backup DB</span></button>
                             </div>
 
                             <div class="control-divider"></div>
 
                             <div class="control-item">
-                                <div class="control-label">ℹ️ Thông tin hệ thống</div>
-                                <p class="control-desc">Xem chi tiết hệ thống và tài nguyên</p>
-                                <button class="btn-control info" onclick="showSystemInfo()">ℹ️ Chi tiết</button>
+                                <div class="control-label">ℹ️ <span data-i18n="settingsExt.systemInfo">Thông tin hệ thống</span></div>
+                                <p class="control-desc" data-i18n="settingsExt.systemInfoDesc">Xem chi tiết hệ thống và tài nguyên</p>
+                                <button class="btn-control info" onclick="showSystemInfo()">ℹ️ <span data-i18n="settingsExt.systemInfoBtn">Chi tiết</span></button>
                             </div>
                         </div>
                     </div>

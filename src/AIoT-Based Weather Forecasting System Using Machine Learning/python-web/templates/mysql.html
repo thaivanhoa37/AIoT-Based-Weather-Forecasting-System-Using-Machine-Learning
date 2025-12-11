@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý dữ liệu MySQL - AIoT Weather</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/i18n.js"></script>
 </head>
 
 <body>
@@ -25,37 +26,37 @@
                 <li class="nav-item">
                     <a href="/" class="nav-link">
                         <span class="nav-icon">🏠</span>
-                        <span>Tổng quan</span>
+                        <span data-i18n="nav.overview">Tổng quan</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/charts" class="nav-link">
                         <span class="nav-icon">📊</span>
-                        <span>Biểu đồ & Phân tích</span>
+                        <span data-i18n="nav.charts">Biểu đồ & Phân tích</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/forecast" class="nav-link">
                         <span class="nav-icon">🤖</span>
-                        <span>Dự báo (ML)</span>
+                        <span data-i18n="nav.forecast">Dự báo (ML)</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/ml-training" class="nav-link">
                         <span class="nav-icon">🚀</span>
-                        <span>Huấn luyện ML</span>
+                        <span data-i18n="nav.mlTraining">Huấn luyện ML</span>
                     </a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item active">
                     <a href="/mysql" class="nav-link">
                         <span class="nav-icon">💾</span>
-                        <span>Quản lý dữ liệu MySQL</span>
+                        <span data-i18n="nav.mysql">Quản lý dữ liệu MySQL</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="/settings" class="nav-link">
                         <span class="nav-icon">⚙️</span>
-                        <span>Cấu hình hệ thống</span>
+                        <span data-i18n="nav.settings">Cấu hình hệ thống</span>
                     </a>
                 </li>
             </ul>
@@ -68,7 +69,7 @@
         <header class="topbar">
             <div class="topbar-left">
                 <button class="hamburger-btn" id="hamburgerBtn">☰</button>
-                <h1 class="page-title">Quản lý dữ liệu MySQL</h1>
+                <h1 class="page-title" data-i18n="mysql.pageTitle">Quản lý dữ liệu MySQL</h1>
             </div>
             <div class="topbar-right">
                 <div class="clock-display">
@@ -78,6 +79,27 @@
                 <div class="status-badge connected" id="mysqlStatus">
                     <span class="status-dot"></span> MySQL: Connected
                 </div>
+                <!-- Language Switcher -->
+                <button class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language">
+                    <span class="lang-flag-toggle" id="langFlagVi">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="24" height="16">
+                            <rect width="30" height="20" fill="#da251d"/>
+                            <polygon points="15,4 11.47,14.85 20.71,8.15 9.29,8.15 18.53,14.85" fill="#ff0"/>
+                        </svg>
+                    </span>
+                    <span class="lang-separator">|</span>
+                    <span class="lang-flag-toggle" id="langFlagEn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="24" height="16">
+                            <clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+                            <clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+                            <g clip-path="url(#s)"><path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+                            <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+                            <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></g>
+                        </svg>
+                    </span>
+                </button>
                 <button class="theme-toggle" id="themeToggle">🌙</button>
             </div>
         </header>
@@ -86,18 +108,18 @@
         <main class="content">
             <!-- Database Summary -->
             <section class="section">
-                <h2 class="section-title">Tổng quan cơ sở dữ liệu</h2>
+                <h2 class="section-title" data-i18n="mysqlExt.dbOverview">Tổng quan cơ sở dữ liệu</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-label">Tổng số bản ghi</div>
+                        <div class="stat-label" data-i18n="mysqlExt.totalRecords">Tổng số bản ghi</div>
                         <div class="stat-value" id="totalRecords">--</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Dung lượng ước tính</div>
+                        <div class="stat-label" data-i18n="mysqlExt.estSize">Dung lượng ước tính</div>
                         <div class="stat-value" style="font-size: 18px;" id="storageSize">--</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Bản ghi mới nhất</div>
+                        <div class="stat-label" data-i18n="mysqlExt.latestRecord">Bản ghi mới nhất</div>
                         <div class="stat-value" style="font-size: 14px;" id="latestRecord">--</div>
                     </div>
                 </div>
@@ -106,39 +128,39 @@
             <!-- Filter Controls -->
             <section class="section">
                 <div class="filter-panel">
-                    <h3 class="section-title">Bộ lọc & Tìm kiếm</h3>
+                    <h3 class="section-title" data-i18n="mysqlExt.filterSearch">Bộ lọc & Tìm kiếm</h3>
 
                     <div class="filter-row">
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                            <label class="form-label">Khoảng thời gian</label>
+                            <label class="form-label" data-i18n="mysqlExt.timeRange">Khoảng thời gian</label>
                             <div class="btn-group">
-                                <button class="btn btn-primary" onclick="setTimeFilter('today')">Hôm nay</button>
-                                <button class="btn btn-secondary" onclick="setTimeFilter('24h')">24 giờ qua</button>
-                                <button class="btn btn-secondary" onclick="setTimeFilter('7d')">7 ngày qua</button>
-                                <button class="btn btn-secondary" onclick="setTimeFilter('all')">Tất cả</button>
+                                <button class="btn btn-primary" onclick="setTimeFilter('today')" data-i18n="mysqlExt.today">Hôm nay</button>
+                                <button class="btn btn-secondary" onclick="setTimeFilter('24h')" data-i18n="mysqlExt.last24h">24 giờ qua</button>
+                                <button class="btn btn-secondary" onclick="setTimeFilter('7d')" data-i18n="mysqlExt.last7d">7 ngày qua</button>
+                                <button class="btn btn-secondary" onclick="setTimeFilter('all')" data-i18n="mysqlExt.all">Tất cả</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="filter-row">
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                            <label class="form-label">Node</label>
+                            <label class="form-label" data-i18n="mysqlExt.node">Node</label>
                             <select class="form-select" id="nodeFilter">
-                                <option value="all">Tất cả</option>
+                                <option value="all" data-i18n="mysqlExt.allNodes">Tất cả</option>
                                 <option value="node1">Node 1</option>
                                 <option value="node2">Node 2</option>
                             </select>
                         </div>
                         <div class="form-group" style="flex: 2; margin-bottom: 0;">
-                            <label class="form-label">Tìm kiếm (ID hoặc thời gian)</label>
+                            <label class="form-label" data-i18n="mysqlExt.searchLabel">Tìm kiếm (ID hoặc thời gian)</label>
                             <input type="text" class="form-input" id="searchInput"
-                                placeholder="Nhập ID hoặc thời gian...">
+                                placeholder="Nhập ID hoặc thời gian..." data-i18n-placeholder="mysqlExt.searchPlaceholder">
                         </div>
                     </div>
 
                     <div class="filter-row">
                         <button class="btn btn-primary" onclick="loadTableData()">
-                            🔍 Làm mới dữ liệu
+                            🔍 <span data-i18n="mysqlExt.refreshData">Làm mới dữ liệu</span>
                         </button>
                     </div>
                 </div>
@@ -146,21 +168,21 @@
 
             <!-- Data Table -->
             <section class="section">
-                <h2 class="section-title">Bảng dữ liệu</h2>
+                <h2 class="section-title" data-i18n="mysqlExt.dataTable">Bảng dữ liệu</h2>
                 <div class="table-container">
                     <div class="table-wrapper">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Thời gian</th>
-                                    <th>Node</th>
-                                    <th>Nhiệt độ (°C)</th>
-                                    <th>Độ ẩm (%)</th>
-                                    <th>Áp suất (hPa)</th>
-                                    <th>CO₂ (ppm)</th>
-                                    <th>Bụi mịn (µg/m³)</th>
-                                    <th>AQI</th>
+                                    <th data-i18n="mysqlExt.thId">ID</th>
+                                    <th data-i18n="mysqlExt.thTime">Thời gian</th>
+                                    <th data-i18n="mysqlExt.thNode">Node</th>
+                                    <th data-i18n="mysqlExt.thTemp">Nhiệt độ (°C)</th>
+                                    <th data-i18n="mysqlExt.thHumidity">Độ ẩm (%)</th>
+                                    <th data-i18n="mysqlExt.thPressure">Áp suất (hPa)</th>
+                                    <th data-i18n="mysqlExt.thCo2">CO₂ (ppm)</th>
+                                    <th data-i18n="mysqlExt.thDust">Bụi mịn (µg/m³)</th>
+                                    <th data-i18n="mysqlExt.thAqi">AQI</th>
                                 </tr>
                             </thead>
                             <tbody id="dataTableBody">
@@ -173,87 +195,87 @@
                         </table>
                     </div>
                     <div class="pagination">
-                        <button class="btn btn-secondary" onclick="previousPage()">← Trước</button>
-                        <span class="pagination-info" id="paginationInfo">Trang 1</span>
-                        <button class="btn btn-secondary" onclick="nextPage()">Sau →</button>
+                        <button class="btn btn-secondary" onclick="previousPage()" data-i18n="mysqlExt.prev">← Trước</button>
+                        <span class="pagination-info" id="paginationInfo"><span data-i18n="mysqlExt.page">Trang</span> 1</span>
+                        <button class="btn btn-secondary" onclick="nextPage()" data-i18n="mysqlExt.next">Sau →</button>
                     </div>
                 </div>
             </section>
 
             <!-- Data Management Tools -->
             <section class="section">
-                <h2 class="section-title">Công cụ quản lý dữ liệu</h2>
+                <h2 class="section-title" data-i18n="mysqlExt.tools">Công cụ quản lý dữ liệu</h2>
                 <div class="tool-grid">
                     <div class="tool-card">
                         <div class="tool-icon">📊</div>
-                        <div class="tool-name">Xuất dữ liệu</div>
-                        <div class="tool-description">Xuất dữ liệu sang CSV, JSON hoặc Excel</div>
-                        <button class="btn btn-primary" onclick="showExportDialog()">Xuất</button>
+                        <div class="tool-name" data-i18n="mysqlExt.exportData">Xuất dữ liệu</div>
+                        <div class="tool-description" data-i18n="mysqlExt.exportDesc">Xuất dữ liệu sang CSV, JSON hoặc Excel</div>
+                        <button class="btn btn-primary" onclick="showExportDialog()" data-i18n="mysqlExt.exportBtn">Xuất</button>
                     </div>
                     <div class="tool-card">
                         <div class="tool-icon">💾</div>
-                        <div class="tool-name">Sao lưu</div>
-                        <div class="tool-description">Tạo bản sao lưu cơ sở dữ liệu</div>
-                        <button class="btn btn-primary" onclick="confirmBackup()">Sao lưu</button>
+                        <div class="tool-name" data-i18n="mysqlExt.backup">Sao lưu</div>
+                        <div class="tool-description" data-i18n="mysqlExt.backupDesc">Tạo bản sao lưu cơ sở dữ liệu</div>
+                        <button class="btn btn-primary" onclick="confirmBackup()" data-i18n="mysqlExt.backupBtn">Sao lưu</button>
                     </div>
                     <div class="tool-card">
                         <div class="tool-icon">🔧</div>
-                        <div class="tool-name">Tối ưu hóa</div>
-                        <div class="tool-description">Tối ưu hóa bảng và index</div>
-                        <button class="btn btn-primary" onclick="confirmOptimize()">Tối ưu</button>
+                        <div class="tool-name" data-i18n="mysqlExt.optimize">Tối ưu hóa</div>
+                        <div class="tool-description" data-i18n="mysqlExt.optimizeDesc">Tối ưu hóa bảng và index</div>
+                        <button class="btn btn-primary" onclick="confirmOptimize()" data-i18n="mysqlExt.optimizeBtn">Tối ưu</button>
                     </div>
                     <div class="tool-card">
                         <div class="tool-icon">📈</div>
-                        <div class="tool-name">Thống kê</div>
-                        <div class="tool-description">Xem thống kê chi tiết</div>
-                        <button class="btn btn-primary" onclick="showStatistics()">Xem</button>
+                        <div class="tool-name" data-i18n="mysqlExt.stats">Thống kê</div>
+                        <div class="tool-description" data-i18n="mysqlExt.statsDesc">Xem thống kê chi tiết</div>
+                        <button class="btn btn-primary" onclick="showStatistics()" data-i18n="mysqlExt.viewBtn">Xem</button>
                     </div>
                 </div>
             </section>
 
             <!-- Data Cleanup -->
             <section class="section">
-                <h2 class="section-title">Dọn dẹp dữ liệu</h2>
+                <h2 class="section-title" data-i18n="mysqlExt.dataCleanup">Dọn dẹp dữ liệu</h2>
                 <div class="card">
                     <div class="info-panel">
-                        <div class="info-panel-title">⚠️ Cảnh báo</div>
-                        <div class="info-panel-content">
+                        <div class="info-panel-title">⚠️ <span data-i18n="common.warning">Cảnh báo</span></div>
+                        <div class="info-panel-content" data-i18n="mysqlExt.cleanupWarning">
                             Việc xóa dữ liệu cũ sẽ giúp giảm dung lượng cơ sở dữ liệu. Tuy nhiên, dữ liệu đã xóa không
                             thể khôi phục được.
                         </div>
                     </div>
 
                     <div class="form-group mt-20">
-                        <label class="form-label">📅 Chọn khoảng thời gian cần xóa</label>
+                        <label class="form-label">📅 <span data-i18n="mysqlExt.selectDeleteRange">Chọn khoảng thời gian cần xóa</span></label>
                         <div class="date-range-container">
                             <div class="date-input-group">
-                                <label class="form-label-small">Từ ngày</label>
+                                <label class="form-label-small" data-i18n="mysqlExt.fromDate">Từ ngày</label>
                                 <input type="datetime-local" class="form-input" id="deleteStartDate">
                             </div>
                             <span class="date-separator">→</span>
                             <div class="date-input-group">
-                                <label class="form-label-small">Đến ngày</label>
+                                <label class="form-label-small" data-i18n="mysqlExt.toDate">Đến ngày</label>
                                 <input type="datetime-local" class="form-input" id="deleteEndDate">
                             </div>
                         </div>
                         <div class="date-quick-btns mt-10">
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('lastWeek')">Tuần trước</button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('lastMonth')">Tháng trước</button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('last3Months')">3 tháng trước</button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('olderThan7Days')">Cũ hơn 7 ngày</button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('olderThan30Days')">Cũ hơn 30 ngày</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('lastWeek')" data-i18n="mysqlExt.lastWeek">Tuần trước</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('lastMonth')" data-i18n="mysqlExt.lastMonth">Tháng trước</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('last3Months')" data-i18n="mysqlExt.last3Months">3 tháng trước</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('olderThan7Days')" data-i18n="mysqlExt.older7Days">Cũ hơn 7 ngày</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('olderThan30Days')" data-i18n="mysqlExt.older30Days">Cũ hơn 30 ngày</button>
                         </div>
                         <div class="info-text mt-10" id="deletePreviewCount">
-                            <span>⏳ Chọn khoảng thời gian để xem số bản ghi sẽ bị xóa</span>
+                            <span>⏳ <span data-i18n="mysqlExt.selectRangeHint">Chọn khoảng thời gian để xem số bản ghi sẽ bị xóa</span></span>
                         </div>
                     </div>
 
                     <div class="mt-20">
                         <button class="btn btn-warning" onclick="confirmDeleteByRange()">
-                            📅 Xóa theo khoảng thời gian
+                            📅 <span data-i18n="mysqlExt.deleteByRange">Xóa theo khoảng thời gian</span>
                         </button>
                         <button class="btn btn-danger" style="background-color: #dc3545; margin-left: 10px;" onclick="clearAllData()">
-                            🗑️ Xóa tất cả dữ liệu
+                            🗑️ <span data-i18n="mysqlExt.deleteAll">Xóa tất cả dữ liệu</span>
                         </button>
                     </div>
                 </div>
@@ -264,11 +286,11 @@
     <!-- Confirmation Modal -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
-            <div class="modal-header" id="modalTitle">Xác nhận xóa dữ liệu</div>
-            <div class="modal-body" id="modalBody">Bạn có chắc chắn muốn xóa dữ liệu cũ không?</div>
+            <div class="modal-header" id="modalTitle" data-i18n="mysqlExt.confirmDelete">Xác nhận xóa dữ liệu</div>
+            <div class="modal-body" id="modalBody" data-i18n="mysqlExt.confirmDeleteMsg">Bạn có chắc chắn muốn xóa dữ liệu cũ không?</div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="modalCancel">Hủy</button>
-                <button class="btn btn-danger" id="modalConfirm">Xác nhận</button>
+                <button class="btn btn-secondary" id="modalCancel" data-i18n="mysqlExt.cancel">Hủy</button>
+                <button class="btn btn-danger" id="modalConfirm" data-i18n="mysqlExt.confirm">Xác nhận</button>
             </div>
         </div>
     </div>
