@@ -325,16 +325,37 @@ function updateStatistics(data) {
 function updateModelInfo(modelInfo) {
     if (!modelInfo) return;
     
+    // Model type names mapping
+    const modelNames = {
+        'prophet': 'Prophet',
+        'randomforest': 'Random Forest',
+        'lstm': 'LSTM'
+    };
+    
+    // Get current model type
+    const currentModelType = modelInfo.currentModelType || 'prophet';
+    const modelTypeName = modelNames[currentModelType] || currentModelType;
+    
+    // Format model name based on type
+    const modelName = `${modelTypeName} (Multi-Sensor)`;
+    
     const updates = {
-        'modelName': modelInfo.name || 'Prophet (Multi-Sensor)',
+        'modelName': modelName,
+        'modelType': modelTypeName,
         'modelStatus': modelInfo.status || 'Chưa huấn luyện',
         'lastTrained': modelInfo.lastTrained || 'Chưa huấn luyện',
-        'modelAccuracy': modelInfo.accuracy ? `${modelInfo.accuracy}%` : '--'
+        'modelAccuracy': modelInfo.accuracy ? `${modelInfo.accuracy.toFixed(2)}%` : '--'
     };
     
     Object.entries(updates).forEach(([id, value]) => {
         const elem = document.getElementById(id);
-        if (elem) elem.value = value;
+        if (elem) {
+            if (elem.tagName === 'INPUT') {
+                elem.value = value;
+            } else {
+                elem.textContent = value;
+            }
+        }
     });
     
     // Update trained models list
@@ -354,6 +375,30 @@ function updateModelInfo(modelInfo) {
         } else {
             trainedModelsDiv.innerHTML = '<span class="tag">Chưa train model nào</span>';
         }
+    }
+    
+    // Update model type badge if exists
+    const modelTypeBadge = document.getElementById('modelTypeBadge');
+    if (modelTypeBadge) {
+        const colors = {
+            'prophet': '#667eea',
+            'randomforest': '#48bb78',
+            'lstm': '#ed8936'
+        };
+        modelTypeBadge.textContent = modelTypeName;
+        modelTypeBadge.style.backgroundColor = colors[currentModelType] || '#667eea';
+    }
+    
+    // Update training count
+    const trainingCountEl = document.getElementById('trainingCount');
+    if (trainingCountEl && modelInfo.trainingCount !== undefined) {
+        trainingCountEl.textContent = modelInfo.trainingCount;
+    }
+    
+    // Update data rows
+    const dataRowsEl = document.getElementById('dataRows');
+    if (dataRowsEl && modelInfo.dataRows !== undefined) {
+        dataRowsEl.textContent = modelInfo.dataRows.toLocaleString();
     }
 }
 

@@ -125,17 +125,19 @@
 
 <!-- 7-Day Weather Forecast -->
 <section class="section">
-    <h2 class="section-title">📅 Dự báo 7 ngày</h2>
-    <p class="section-subtitle">Dự báo thời tiết trong 7 ngày tới từ API thời tiết</p>
-    <div class="forecast-grid-7day" id="forecast7DayGrid">
-        <!-- Will be populated by JavaScript -->
+    <h2 class="section-title">📅 Dự báo 7 ngày (ML Model)</h2>
+    <p class="section-subtitle">Dự báo thời tiết từ model Prophet đã huấn luyện</p>
+    <div class="forecast-scroll-container" id="forecast7DayContainer">
+        <div class="forecast-grid-7day-scroll" id="forecast7DayGrid">
+            <!-- Will be populated by JavaScript -->
+        </div>
     </div>
 </section>
 
 <!-- Today Hourly Forecast -->
 <section class="section">
-    <h2 class="section-title">📈 Dự báo theo giờ (24 giờ)</h2>
-    <p class="section-subtitle">Dự báo thời tiết chi tiết từng giờ trong 24 giờ tới</p>
+    <h2 class="section-title">📈 Dự báo theo giờ - 24 giờ (ML Model)</h2>
+    <p class="section-subtitle">Dự báo chi tiết từng giờ trong 24 giờ tới từ model ML</p>
     <div class="forecast-scroll-container">
         <div class="forecast-grid-hourly" id="forecastHourlyGrid">
             <!-- Will be populated by JavaScript -->
@@ -201,116 +203,155 @@
         dust: []
     };
 
-    // Generate 7-day forecast data
-    function generateForecast7Day() {
-        const forecast = [];
-        const weatherConditions = ['Nắng', 'Mây', 'Mưa', 'Nắng', 'Mây', 'Mưa', 'Nắng'];
-        const icons = ['☀️', '☁️', '🌧️', '☀️', '☁️', '🌧️', '☀️'];
-        const today = new Date();
-        const currentDayOfWeek = today.getDay();
-        let daysUntilMonday = (1 - currentDayOfWeek + 7) % 7;
-        if (daysUntilMonday === 0) daysUntilMonday = 7;
-        const startDate = new Date(today);
-        startDate.setDate(today.getDate() + daysUntilMonday);
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(startDate);
-            date.setDate(startDate.getDate() + i);
-            const dayOfWeek = date.getDay();
-            const dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-            const dayName = dayNames[dayOfWeek];
-            const monthDay = date.toLocaleDateString('vi-VN', { month: '2-digit', day: '2-digit' });
-
-            forecast.push({
-                date: `${dayName}, ${monthDay}`,
-                condition: weatherConditions[i],
-                icon: icons[i],
-                tempMax: 28 + Math.random() * 5,
-                tempMin: 22 + Math.random() * 3,
-                humidity: 65 + Math.random() * 20,
-                windSpeed: 10 + Math.random() * 8,
-                rainChance: Math.random() * 100
-            });
-        }
-        return forecast;
-    }
-
-    function generateForecastHourly() {
-        const forecast = [];
-        const conditions = ['Nắng', 'Mây', 'Mưa nhẹ', 'Nắng'];
-        const icons = ['☀️', '☁️', '🌧️', '☀️'];
-
-        for (let i = 0; i < 24; i++) {
-            const time = new Date();
-            time.setHours(i);
-
-            forecast.push({
-                time: time.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-                hour: i,
-                condition: conditions[Math.floor(Math.random() * conditions.length)],
-                icon: icons[Math.floor(Math.random() * icons.length)],
-                temp: 24 + Math.random() * 6,
-                humidity: 60 + Math.random() * 30,
-                windSpeed: 8 + Math.random() * 10,
-                rainChance: Math.random() * 100
-            });
-        }
-        return forecast;
-    }
-
-    function displayForecast7Day() {
-        const forecast = generateForecast7Day();
+    // Load 7-day forecast from ML model
+    async function loadForecast7Day() {
         const grid = document.getElementById('forecast7DayGrid');
-        grid.innerHTML = '';
-
-        forecast.forEach(day => {
-            const card = document.createElement('div');
-            card.className = 'forecast-card-7day';
-            card.innerHTML = `
-                <div class="forecast-date">${day.date}</div>
-                <div class="forecast-icon" style="font-size: 32px;">${day.icon}</div>
-                <div class="forecast-condition">${day.condition}</div>
-                <div class="forecast-temp">
-                    <span class="temp-max">${day.tempMax.toFixed(0)}°</span>
-                    <span class="temp-min">${day.tempMin.toFixed(0)}°</span>
-                </div>
-                <div class="forecast-details">
-                    <span>💧 ${day.humidity.toFixed(0)}%</span>
-                    <span>💨 ${day.windSpeed.toFixed(0)}km/h</span>
-                </div>
-                <div class="forecast-rain">☔ ${day.rainChance.toFixed(0)}%</div>
-            `;
-            grid.appendChild(card);
-        });
+        grid.innerHTML = '<div class="loading-text">Đang tải dự báo từ ML model...</div>';
+        
+        try {
+            const response = await fetch('/api/ml/predict?hours_ahead=168');
+            if (!response.ok) throw new Error('Failed to fetch forecast');
+            const data = await response.json();
+            
+            if (!data.forecasts || data.forecasts.length === 0) {
+                throw new Error('No forecast data');
+            }
+            
+            // Group forecasts by day
+            const dailyForecasts = {};
+            data.forecasts.forEach(forecast => {
+                const date = forecast.timestamp.split(' ')[0]; // Get date part
+                if (!dailyForecasts[date]) {
+                    dailyForecasts[date] = [];
+                }
+                dailyForecasts[date].push(forecast);
+            });
+            
+            // Calculate daily averages
+            const days = Object.keys(dailyForecasts).slice(0, 7);
+            grid.innerHTML = '';
+            
+            days.forEach((date, index) => {
+                const dayData = dailyForecasts[date];
+                const temps = dayData.map(d => d.temperature);
+                const humidities = dayData.map(d => d.humidity);
+                const rainCount = dayData.filter(d => d.willRain).length;
+                
+                const tempMax = Math.max(...temps);
+                const tempMin = Math.min(...temps);
+                const avgHumidity = humidities.reduce((a, b) => a + b, 0) / humidities.length;
+                const rainChance = (rainCount / dayData.length) * 100;
+                
+                // Get weather icon based on conditions
+                let icon = '☀️';
+                let condition = 'Nắng';
+                if (rainChance > 60) {
+                    icon = '🌧️';
+                    condition = 'Mưa';
+                } else if (rainChance > 30) {
+                    icon = '⛅';
+                    condition = 'Có mây';
+                } else if (avgHumidity > 80) {
+                    icon = '☁️';
+                    condition = 'Nhiều mây';
+                }
+                
+                // Parse date
+                const [day, month, year] = date.split('/');
+                const dateObj = new Date(year, month - 1, day);
+                const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+                const dayName = dayNames[dateObj.getDay()];
+                
+                const card = document.createElement('div');
+                card.className = 'forecast-card-7day';
+                if (index === 0) card.classList.add('today');
+                
+                card.innerHTML = `
+                    <div class="forecast-date">${dayName}, ${day}/${month}</div>
+                    <div class="forecast-icon" style="font-size: 32px;">${icon}</div>
+                    <div class="forecast-condition">${condition}</div>
+                    <div class="forecast-temp">
+                        <span class="temp-max">${tempMax.toFixed(0)}°</span>
+                        <span class="temp-min">${tempMin.toFixed(0)}°</span>
+                    </div>
+                    <div class="forecast-details">
+                        <span>💧 ${avgHumidity.toFixed(0)}%</span>
+                    </div>
+                    <div class="forecast-rain">☔ ${rainChance.toFixed(0)}%</div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            // Add scroll buttons for 7-day forecast
+            addScrollButtonsFor7Day();
+            
+        } catch (error) {
+            console.error('Error loading 7-day forecast:', error);
+            grid.innerHTML = '<div class="error-text">⚠️ Không thể tải dự báo. Vui lòng train model trước.</div>';
+        }
     }
 
-    function displayForecastHourly() {
-        const forecast = generateForecastHourly();
+    // Load hourly forecast from ML model
+    async function loadForecastHourly() {
         const grid = document.getElementById('forecastHourlyGrid');
-        grid.innerHTML = '';
-
-        forecast.forEach((hour, index) => {
-            const card = document.createElement('div');
-            card.className = 'forecast-card-hourly';
-            if (index === new Date().getHours()) {
-                card.classList.add('current-hour');
+        grid.innerHTML = '<div class="loading-text">Đang tải dự báo...</div>';
+        
+        try {
+            const response = await fetch('/api/ml/predict?hours_ahead=24');
+            if (!response.ok) throw new Error('Failed to fetch forecast');
+            const data = await response.json();
+            
+            if (!data.forecasts || data.forecasts.length === 0) {
+                throw new Error('No forecast data');
             }
-            card.innerHTML = `
-                <div class="forecast-hour">${hour.time}</div>
-                <div class="forecast-icon" style="font-size: 28px;">${hour.icon}</div>
-                <div class="forecast-temp-main">${hour.temp.toFixed(0)}°C</div>
-                <div class="forecast-condition-small">${hour.condition}</div>
-                <div class="forecast-details-small">
-                    <span>💧 ${hour.humidity.toFixed(0)}%</span>
-                </div>
-                <div class="forecast-details-small">
-                    <span>💨 ${hour.windSpeed.toFixed(0)}km/h</span>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-
-        addScrollButtons();
+            
+            grid.innerHTML = '';
+            const currentHour = new Date().getHours();
+            
+            data.forecasts.forEach((forecast, index) => {
+                // Parse time from timestamp
+                const timePart = forecast.time || forecast.timestamp.split(' ')[1];
+                const hour = parseInt(timePart.split(':')[0]);
+                
+                // Get weather icon
+                let icon = '☀️';
+                let condition = 'Nắng';
+                if (forecast.willRain) {
+                    icon = '🌧️';
+                    condition = 'Mưa';
+                } else if (forecast.humidity > 80) {
+                    icon = '☁️';
+                    condition = 'Mây';
+                } else if (hour >= 18 || hour < 6) {
+                    icon = '🌙';
+                    condition = 'Đêm';
+                }
+                
+                const card = document.createElement('div');
+                card.className = 'forecast-card-hourly';
+                if (index === 0) card.classList.add('current-hour');
+                
+                card.innerHTML = `
+                    <div class="forecast-hour">${timePart.substring(0, 5)}</div>
+                    <div class="forecast-icon" style="font-size: 28px;">${icon}</div>
+                    <div class="forecast-temp-main">${forecast.temperature.toFixed(0)}°C</div>
+                    <div class="forecast-condition-small">${condition}</div>
+                    <div class="forecast-details-small">
+                        <span>💧 ${forecast.humidity.toFixed(0)}%</span>
+                    </div>
+                    <div class="forecast-details-small">
+                        <span>📊 ${forecast.confidence.toFixed(0)}%</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            addScrollButtons();
+            
+        } catch (error) {
+            console.error('Error loading hourly forecast:', error);
+            grid.innerHTML = '<div class="error-text">⚠️ Không thể tải dự báo theo giờ.</div>';
+        }
     }
 
     function addScrollButtons() {
@@ -334,6 +375,33 @@
         rightBtn.onclick = () => {
             const grid = document.getElementById('forecastHourlyGrid');
             grid.parentElement.scrollBy({ left: 300, behavior: 'smooth' });
+        };
+
+        container.appendChild(leftBtn);
+        container.appendChild(rightBtn);
+    }
+
+    function addScrollButtonsFor7Day() {
+        const container = document.getElementById('forecast7DayContainer');
+        if (!container) return;
+
+        const existingBtn = container.querySelectorAll('.scroll-btn');
+        existingBtn.forEach(btn => btn.remove());
+
+        const leftBtn = document.createElement('button');
+        leftBtn.className = 'scroll-btn scroll-left';
+        leftBtn.innerHTML = '❮';
+        leftBtn.onclick = () => {
+            const grid = document.getElementById('forecast7DayGrid');
+            grid.scrollBy({ left: -200, behavior: 'smooth' });
+        };
+
+        const rightBtn = document.createElement('button');
+        rightBtn.className = 'scroll-btn scroll-right';
+        rightBtn.innerHTML = '❯';
+        rightBtn.onclick = () => {
+            const grid = document.getElementById('forecast7DayGrid');
+            grid.scrollBy({ left: 200, behavior: 'smooth' });
         };
 
         container.appendChild(leftBtn);
@@ -434,11 +502,17 @@
     document.addEventListener('DOMContentLoaded', () => {
         loadLocationSettings();
         loadRealtimeData();
-        displayForecast7Day();
-        displayForecastHourly();
+        loadForecast7Day();
+        loadForecastHourly();
 
         // Auto-refresh every 30 seconds
         setInterval(loadRealtimeData, 30000);
+        
+        // Refresh forecasts every 5 minutes
+        setInterval(() => {
+            loadForecast7Day();
+            loadForecastHourly();
+        }, 300000);
     });
 </script>
 

@@ -13,6 +13,7 @@ import platform
 import os
 import subprocess
 import json
+import math
 from pathlib import Path
 
 from database import get_db
@@ -384,36 +385,41 @@ async def get_system_stats(db: Session = Depends(get_db)):
 
 @router.post("/ml/train")
 async def train_ml_model(
-    model_type: str = Query("prophet", regex="^(prophet|lstm|arima)$"),
-    data_points: int = Query(1000, ge=100, le=10000),
+    model_type: str = Query("prophet", regex="^(prophet|lstm)$"),
+    data_points: int = Query(5000, ge=100, le=50000),
     db: Session = Depends(get_db)
 ):
     """
-    Train ML model for weather forecasting with real Prophet implementation
+    Train ML model for weather forecasting
     
-    - **model_type**: Type of model (prophet is fully implemented, lstm/arima are legacy)
-    - **data_points**: Number of historical data points to use (actual used: available data)
+    - **model_type**: Type of model (prophet, lstm)
+    - **data_points**: Number of historical data points to use
     """
     try:
         # Get training data - order by ascending time (oldest first) for proper time series
-        records = db.query(SensorData).order_by(SensorData.timestamp).limit(data_points).all()
+        records = db.query(SensorData).filter(
+            SensorData.temperature > 0
+        ).order_by(SensorData.timestamp).limit(data_points).all()
         
         if len(records) < 100:
             raise HTTPException(status_code=400, detail="Không đủ dữ liệu để huấn luyện (tối thiểu 100 bản ghi)")
         
-        # Train all models (temperature, humidity, aqi) using Prophet
-        train_result = ml_trainer.train_all_models(records)
+        logger.info(f"Training {model_type} model with {len(records)} records...")
+        
+        # Train model using MLManager
+        train_result = ml_trainer.train_all_models(records, model_type)
         
         # Format response for frontend
         if train_result.get('success'):
             return {
                 'success': True,
+                'model_type': train_result.get('model_type', model_type),
                 'models_trained': train_result.get('models_trained', []),
                 'all_metrics': train_result.get('metrics', {}),
-                'overall_accuracy': train_result.get('accuracy', 0),
-                'data_points_used': train_result.get('data_points', 0),
-                'training_time': f"{train_result.get('time_seconds', 0):.2f}s",
-                'timestamp': train_result.get('timestamp', datetime.now().isoformat())
+                'overall_accuracy': train_result.get('overall_accuracy', 0),
+                'data_points_used': train_result.get('data_points', len(records)),
+                'training_time': f"{train_result.get('training_time', 0):.2f}s",
+                'timestamp': datetime.now().isoformat()
             }
         else:
             raise HTTPException(status_code=400, detail=train_result.get('error', 'Training failed'))
@@ -422,6 +428,8 @@ async def train_ml_model(
         raise
     except Exception as e:
         logger.error(f"ML training error: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -430,24 +438,47 @@ async def get_model_info():
     """Get current ML model information"""
     info = ml_trainer.get_model_info()
     
-    if info['models_available']:
+    return {
+        "current_model_type": info.get('current_model_type', 'prophet'),
+        "models_available": info.get('models_available', []),
+        "training_count": info.get('training_count', 0),
+        "last_trained": info.get('last_trained', 'Chưa huấn luyện'),
+        "last_accuracy": info.get('last_accuracy', 0),
+        "last_data_points": info.get('last_data_points', 0),
+        "status": info.get('status', 'Cần huấn luyện'),
+        "supported_model_types": info.get('supported_model_types', ['prophet', 'lstm'])
+    }
+
+
+@router.get("/ml/training-history")
+async def get_training_history(limit: int = Query(10, ge=1, le=100)):
+    """Get ML training history"""
+    history = ml_trainer.get_training_history(limit)
+    return {
+        "history": history,
+        "total": len(history)
+    }
+
+
+@router.get("/ml/compare-models")
+async def compare_models():
+    """Compare performance of all trained models"""
+    comparison = ml_trainer.compare_models()
+    return comparison
+
+
+@router.post("/ml/set-model")
+async def set_current_model(model_type: str = Query(..., regex="^(prophet|lstm)$")):
+    """Set the current active model for predictions"""
+    success = ml_trainer.set_current_model(model_type)
+    if success:
         return {
-            "models_available": info['models_available'],
-            "training_count": info['training_count'],
-            "last_trained": info.get('last_trained', 'Chưa huấn luyện'),
-            "last_accuracy": info.get('last_accuracy', 0),
-            "last_data_points": info.get('last_data_points', 0),
-            "metrics": info.get('metrics', {}),
-            "status": "Hoạt động" if info['models_available'] else "Cần huấn luyện"
+            "success": True,
+            "message": f"Đã chuyển sang model {model_type}",
+            "current_model_type": model_type
         }
     else:
-        return {
-            "models_available": [],
-            "training_count": 0,
-            "last_trained": "Chưa huấn luyện",
-            "status": "Cần huấn luyện",
-            "message": "Vui lòng huấn luyện mô hình trước"
-        }
+        raise HTTPException(status_code=400, detail=f"Model type {model_type} không hợp lệ")
 
 
 @router.get("/ml/predict")
@@ -534,13 +565,15 @@ async def predict_weather(
                 for p in predictions
             ],
             'modelInfo': {
-                'name': 'Prophet (Multi-Sensor)',
+                'name': f"{model_info.get('current_model_type', 'prophet').title()} (Multi-Sensor)",
+                'currentModelType': model_info.get('current_model_type', 'prophet'),
                 'status': 'Hoạt động' if models_trained else 'Cần huấn luyện',
                 'modelsTrained': models_trained,
                 'lastTrained': model_info.get('last_trained', 'Chưa huấn luyện'),
                 'accuracy': model_info.get('last_accuracy', 0),
                 'dataRows': model_info.get('last_data_points', 0),
-                'trainingCount': model_info.get('training_count', 0)
+                'trainingCount': model_info.get('training_count', 0),
+                'supportedModelTypes': model_info.get('supported_model_types', ['prophet', 'lstm'])
             },
             'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         }
@@ -548,10 +581,13 @@ async def predict_weather(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Prediction error: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def _generate_basic_predictions(latest_data: dict, hours_ahead: int) -> dict:
+def _generate_basic_predictions(latest_data: dict, hours_ahead: int) -> list:
     """Generate basic predictions as fallback when ML models aren't available"""
     predictions = []
     base_time = datetime.now()
@@ -563,10 +599,10 @@ def _generate_basic_predictions(latest_data: dict, hours_ahead: int) -> dict:
     for i in range(1, hours_ahead + 1):
         pred_time = base_time + timedelta(hours=i)
         
-        # Simple predictions with slight variations
-        temp_variation = np.sin(i * 0.3) * 2
-        humidity_variation = np.cos(i * 0.25) * 5
-        pressure_variation = np.sin(i * 0.2) * 1
+        # Simple predictions with slight variations using math module
+        temp_variation = math.sin(i * 0.3) * 2
+        humidity_variation = math.cos(i * 0.25) * 5
+        pressure_variation = math.sin(i * 0.2) * 1
         
         will_rain = humidity + humidity_variation > 80
         confidence = max(50, 90 - i * 1)
@@ -576,17 +612,12 @@ def _generate_basic_predictions(latest_data: dict, hours_ahead: int) -> dict:
             'temperature': round(temp + temp_variation, 1),
             'humidity': round(min(100, max(0, humidity + humidity_variation)), 1),
             'pressure': round(pressure + pressure_variation, 1),
-            'aqi': round(latest_data.get('aqi', 50) + np.random.normal(0, 2), 0),
+            'aqi': round(latest_data.get('aqi', 50) + random.gauss(0, 2), 0),
             'willRain': will_rain,
             'confidence': round(confidence, 1)
         })
     
-    return {
-        'success': True,
-        'predictions': predictions,
-        'models_used': [],
-        'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    }
+    return predictions
 
 
 # ===== Database Management Endpoints =====
@@ -992,42 +1023,54 @@ async def get_database_status():
 
 
 @router.post("/database/test")
-async def test_database_connection(credentials: dict = None):
+async def test_database_connection(request_data: dict):
     """Test database connection with provided credentials"""
     try:
-        from sqlalchemy import create_engine
+        from sqlalchemy import create_engine, text
+        import logging
         
-        if not credentials:
+        logger.info(f"Testing database connection with: {request_data}")
+        
+        host = request_data.get('host', 'localhost')
+        port = request_data.get('port', 3306)
+        user = request_data.get('user', '')
+        password = request_data.get('password', '') or ''
+        db = request_data.get('db', '')
+        
+        # Validate required fields
+        if not host or not user or not db:
             return {
                 "success": False,
-                "message": "No credentials provided"
+                "message": "Missing required fields: host, user, or db"
             }
         
-        host = credentials.get('host', 'localhost')
-        port = credentials.get('port', 3306)
-        user = credentials.get('user', '')
-        password = credentials.get('password', '')
-        db = credentials.get('db', '')
-        
         # Create connection string
-        connection_string = f"mysql+pymysql://{user}:{password}@{host}:{port}/{db}"
+        if password:
+            connection_string = f"mysql+pymysql://{user}:{password}@{host}:{port}/{db}"
+        else:
+            connection_string = f"mysql+pymysql://{user}@{host}:{port}/{db}"
+        
+        logger.info(f"Attempting connection to: {host}:{port}/{db}")
         
         # Try to connect
-        engine = create_engine(connection_string)
+        engine = create_engine(connection_string, echo=False)
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            result = conn.execute(text("SELECT 1"))
+            result.close()
         
         logger.info(f"Database test successful: {host}:{port}/{db}")
         
         return {
             "success": True,
-            "message": "Database connection successful"
+            "message": "Database connection successful",
+            "info": f"Connected to {host}:{port}/{db}"
         }
     except Exception as e:
-        logger.error(f"Database test failed: {e}")
+        error_msg = str(e)
+        logger.error(f"Database test failed: {error_msg}")
         return {
             "success": False,
-            "message": str(e)
+            "message": error_msg
         }
 
 
@@ -1052,6 +1095,79 @@ async def delete_old_data(days: int = Query(7, ge=1, le=365), db: Session = Depe
             "cutoff_date": cutoff_date.strftime("%d/%m/%Y %H:%M:%S"),
             "message": f"Deleted {deleted_count} records older than {days} days"
         }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/database/count-range")
+async def count_records_in_range(
+    start: str = Query(..., description="Start datetime (YYYY-MM-DDTHH:MM)"),
+    end: str = Query(..., description="End datetime (YYYY-MM-DDTHH:MM)"),
+    db: Session = Depends(get_db)
+):
+    """Count records within a specific date range"""
+    try:
+        # Parse datetime strings
+        start_date = datetime.strptime(start, "%Y-%m-%dT%H:%M")
+        end_date = datetime.strptime(end, "%Y-%m-%dT%H:%M")
+        
+        if start_date >= end_date:
+            raise HTTPException(status_code=400, detail="Start date must be before end date")
+        
+        # Count records in range
+        count = db.query(func.count(SensorData.id)).filter(
+            SensorData.timestamp >= start_date,
+            SensorData.timestamp <= end_date
+        ).scalar() or 0
+        
+        return {
+            "success": True,
+            "count": count,
+            "start_date": start_date.strftime("%d/%m/%Y %H:%M:%S"),
+            "end_date": end_date.strftime("%d/%m/%Y %H:%M:%S")
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/database/delete-range")
+async def delete_data_in_range(
+    start: str = Query(..., description="Start datetime (YYYY-MM-DDTHH:MM)"),
+    end: str = Query(..., description="End datetime (YYYY-MM-DDTHH:MM)"),
+    db: Session = Depends(get_db)
+):
+    """Delete records within a specific date range"""
+    try:
+        # Parse datetime strings
+        start_date = datetime.strptime(start, "%Y-%m-%dT%H:%M")
+        end_date = datetime.strptime(end, "%Y-%m-%dT%H:%M")
+        
+        if start_date >= end_date:
+            raise HTTPException(status_code=400, detail="Start date must be before end date")
+        
+        # Delete records in range
+        deleted_count = db.query(SensorData).filter(
+            SensorData.timestamp >= start_date,
+            SensorData.timestamp <= end_date
+        ).delete()
+        
+        db.commit()
+        
+        logger.info(f"Deleted {deleted_count} records from {start_date} to {end_date}")
+        
+        return {
+            "success": True,
+            "deleted_records": deleted_count,
+            "start_date": start_date.strftime("%d/%m/%Y %H:%M:%S"),
+            "end_date": end_date.strftime("%d/%m/%Y %H:%M:%S"),
+            "message": f"Deleted {deleted_count} records from {start_date.strftime('%d/%m/%Y %H:%M')} to {end_date.strftime('%d/%m/%Y %H:%M')}"
+        }
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))

@@ -46,6 +46,17 @@ function initializeMySQLPage() {
             loadTableData();
         });
     }
+
+    // Initialize delete date inputs
+    initDeleteDateInputs();
+
+    // Initialize delete date inputs change event
+    const deleteStartDate = document.getElementById('deleteStartDate');
+    const deleteEndDate = document.getElementById('deleteEndDate');
+    if (deleteStartDate && deleteEndDate) {
+        deleteStartDate.addEventListener('change', previewDeleteCount);
+        deleteEndDate.addEventListener('change', previewDeleteCount);
+    }
 }
 
 // ===== Time Filter Management =====
@@ -411,23 +422,6 @@ async function backupDatabase() {
 }
 
 // ===== Data Cleanup =====
-function confirmDelete() {
-    const selectedRange = document.querySelector('input[name="deleteRange"]:checked');
-    if (!selectedRange) {
-        AppUtils.showToast('Vui lòng chọn khoảng thời gian', 'warning');
-        return;
-    }
-
-    const days = selectedRange.value;
-    const dayText = `${days} ngày`;
-
-    AppUtils.showModal(
-        'Xác nhận xóa dữ liệu',
-        `CẢNH BÁO: Bạn sắp xóa dữ liệu cũ hơn ${dayText} khỏi database. Hành động này KHÔNG THỂ HOÀN TÁC. Bạn có chắc chắn?`,
-        () => deleteOldData(days)
-    );
-}
-
 function clearAllData() {
     AppUtils.showModal(
         'Xác nhận xóa toàn bộ dữ liệu',
@@ -457,6 +451,166 @@ async function deleteOldData(days) {
             AppUtils.showToast(`Đã xóa ${result.deleted_records || 0} bản ghi`, 'success');
             currentPage = 0;
             loadTableData();
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        AppUtils.showToast('Không thể xóa dữ liệu: ' + error.message, 'error');
+    } finally {
+        AppUtils.hideLoading(loading);
+    }
+}
+
+// ===== Custom Date Range Delete Functions =====
+function initDeleteDateInputs() {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    const deleteStartDate = document.getElementById('deleteStartDate');
+    const deleteEndDate = document.getElementById('deleteEndDate');
+    
+    if (deleteStartDate && deleteEndDate) {
+        deleteStartDate.value = formatDateTimeLocal(oneWeekAgo);
+        deleteEndDate.value = formatDateTimeLocal(now);
+        previewDeleteCount();
+    }
+}
+
+function formatDateTimeLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function setDeleteQuickRange(range) {
+    const now = new Date();
+    let startDate, endDate;
+    
+    switch (range) {
+        case 'lastWeek':
+            // Tuần trước (7-14 ngày trước)
+            endDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            startDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+            break;
+        case 'lastMonth':
+            // Tháng trước (30-60 ngày trước)
+            endDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            startDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+            break;
+        case 'last3Months':
+            // 3 tháng trước (90-180 ngày trước)
+            endDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+            break;
+        case 'olderThan7Days':
+            // Cũ hơn 7 ngày (từ đầu đến 7 ngày trước)
+            endDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            startDate = new Date(2020, 0, 1); // Từ 01/01/2020
+            break;
+        case 'olderThan30Days':
+            // Cũ hơn 30 ngày (từ đầu đến 30 ngày trước)
+            endDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            startDate = new Date(2020, 0, 1); // Từ 01/01/2020
+            break;
+        default:
+            return;
+    }
+    
+    const deleteStartDate = document.getElementById('deleteStartDate');
+    const deleteEndDate = document.getElementById('deleteEndDate');
+    
+    if (deleteStartDate && deleteEndDate) {
+        deleteStartDate.value = formatDateTimeLocal(startDate);
+        deleteEndDate.value = formatDateTimeLocal(endDate);
+        previewDeleteCount();
+    }
+}
+
+async function previewDeleteCount() {
+    const startDate = document.getElementById('deleteStartDate').value;
+    const endDate = document.getElementById('deleteEndDate').value;
+    const previewEl = document.getElementById('deletePreviewCount');
+    
+    if (!startDate || !endDate) {
+        previewEl.innerHTML = '<span>⏳ Chọn khoảng thời gian để xem số bản ghi sẽ bị xóa</span>';
+        return;
+    }
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (start >= end) {
+        previewEl.innerHTML = '<span style="color: var(--danger);">⚠️ Ngày bắt đầu phải nhỏ hơn ngày kết thúc</span>';
+        return;
+    }
+    
+    previewEl.innerHTML = '<span>⏳ Đang đếm số bản ghi...</span>';
+    
+    try {
+        const response = await fetch(`/api/database/count-range?start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`);
+        if (!response.ok) throw new Error('Failed to count');
+        const data = await response.json();
+        
+        const count = data.count || 0;
+        previewEl.className = 'info-text mt-10 warning';
+        previewEl.innerHTML = `<span>⚠️ Sẽ xóa <span class="count">${count.toLocaleString()}</span> bản ghi từ <strong>${formatDisplayDate(start)}</strong> đến <strong>${formatDisplayDate(end)}</strong></span>`;
+    } catch (error) {
+        console.error('Count error:', error);
+        previewEl.innerHTML = '<span style="color: var(--danger);">❌ Không thể đếm số bản ghi</span>';
+    }
+}
+
+function formatDisplayDate(date) {
+    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+}
+
+function confirmDeleteByRange() {
+    const startDate = document.getElementById('deleteStartDate').value;
+    const endDate = document.getElementById('deleteEndDate').value;
+    
+    if (!startDate || !endDate) {
+        AppUtils.showToast('Vui lòng chọn khoảng thời gian', 'warning');
+        return;
+    }
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (start >= end) {
+        AppUtils.showToast('Ngày bắt đầu phải nhỏ hơn ngày kết thúc', 'error');
+        return;
+    }
+    
+    AppUtils.showModal(
+        'Xác nhận xóa dữ liệu theo khoảng thời gian',
+        `⚠️ CẢNH BÁO: Bạn sắp xóa dữ liệu từ <strong>${formatDisplayDate(start)}</strong> đến <strong>${formatDisplayDate(end)}</strong>. Hành động này KHÔNG THỂ HOÀN TÁC. Bạn có chắc chắn?`,
+        () => deleteDataByRange(startDate, endDate)
+    );
+}
+
+async function deleteDataByRange(startDate, endDate) {
+    const loading = AppUtils.showLoading(document.querySelector('.content'), true);
+    
+    try {
+        const result = await fetch(`/api/database/delete-range?start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`, { 
+            method: 'DELETE' 
+        }).then(r => {
+            if (!r.ok) throw new Error('Delete failed');
+            return r.json();
+        });
+
+        if (result.success) {
+            AppUtils.showToast(`✅ Đã xóa ${result.deleted_records || 0} bản ghi`, 'success');
+            currentPage = 0;
+            loadTableData();
+            
+            // Reset form
+            document.getElementById('delete7').checked = true;
+            document.getElementById('customDateRange').style.display = 'none';
+            document.getElementById('btnDeleteByRange').style.display = 'none';
+            document.querySelector('.btn-danger[onclick="confirmDelete()"]').style.display = 'inline-block';
         }
     } catch (error) {
         console.error('Delete error:', error);

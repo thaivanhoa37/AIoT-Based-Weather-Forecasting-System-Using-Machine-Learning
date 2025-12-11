@@ -224,24 +224,33 @@
                     </div>
 
                     <div class="form-group mt-20">
-                        <label class="form-label">Chọn khoảng thời gian cần xóa</label>
-                        <div class="form-radio">
-                            <input type="radio" name="deleteRange" value="7" id="delete7" checked>
-                            <label for="delete7">Xóa dữ liệu cũ hơn 7 ngày</label>
+                        <label class="form-label">📅 Chọn khoảng thời gian cần xóa</label>
+                        <div class="date-range-container">
+                            <div class="date-input-group">
+                                <label class="form-label-small">Từ ngày</label>
+                                <input type="datetime-local" class="form-input" id="deleteStartDate">
+                            </div>
+                            <span class="date-separator">→</span>
+                            <div class="date-input-group">
+                                <label class="form-label-small">Đến ngày</label>
+                                <input type="datetime-local" class="form-input" id="deleteEndDate">
+                            </div>
                         </div>
-                        <div class="form-radio">
-                            <input type="radio" name="deleteRange" value="30" id="delete30">
-                            <label for="delete30">Xóa dữ liệu cũ hơn 30 ngày</label>
+                        <div class="date-quick-btns mt-10">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('lastWeek')">Tuần trước</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('lastMonth')">Tháng trước</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('last3Months')">3 tháng trước</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('olderThan7Days')">Cũ hơn 7 ngày</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDeleteQuickRange('olderThan30Days')">Cũ hơn 30 ngày</button>
                         </div>
-                        <div class="form-radio">
-                            <input type="radio" name="deleteRange" value="90" id="delete90">
-                            <label for="delete90">Xóa dữ liệu cũ hơn 90 ngày</label>
+                        <div class="info-text mt-10" id="deletePreviewCount">
+                            <span>⏳ Chọn khoảng thời gian để xem số bản ghi sẽ bị xóa</span>
                         </div>
                     </div>
 
                     <div class="mt-20">
-                        <button class="btn btn-danger" onclick="confirmDelete()">
-                            🗑️ Xóa dữ liệu cũ
+                        <button class="btn btn-warning" onclick="confirmDeleteByRange()">
+                            📅 Xóa theo khoảng thời gian
                         </button>
                         <button class="btn btn-danger" style="background-color: #dc3545; margin-left: 10px;" onclick="clearAllData()">
                             🗑️ Xóa tất cả dữ liệu
@@ -306,6 +315,77 @@
             color: var(--text-secondary);
             margin-bottom: 15px;
             min-height: 30px;
+        }
+
+        /* Date Range Container */
+        .date-range-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .date-input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .date-separator {
+            font-size: 20px;
+            color: var(--text-secondary);
+            padding-bottom: 10px;
+        }
+
+        .form-label-small {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .date-quick-btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(237, 137, 54, 0.3);
+        }
+
+        .info-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 10px;
+            background: rgba(66, 153, 225, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid var(--info);
+        }
+
+        .info-text.warning {
+            background: rgba(237, 137, 54, 0.1);
+            border-left-color: var(--warning);
+        }
+
+        .info-text .count {
+            font-weight: 700;
+            color: var(--danger);
+            font-size: 16px;
         }
 
         .stats-grid {

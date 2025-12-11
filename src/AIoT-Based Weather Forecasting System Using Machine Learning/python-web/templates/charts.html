@@ -174,8 +174,10 @@
             <!-- Statistics Cards -->
             <section class="section">
                 <h2 class="section-title">📈 Thống kê tổng hợp</h2>
-                <div class="stats-grid" id="statsGrid">
-                    <!-- Stats will be populated by JavaScript -->
+                <div class="stats-scroll-container" id="statsContainer">
+                    <div class="stats-grid-scroll" id="statsGrid">
+                        <!-- Stats will be populated by JavaScript -->
+                    </div>
                 </div>
             </section>
         </main>
@@ -471,6 +473,36 @@
                 `;
                 statsGrid.appendChild(statCard);
             });
+            
+            // Add scroll buttons for stats
+            addStatsScrollButtons();
+        }
+        
+        function addStatsScrollButtons() {
+            const container = document.getElementById('statsContainer');
+            if (!container) return;
+
+            const existingBtn = container.querySelectorAll('.scroll-btn');
+            existingBtn.forEach(btn => btn.remove());
+
+            const leftBtn = document.createElement('button');
+            leftBtn.className = 'scroll-btn scroll-left';
+            leftBtn.innerHTML = '❮';
+            leftBtn.onclick = () => {
+                const grid = document.getElementById('statsGrid');
+                grid.scrollBy({ left: -250, behavior: 'smooth' });
+            };
+
+            const rightBtn = document.createElement('button');
+            rightBtn.className = 'scroll-btn scroll-right';
+            rightBtn.innerHTML = '❯';
+            rightBtn.onclick = () => {
+                const grid = document.getElementById('statsGrid');
+                grid.scrollBy({ left: 250, behavior: 'smooth' });
+            };
+
+            container.appendChild(leftBtn);
+            container.appendChild(rightBtn);
         }
 
         // Initialize page

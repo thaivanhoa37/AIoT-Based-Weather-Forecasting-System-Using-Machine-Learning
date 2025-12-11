@@ -735,59 +735,72 @@
                         </div>
 
                         <div class="info-box">
-                            📌 Vị trí được dùng cho dự báo thời tiết và hiển thị bản đồ
+                            📌 Nhập tên địa điểm và lấy tọa độ tự động
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Tên địa điểm</label>
-                            <input type="text" class="form-control" id="locationName" placeholder="Ví dụ: Sài Gòn, TP.HCM">
+                        <!-- Bước 1: Tìm kiếm vị trí -->
+                        <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color);">
+                            <label class="form-label" style="margin-bottom: 12px;">🔍 Bước 1: Tìm kiếm vị trí</label>
+                            
+                            <!-- Tùy chọn: Sử dụng vị trí hiện tại -->
+                            <div style="margin-bottom: 15px;">
+                                <button class="btn-secondary" type="button" onclick="useCurrentLocation()" style="width: 100%; white-space: nowrap;">
+                                    📍 Sử dụng vị trí hiện tại (GPS)
+                                </button>
+                            </div>
+
+                            <!-- Hoặc tìm kiếm theo tên -->
+                            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                                <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+                                <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">HOẶC</span>
+                                <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+                            </div>
+
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" class="form-control" id="locationName" placeholder="VD: Sài Gòn, Hà Nội, Đà Nẵng..." style="flex: 1;">
+                                <button class="btn-secondary" type="button" onclick="getLocationFromName()" style="white-space: nowrap; min-width: 120px;">🔍 Tìm kiếm</button>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Địa chỉ đầy đủ</label>
-                            <input type="text" class="form-control" id="locationAddress" placeholder="Ví dụ: 123 Nguyễn Huệ, Q1, TP.HCM">
-                        </div>
-
-                        <div class="form-row">
+                        <!-- Bước 2: Thông tin chi tiết -->
+                        <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color);">
+                            <label class="form-label" style="margin-bottom: 12px;">📋 Bước 2: Thông tin chi tiết</label>
+                            
                             <div class="form-group">
-                                <label class="form-label">Vĩ độ (Latitude)</label>
-                                <input type="number" class="form-control" id="latitude" placeholder="10.773" step="0.0001">
+                                <label class="form-label">Địa chỉ đầy đủ</label>
+                                <input type="text" class="form-control" id="locationAddress" placeholder="Ví dụ: 123 Nguyễn Huệ, Q1, TP.HCM">
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Kinh độ (Longitude)</label>
-                                <input type="number" class="form-control" id="longitude" placeholder="106.700" step="0.0001">
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Vĩ độ (Latitude)</label>
+                                    <input type="number" class="form-control" id="latitude" placeholder="10.773" step="0.0001" readonly style="background: var(--bg); cursor: not-allowed; opacity: 0.8;">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Kinh độ (Longitude)</label>
+                                    <input type="number" class="form-control" id="longitude" placeholder="106.700" step="0.0001" readonly style="background: var(--bg); cursor: not-allowed; opacity: 0.8;">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Độ cao (m)</label>
+                                    <input type="number" class="form-control" id="altitude" placeholder="0" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Múi giờ</label>
+                                    <select class="form-control" id="timezone">
+                                        <option value="Asia/Ho_Chi_Minh" selected>GMT+7 (Việt Nam)</option>
+                                        <option value="Asia/Bangkok">GMT+7 (Bangkok)</option>
+                                        <option value="Asia/Shanghai">GMT+8 (Shanghai)</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <button class="btn-secondary" type="button" onclick="getDeviceLocation()" style="width: 100%; margin-bottom: 15px;">
-                                📍 Lấy vị trí từ thiết bị (GPS)
-                            </button>
-                        </div>
-
-                        <div class="form-group">
-                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                                <input type="text" class="form-control" id="searchLocationInput" placeholder="VD: Đà Nẵng, Hà Nội, Sài Gòn..." style="flex: 1;">
-                                <button class="btn-secondary" type="button" onclick="searchLocationByName()" style="white-space: nowrap;">🔍 Tìm kiếm</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Độ cao (m)</label>
-                            <input type="number" class="form-control" id="altitude" placeholder="0" step="0.1">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Múi giờ</label>
-                            <select class="form-control" id="timezone">
-                                <option value="Asia/Ho_Chi_Minh" selected>GMT+7 (Việt Nam)</option>
-                                <option value="Asia/Bangkok">GMT+7 (Bangkok)</option>
-                                <option value="Asia/Ho_Chi_Minh">GMT+8 (Shanghai)</option>
-                            </select>
-                        </div>
-
+                        <!-- Bước 3: Lưu -->
                         <div class="btn-container">
-                            <button class="btn-save" onclick="saveLocationSettings()">💾 Lưu vị trí</button>
+                            <button class="btn-save" onclick="saveLocationSettings()">💾 Lưu cài đặt vị trí</button>
                         </div>
                     </div>
 
@@ -801,44 +814,63 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Trạng thái kết nối</label>
+                        <div class="info-box">
+                            💡 Nhập thông tin kết nối MySQL. Nhấn "Kiểm tra" để xác minh kết nối trước khi lưu.
+                        </div>
+
+                        <!-- Trạng thái kết nối -->
+                        <div class="form-group" style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color);">
+                            <label class="form-label">📊 Trạng thái kết nối hiện tại</label>
                             <div style="margin-top: 8px;">
                                 <span class="status-badge" id="dbStatus">
                                     <span class="status-dot"></span>
                                     <span>Đang kiểm tra...</span>
                                 </span>
                             </div>
+                            <div id="dbStatusDetails" style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);"></div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Host</label>
-                            <input type="text" class="form-control" id="mysqlHost" placeholder="localhost" value="localhost">
+                        <!-- Thông tin kết nối -->
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label" style="margin-bottom: 15px;">⚙️ Thông tin kết nối</label>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Host</label>
+                                    <input type="text" class="form-control" id="mysqlHost" placeholder="localhost" value="localhost">
+                                    <div class="form-label-note">VD: localhost, 127.0.0.1, mysql.example.com</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Port</label>
+                                    <input type="number" class="form-control" id="mysqlPort" placeholder="3306" value="3306">
+                                    <div class="form-label-note">Mặc định: 3306</div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" id="mysqlUser" placeholder="root">
+                                <div class="form-label-note">Tên đăng nhập MySQL</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" id="mysqlPass" placeholder="••••••••">
+                                <div class="form-label-note">Mật khẩu (để trống nếu không có)</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Database</label>
+                                <input type="text" class="form-control" id="mysqlDb" placeholder="sensor_data">
+                                <div class="form-label-note">Tên cơ sở dữ liệu</div>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Port</label>
-                            <input type="number" class="form-control" id="mysqlPort" placeholder="3306" value="3306">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Username</label>
-                            <input type="text" class="form-control" id="mysqlUser" placeholder="root">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Password</label>
-                            <input type="password" class="form-control" id="mysqlPass" placeholder="••••••••">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Database</label>
-                            <input type="text" class="form-control" id="mysqlDb" placeholder="sensor_data">
-                        </div>
-
+                        <!-- Nút hành động -->
                         <div class="btn-container">
-                            <button class="btn-save" onclick="saveMysqlSettings()">💾 Lưu MySQL</button>
-                            <button class="btn-secondary" onclick="testMysqlConnection()">🔗 Kiểm tra</button>
+                            <button class="btn-secondary" type="button" onclick="testMysqlConnection()" style="flex: 1;">🔗 Kiểm tra kết nối</button>
+                            <button class="btn-save" type="button" onclick="saveMysqlSettings()" style="flex: 1;">💾 Lưu cài đặt</button>
                         </div>
                     </div>
 
@@ -1026,6 +1058,92 @@
             }
         }
 
+        // Get location from location name
+        async function useCurrentLocation() {
+            if (!navigator.geolocation) {
+                AppUtils.showToast('✗ Trình duyệt không hỗ trợ Geolocation', 'error');
+                return;
+            }
+
+            AppUtils.showToast('📍 Đang lấy vị trí hiện tại...', 'info');
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    // Set coordinates
+                    document.getElementById('latitude').value = lat.toFixed(6);
+                    document.getElementById('longitude').value = lon.toFixed(6);
+                    document.getElementById('altitude').value = (position.coords.altitude || 0).toFixed(1);
+
+                    // Try to get location name from reverse geocoding
+                    try {
+                        const response = await fetch(`/api/location/reverse?lat=${lat}&lon=${lon}`);
+                        const data = await response.json();
+                        
+                        if (data.success && data.location) {
+                            document.getElementById('locationName').value = data.location.name || '';
+                            document.getElementById('locationAddress').value = data.location.address || '';
+                        }
+                    } catch (error) {
+                        console.error('Error reverse geocoding:', error);
+                    }
+
+                    AppUtils.showToast('✓ Đã lấy vị trí hiện tại thành công!', 'success');
+                },
+                (error) => {
+                    let message = 'Lỗi khi lấy vị trí';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            message = 'Bạn đã từ chối quyền truy cập vị trí';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            message = 'Thông tin vị trí không khả dụng';
+                            break;
+                        case error.TIMEOUT:
+                            message = 'Timeout khi lấy vị trí';
+                            break;
+                    }
+                    AppUtils.showToast('✗ ' + message, 'error');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        async function getLocationFromName() {
+            const locationName = document.getElementById('locationName').value.trim();
+            
+            if (!locationName) {
+                AppUtils.showToast('⚠️ Vui lòng nhập tên địa điểm', 'warning');
+                return;
+            }
+
+            try {
+                AppUtils.showToast('🔍 Đang tìm tọa độ...', 'info');
+                const response = await fetch(`/api/location/geocode?name=${encodeURIComponent(locationName)}`);
+                const data = await response.json();
+                
+                if (data.success && data.location) {
+                    document.getElementById('locationAddress').value = data.location.address || locationName;
+                    document.getElementById('latitude').value = data.location.latitude || '';
+                    document.getElementById('longitude').value = data.location.longitude || '';
+                    document.getElementById('altitude').value = data.location.altitude || '';
+                    AppUtils.showToast('✓ Lấy tọa độ thành công!', 'success');
+                } else {
+                    AppUtils.showToast('✗ Không tìm thấy vị trí: ' + (data.message || 'Vui lòng thử lại'), 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                AppUtils.showToast('✗ Lỗi khi lấy tọa độ', 'error');
+            }
+        }
+
         // Save functions
         async function saveDeviceSettings() {
             const settings = {
@@ -1085,27 +1203,73 @@
         }
 
         async function testMysqlConnection() {
+            const host = document.getElementById('mysqlHost').value.trim();
+            const port = document.getElementById('mysqlPort').value.trim();
+            const user = document.getElementById('mysqlUser').value.trim();
+            const password = document.getElementById('mysqlPass').value;
+            const db = document.getElementById('mysqlDb').value.trim();
+
+            // Validate inputs
+            if (!host || !port || !user || !db) {
+                AppUtils.showToast('⚠️ Vui lòng điền đầy đủ thông tin kết nối', 'warning');
+                return;
+            }
+
             try {
+                AppUtils.showToast('🔗 Đang kiểm tra kết nối...', 'info');
+                
+                const requestData = {
+                    host: host,
+                    port: parseInt(port),
+                    user: user,
+                    password: password || '',
+                    db: db
+                };
+                
+                console.log('Sending test request:', requestData);
+                
                 const response = await fetch('/api/database/test', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        host: document.getElementById('mysqlHost').value,
-                        port: parseInt(document.getElementById('mysqlPort').value),
-                        user: document.getElementById('mysqlUser').value,
-                        password: document.getElementById('mysqlPass').value,
-                        db: document.getElementById('mysqlDb').value
-                    })
+                    body: JSON.stringify(requestData)
                 });
+                
+                console.log('Response status:', response.status);
                 const data = await response.json();
+                console.log('Response data:', data);
+                
                 if (data.success) {
-                    AppUtils.showToast('✓ Kết nối MySQL thành công', 'success');
+                    AppUtils.showToast('✓ Kết nối MySQL thành công!', 'success');
+                    updateMysqlStatusDisplay(true, 'Kết nối thành công');
                     checkDatabaseStatus();
                 } else {
-                    AppUtils.showToast('✗ Kết nối thất bại: ' + data.message, 'error');
+                    const errorMsg = data.message || 'Lỗi không xác định';
+                    AppUtils.showToast('✗ Kết nối thất bại: ' + errorMsg, 'error');
+                    updateMysqlStatusDisplay(false, errorMsg);
                 }
             } catch (error) {
-                AppUtils.showToast('✗ Lỗi khi kiểm tra kết nối', 'error');
+                console.error('Error:', error);
+                AppUtils.showToast('✗ Lỗi khi kiểm tra kết nối: ' + error.message, 'error');
+                updateMysqlStatusDisplay(false, 'Lỗi kết nối: ' + error.message);
+            }
+        }
+
+        function updateMysqlStatusDisplay(success, info) {
+            const badge = document.getElementById('dbStatus');
+            const details = document.getElementById('dbStatusDetails');
+            
+            if (success) {
+                badge.innerHTML = '<span class="status-dot"></span><span>✓ Kết nối OK</span>';
+                badge.className = 'status-badge';
+                details.innerHTML = `<strong>✓ Kết nối thành công</strong><br>
+                    🖥️ Host: <code>${document.getElementById('mysqlHost').value}</code><br>
+                    🔌 Port: <code>${document.getElementById('mysqlPort').value}</code><br>
+                    👤 User: <code>${document.getElementById('mysqlUser').value}</code><br>
+                    💾 Database: <code>${document.getElementById('mysqlDb').value}</code>`;
+            } else {
+                badge.innerHTML = '<span class="status-dot"></span><span>✗ Lỗi kết nối</span>';
+                badge.className = 'status-badge error';
+                details.innerHTML = `<strong>✗ Kết nối thất bại</strong><br><code style="font-size: 11px; color: #f56565;">${info}</code>`;
             }
         }
 

@@ -7,34 +7,23 @@
     <title>Huấn luyện Model ML - AIoT Weather</title>
     <link rel="stylesheet" href="/static/css/styles.css">
     <style>
-        /* ML Training Page Styles */
+        /* ML Training Page Styles - Phù hợp với dự án */
         
         .training-hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
-            padding: 40px;
+            padding: 40px 30px;
             border-radius: 16px;
             margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
             position: relative;
             overflow: hidden;
-        }
-
-        .training-hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 300px;
-            height: 300px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
         }
 
         .training-hero h1 {
             font-size: 32px;
             font-weight: 700;
-            margin: 0 0 10px 0;
+            margin: 0 0 15px 0;
             position: relative;
             z-index: 1;
         }
@@ -45,19 +34,20 @@
             margin: 0;
             position: relative;
             z-index: 1;
+            line-height: 1.6;
         }
 
         /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
             margin-bottom: 30px;
         }
 
         .stat-card {
             background: var(--card-bg);
-            border: 2px solid var(--border-color);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 20px;
             text-align: center;
@@ -66,26 +56,26 @@
 
         .stat-card:hover {
             border-color: var(--primary-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transform: translateY(-3px);
+            box-shadow: 0 4px 12px var(--shadow);
+            transform: translateY(-4px);
         }
 
         .stat-icon {
-            font-size: 28px;
-            margin-bottom: 10px;
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
         }
 
         .stat-label {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--text-secondary);
             font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: block;
         }
 
         .stat-value {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--primary-color);
         }
@@ -93,16 +83,17 @@
         /* Form Section */
         .form-section {
             background: var(--card-bg);
-            border: 2px solid var(--border-color);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 25px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px var(--shadow);
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
             margin-bottom: 20px;
         }
 
@@ -127,7 +118,7 @@
             background: var(--card-bg);
             color: var(--text);
             font-size: 14px;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .form-input:focus,
@@ -142,7 +133,7 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            margin-top: 25px;
+            margin-top: 20px;
         }
 
         .btn {
@@ -152,10 +143,11 @@
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
         }
 
@@ -163,63 +155,82 @@
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
             flex: 1;
-            min-width: 200px;
-            justify-content: center;
+            min-width: 180px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
         }
 
         .btn-secondary {
             background: var(--border-color);
             color: var(--text);
-            flex: 1;
-            min-width: 150px;
-            justify-content: center;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
         }
 
         .btn-secondary:hover {
-            background: var(--primary-color);
-            color: white;
+            background: transparent;
+            color: var(--primary-color);
+            border-color: var(--primary-color);
         }
 
         /* Progress Section */
         .progress-card {
             background: var(--card-bg);
-            border: 2px solid var(--border-color);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 25px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             display: none;
+            box-shadow: 0 2px 8px var(--shadow);
         }
 
         .progress-card.active {
             display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .progress-bar {
             width: 100%;
-            height: 10px;
+            height: 12px;
             background: var(--border-color);
             border-radius: 10px;
             overflow: hidden;
             margin-bottom: 15px;
+            border: 1px solid var(--border-color);
         }
 
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
             width: 0%;
-            transition: width 0.3s ease;
+            transition: width 0.4s ease;
+            border-radius: 10px;
         }
 
         .progress-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .progress-text {
@@ -229,7 +240,7 @@
         }
 
         .progress-percent {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
             color: var(--primary-color);
         }
@@ -237,69 +248,77 @@
         /* Steps */
         .steps-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
         }
 
         .step-item {
             background: var(--bg);
-            border: 2px solid var(--border-color);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 15px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            position: relative;
         }
 
         .step-item.active {
             border-color: var(--primary-color);
             background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.02);
         }
 
         .step-item.done {
-            border-color: #48bb78;
+            border-color: var(--accent);
             background: rgba(72, 187, 120, 0.1);
         }
 
         .step-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
+            font-size: 20px;
+            margin-bottom: 6px;
             display: block;
         }
 
         .step-text {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--text);
-            line-height: 1.4;
+            line-height: 1.3;
         }
 
         /* Results */
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
         }
 
         .result-item {
             background: var(--bg);
-            border: 2px solid var(--border-color);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 15px;
             text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px var(--shadow);
         }
 
         .result-label {
             font-size: 11px;
             color: var(--text-secondary);
             font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            display: block;
         }
 
         .result-value {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--primary-color);
         }
@@ -307,37 +326,41 @@
         /* Model Grid */
         .model-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
         }
 
         .model-item {
             background: var(--card-bg);
-            border: 2px solid var(--border-color);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 25px;
             text-align: center;
             transition: all 0.3s ease;
             cursor: pointer;
-            position: relative;
         }
 
         .model-item:hover {
             border-color: var(--primary-color);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
-            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
+            transform: translateY(-4px);
         }
 
         .model-item.selected {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.1));
-            border-color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid var(--primary-color);
         }
 
         .model-icon {
-            font-size: 40px;
+            font-size: 36px;
             margin-bottom: 12px;
             display: block;
+            transition: transform 0.2s ease;
+        }
+
+        .model-item:hover .model-icon {
+            transform: scale(1.1);
         }
 
         .model-name {
@@ -350,8 +373,8 @@
         .model-info {
             font-size: 12px;
             color: var(--text-secondary);
-            line-height: 1.8;
-            margin-bottom: 12px;
+            line-height: 1.6;
+            margin-bottom: 10px;
             text-align: left;
         }
 
@@ -369,24 +392,24 @@
             border-radius: 4px;
             font-size: 10px;
             font-weight: 700;
-            margin-top: 10px;
+            margin-top: 8px;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
+            .training-hero {
+                padding: 30px 20px;
+            }
+
             .training-hero h1 {
                 font-size: 24px;
             }
 
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .steps-grid {
+            .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .model-grid {
+            .form-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -398,23 +421,47 @@
                 width: 100%;
                 min-width: auto;
             }
+
+            .model-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 480px) {
             .training-hero {
-                padding: 25px;
+                padding: 20px 15px;
             }
 
             .training-hero h1 {
                 font-size: 20px;
             }
 
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .training-hero p {
+                font-size: 14px;
             }
 
-            .steps-grid {
+            .stats-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .form-section {
+                padding: 20px 15px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .model-grid {
+                gap: 12px;
+            }
+
+            .model-item {
+                padding: 20px 15px;
+            }
+
+            .model-icon {
+                font-size: 28px;
             }
 
             .results-grid {
@@ -500,140 +547,74 @@
 
         <!-- Content -->
         <main class="content">
-            <!-- Hero Section -->
+        <!-- Hero Section -->
             <section class="section">
                 <div class="training-hero">
-                    <h1>🎯 Huấn luyện Mô hình Dự báo</h1>
-                    <p>Sử dụng Machine Learning để dự báo chính xác thời tiết dựa trên dữ liệu cảm biến IoT</p>
+                    <h1>🚀 Huấn luyện Model Dự báo</h1>
+                    <p>Sử dụng Machine Learning để dự báo chính xác thời tiết từ dữ liệu cảm biến IoT</p>
                 </div>
             </section>
 
-            <!-- Stats Section -->
+            <!-- Quick Stats -->
             <section class="section">
-                <h2 class="section-title">📊 Thống kê hiện tại</h2>
+                <h2 class="section-title">📊 Thông tin hiện tại</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">🤖</div>
-                        <div class="stat-label">Model hiện tại</div>
-                        <div class="stat-value" id="currentModel">Prophet</div>
+                        <div class="stat-label">Model</div>
+                        <div class="stat-value" id="currentModelType">Prophet</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">📅</div>
-                        <div class="stat-label">Train gần nhất</div>
-                        <div class="stat-value" id="lastTrain">--</div>
+                        <div class="stat-label">Huấn luyện gần nhất</div>
+                        <div class="stat-value" id="lastTrainTime">--</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">📈</div>
-                        <div class="stat-label">Độ chính xác</div>
-                        <div class="stat-value" id="accuracy">--</div>
+                        <div class="stat-label">R² Score</div>
+                        <div class="stat-value" id="modelAccuracy">--</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">📁</div>
                         <div class="stat-label">Dữ liệu</div>
-                        <div class="stat-value" id="dataPoints">0 rows</div>
+                        <div class="stat-value" id="trainingDataCount">0</div>
                     </div>
                 </div>
             </section>
 
             <!-- Training Configuration -->
             <section class="section">
-                <h2 class="section-title">⚙️ Cấu hình huấn luyện</h2>
+                <h2 class="section-title">⚙️ Cấu hình & Bắt đầu</h2>
                 <div class="form-section">
                     <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label">🤖 Chọn Model</label>
-                            <select class="form-select" id="modelSelect" onchange="updateCurrentModel()">
-                                <option value="prophet">Prophet (Facebook)</option>
+                            <select class="form-select" id="modelType" onchange="updateCurrentModel()">
+                                <option value="prophet">Prophet (Khuyến nghị)</option>
                                 <option value="lstm">LSTM (Deep Learning)</option>
-                                <option value="arima">ARIMA</option>
-                                <option value="random_forest">Random Forest</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">📊 Số lượng dữ liệu</label>
+                            <input type="number" class="form-input" id="dataPoints" value="5000" min="100" max="20000">
                         </div>
                         <div class="form-group">
                             <label class="form-label">🎯 Biến dự báo</label>
-                            <select class="form-select" id="targetSelect">
-                                <option value="temp">Nhiệt độ (°C)</option>
-                                <option value="humidity">Độ ẩm (%)</option>
-                                <option value="pressure">Áp suất (hPa)</option>
-                                <option value="aqi">AQI</option>
-                                <option value="all">Tất cả biến</option>
+                            <select class="form-select" id="targetSelect" disabled>
+                                <option value="all" selected>Tất cả (nhiệt độ, độ ẩm, AQI, áp suất)</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">📅 Khoảng dữ liệu (ngày)</label>
-                            <input type="number" class="form-input" id="daysInput" value="30" min="7" max="365">
-                        </div>
-                        <div class="form-group">
                             <label class="form-label">🔀 Tỷ lệ Train/Test</label>
-                            <select class="form-select" id="testRatioSelect">
-                                <option value="0.2">80/20 (Khuyến nghị)</option>
-                                <option value="0.15">85/15</option>
-                                <option value="0.25">75/25</option>
+                            <select class="form-select" id="testRatioSelect" disabled>
+                                <option value="0.2" selected>80/20 (Mặc định)</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="btn-group">
-                        <button class="btn btn-primary" onclick="startTraining()">🚀 Bắt đầu huấn luyện</button>
-                        <button class="btn btn-secondary" onclick="validateData()">✓ Kiểm tra dữ liệu</button>
-                        <button class="btn btn-secondary" onclick="previewData()">👁️ Xem trước</button>
-                    </div>
-
-                    <!-- Parameters Info -->
-                    <div style="background: rgba(102, 126, 234, 0.1); border: 2px solid var(--primary-color); border-radius: 10px; padding: 20px; margin-top: 25px;">
-                        <h3 style="margin: 0 0 15px 0; color: var(--primary-color); font-size: 16px;">💡 Hướng dẫn chọn thông số</h3>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 8px;">🤖 Model</div>
-                                <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: var(--text-secondary);">
-                                    <li><strong>Prophet:</strong> Nhanh, dễ dùng (khuyến nghị)</li>
-                                    <li><strong>LSTM:</strong> Độ chính xác cao, chậm hơn</li>
-                                    <li><strong>ARIMA:</strong> Nhẹ, cho dữ liệu tĩnh</li>
-                                    <li><strong>Random Forest:</strong> Cân bằng tốt</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 8px;">📅 Dữ liệu</div>
-                                <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: var(--text-secondary);">
-                                    <li><strong>7-30 ngày:</strong> Dữ liệu nhỏ, nhanh</li>
-                                    <li><strong>30-90 ngày:</strong> Cân bằng (khuyến nghị)</li>
-                                    <li><strong>90-365 ngày:</strong> Dữ liệu lớn, độ chính xác cao</li>
-                                    <li><strong>Tối thiểu 100 bản ghi</strong></li>
-                                </ul>
-                            </div>
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 8px;">🎯 Biến dự báo</div>
-                                <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: var(--text-secondary);">
-                                    <li><strong>Riêng lẻ:</strong> 1 model cho 1 biến</li>
-                                    <li><strong>Tất cả:</strong> 3-4 model cùng lúc (chậm hơn)</li>
-                                    <li><strong>Nhiệt độ:</strong> Phổ biến nhất</li>
-                                    <li><strong>Độ ẩm/Áp suất:</strong> Bổ sung tốt</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Metrics Explanation -->
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-                            <div style="font-weight: 600; margin-bottom: 8px;">📊 Giải thích kết quả huấn luyện</div>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 12px; color: var(--text-secondary);">
-                                <div>
-                                    <strong style="color: var(--primary-color);">RMSE (Root Mean Square Error)</strong>
-                                    <p style="margin: 5px 0 0 0;">Sai số bình phương trung bình. Nhỏ hơn = tốt. Nên < 5 cho nhiệt độ.</p>
-                                </div>
-                                <div>
-                                    <strong style="color: var(--primary-color);">MAE (Mean Absolute Error)</strong>
-                                    <p style="margin: 5px 0 0 0;">Sai số tuyệt đối trung bình. Dễ hiểu hơn RMSE. Nên < 2 cho nhiệt độ.</p>
-                                </div>
-                                <div>
-                                    <strong style="color: var(--primary-color);">R² Score (Coefficient of Determination)</strong>
-                                    <p style="margin: 5px 0 0 0;">Độ phù hợp mô hình (0-1). Gần 1 = tốt. Nên > 0.8.</p>
-                                </div>
-                                <div>
-                                    <strong style="color: var(--primary-color);">Training Time</strong>
-                                    <p style="margin: 5px 0 0 0;">Thời gian huấn luyện. Prophet: 10-30s, LSTM: 1-5 phút.</p>
-                                </div>
-                            </div>
-                        </div>
+                        <button class="btn btn-primary" onclick="startTraining(event)">🚀 Bắt đầu huấn luyện</button>
+                        <button class="btn btn-secondary" onclick="compareModels()">📊 So sánh Models</button>
                     </div>
                 </div>
             </section>
@@ -641,43 +622,26 @@
             <!-- Progress Section -->
             <section class="section" id="progressSection">
                 <h2 class="section-title">📈 Tiến trình huấn luyện</h2>
-                <div class="progress-card" id="progressCard">
+                <div class="progress-card active" id="progressCard">
                     <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
+                        <div class="progress-fill" id="trainingProgress" style="width: 0%;"></div>
                     </div>
                     <div class="progress-info">
-                        <div class="progress-text" id="progressText">Đang chuẩn bị...</div>
+                        <div class="progress-text" id="trainingProgressText">Sẵn sàng huấn luyện</div>
                         <div class="progress-percent" id="progressPercent">0%</div>
                     </div>
 
-                    <!-- Steps -->
-                    <div class="steps-grid" id="stepsContainer">
-                        <div class="step-item" id="step1">
-                            <span class="step-icon">⏳</span>
-                            <span class="step-text">Tải dữ liệu</span>
-                        </div>
-                        <div class="step-item" id="step2">
-                            <span class="step-icon">⏳</span>
-                            <span class="step-text">Xử lý dữ liệu</span>
-                        </div>
-                        <div class="step-item" id="step3">
-                            <span class="step-icon">⏳</span>
-                            <span class="step-text">Xây dựng</span>
-                        </div>
-                        <div class="step-item" id="step4">
-                            <span class="step-icon">⏳</span>
-                            <span class="step-text">Đánh giá</span>
-                        </div>
-                        <div class="step-item" id="step5">
-                            <span class="step-icon">⏳</span>
-                            <span class="step-text">Lưu model</span>
-                        </div>
-                    </div>
+                    <!-- Progress Log -->
+                    <div id="progressLog" class="progress-log" style="max-height: 200px; overflow-y: auto; margin-top: 15px; padding: 10px; background: var(--bg-secondary); border-radius: 8px; font-family: monospace; font-size: 12px;"></div>
 
                     <!-- Results -->
-                    <div id="resultsSection" style="display: none; margin-top: 25px;">
-                        <h3 style="margin-bottom: 15px; color: var(--text);">✅ Kết quả huấn luyện</h3>
+                    <div id="resultsSection" style="display: none; margin-top: 20px;">
+                        <h3 style="margin-bottom: 15px; color: var(--text); font-size: 15px;">✅ Kết quả huấn luyện</h3>
                         <div class="results-grid">
+                            <div class="result-item">
+                                <div class="result-label">Model Type</div>
+                                <div class="result-value" id="trainedModelType">--</div>
+                            </div>
                             <div class="result-item">
                                 <div class="result-label">RMSE</div>
                                 <div class="result-value" id="rmseValue">--</div>
@@ -687,8 +651,12 @@
                                 <div class="result-value" id="maeValue">--</div>
                             </div>
                             <div class="result-item">
-                                <div class="result-label">R² Score</div>
+                                <div class="result-label">R²</div>
                                 <div class="result-value" id="r2Value">--</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Độ chính xác</div>
+                                <div class="result-value" id="accuracyValue">--</div>
                             </div>
                             <div class="result-item">
                                 <div class="result-label">Thời gian</div>
@@ -701,9 +669,10 @@
 
             <!-- Model Selection -->
             <section class="section">
-                <h2 class="section-title">🤖 Các Model có sẵn</h2>
+                <h2 class="section-title">🤖 Các Model hỗ trợ</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;">So sánh các model và chọn model phù hợp với nhu cầu của bạn.</p>
                 <div class="model-grid">
-                    <div class="model-item" onclick="selectModel('prophet')" id="model-prophet">
+                    <div class="model-item selected" onclick="selectModel('prophet')" id="model-prophet">
                         <span class="model-icon">📈</span>
                         <div class="model-name">Prophet</div>
                         <div class="model-info">
@@ -711,7 +680,6 @@
                             <div><span>Tốc độ:</span> <span>⭐⭐⭐⭐⭐</span></div>
                             <div><span>Phức tạp:</span> <span>⭐⭐</span></div>
                         </div>
-                        <button class="btn btn-secondary" style="width: 100%; margin-top: 15px;">Chọn</button>
                     </div>
 
                     <div class="model-item" onclick="selectModel('lstm')" id="model-lstm">
@@ -722,29 +690,6 @@
                             <div><span>Tốc độ:</span> <span>⭐⭐⭐</span></div>
                             <div><span>Phức tạp:</span> <span>⭐⭐⭐⭐⭐</span></div>
                         </div>
-                        <button class="btn btn-secondary" style="width: 100%; margin-top: 15px;">Chọn</button>
-                    </div>
-
-                    <div class="model-item" onclick="selectModel('arima')" id="model-arima">
-                        <span class="model-icon">📊</span>
-                        <div class="model-name">ARIMA</div>
-                        <div class="model-info">
-                            <div><span>Độ chính xác:</span> <span>⭐⭐⭐</span></div>
-                            <div><span>Tốc độ:</span> <span>⭐⭐⭐⭐⭐</span></div>
-                            <div><span>Phức tạp:</span> <span>⭐⭐</span></div>
-                        </div>
-                        <button class="btn btn-secondary" style="width: 100%; margin-top: 15px;">Chọn</button>
-                    </div>
-
-                    <div class="model-item" onclick="selectModel('random_forest')" id="model-random_forest">
-                        <span class="model-icon">🌳</span>
-                        <div class="model-name">Random Forest</div>
-                        <div class="model-info">
-                            <div><span>Độ chính xác:</span> <span>⭐⭐⭐⭐</span></div>
-                            <div><span>Tốc độ:</span> <span>⭐⭐⭐⭐</span></div>
-                            <div><span>Phức tạp:</span> <span>⭐⭐⭐</span></div>
-                        </div>
-                        <button class="btn btn-secondary" style="width: 100%; margin-top: 15px;">Chọn</button>
                     </div>
                 </div>
             </section>
@@ -756,6 +701,7 @@
 
     <!-- Scripts -->
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/ml-training.js"></script>
     <script>
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -763,7 +709,75 @@
             setupHamburger();
             updateClock();
             setInterval(updateClock, 1000);
+            
+            // Load ML Training page data
+            loadMLInfo();
         });
+        
+        // Load ML model info
+        async function loadMLInfo() {
+            try {
+                const response = await fetch('/api/ml/model-info');
+                if (!response.ok) throw new Error('API Error');
+                const modelInfo = await response.json();
+                
+                // Model names mapping
+                const modelNames = {
+                    'prophet': 'Prophet',
+                    'lstm': 'LSTM'
+                };
+                
+                // Update current model type
+                const currentModelTypeEl = document.getElementById('currentModelType');
+                if (currentModelTypeEl && modelInfo.current_model_type) {
+                    currentModelTypeEl.textContent = modelNames[modelInfo.current_model_type] || modelInfo.current_model_type;
+                }
+                
+                // Update last train time
+                const lastTrainTimeEl = document.getElementById('lastTrainTime');
+                if (lastTrainTimeEl) {
+                    if (modelInfo.last_trained) {
+                        const date = new Date(modelInfo.last_trained);
+                        lastTrainTimeEl.textContent = date.toLocaleString('vi-VN');
+                    } else {
+                        lastTrainTimeEl.textContent = 'Chưa huấn luyện';
+                    }
+                }
+                
+                // Update training data count
+                const trainingDataCountEl = document.getElementById('trainingDataCount');
+                if (trainingDataCountEl) {
+                    trainingDataCountEl.textContent = (modelInfo.last_data_points || 0).toLocaleString() + ' rows';
+                }
+                
+                // Update model accuracy
+                const modelAccuracyEl = document.getElementById('modelAccuracy');
+                if (modelAccuracyEl) {
+                    const accuracy = modelInfo.last_accuracy || 0;
+                    modelAccuracyEl.textContent = accuracy > 0 ? `${accuracy.toFixed(2)}%` : '--';
+                    
+                    // Color code accuracy
+                    if (accuracy >= 85) {
+                        modelAccuracyEl.style.color = '#51cf66';
+                    } else if (accuracy >= 70) {
+                        modelAccuracyEl.style.color = '#ffd43b';
+                    } else if (accuracy > 0) {
+                        modelAccuracyEl.style.color = '#ff6b6b';
+                    }
+                }
+                
+                // Update model type selector
+                const modelTypeSelect = document.getElementById('modelType');
+                if (modelTypeSelect && modelInfo.current_model_type) {
+                    modelTypeSelect.value = modelInfo.current_model_type;
+                    updateCurrentModel();
+                }
+                
+                console.log('ML Info loaded:', modelInfo);
+            } catch (error) {
+                console.error('Error loading ML info:', error);
+            }
+        }
 
         function initTheme() {
             const themeToggle = document.getElementById('themeToggle');
@@ -800,77 +814,26 @@
         }
 
         function updateCurrentModel() {
-            const model = document.getElementById('modelSelect').value;
-            document.getElementById('currentModel').textContent = model.charAt(0).toUpperCase() + model.slice(1);
+            const model = document.getElementById('modelType').value;
+            const modelNames = {
+                'prophet': 'Prophet',
+                'lstm': 'LSTM'
+            };
+            document.getElementById('currentModelType').textContent = modelNames[model] || model;
+            
+            // Update selected state in model grid
+            document.querySelectorAll('.model-item').forEach(el => el.classList.remove('selected'));
+            const modelEl = document.getElementById('model-' + model);
+            if (modelEl) modelEl.classList.add('selected');
         }
 
         function selectModel(model) {
-            document.getElementById('modelSelect').value = model;
+            document.getElementById('modelType').value = model;
             updateCurrentModel();
             
-            // Update selected state
-            document.querySelectorAll('.model-item').forEach(el => el.classList.remove('selected'));
-            document.getElementById('model-' + model).classList.add('selected');
-            
             if (typeof AppUtils !== 'undefined') {
-                AppUtils.showToast(`✅ Đã chọn model ${model.toUpperCase()}`, 'success');
-            }
-        }
-
-        async function startTraining() {
-            const progressCard = document.getElementById('progressCard');
-            const resultsSection = document.getElementById('resultsSection');
-            
-            progressCard.classList.add('active');
-            resultsSection.style.display = 'none';
-            
-            // Reset steps
-            document.querySelectorAll('.step-item').forEach(el => {
-                el.classList.remove('active', 'done');
-            });
-            
-            const steps = [
-                { progress: 20, text: 'Tải dữ liệu từ database...', step: 'step1', duration: 2000 },
-                { progress: 40, text: 'Xử lý và làm sạch dữ liệu...', step: 'step2', duration: 2000 },
-                { progress: 60, text: 'Xây dựng mô hình...', step: 'step3', duration: 2500 },
-                { progress: 80, text: 'Đánh giá hiệu suất...', step: 'step4', duration: 1500 },
-                { progress: 100, text: 'Lưu mô hình thành công!', step: 'step5', duration: 1000 }
-            ];
-            
-            for (const s of steps) {
-                document.getElementById(s.step).classList.add('active');
-                await new Promise(r => setTimeout(r, s.duration));
-                document.getElementById(s.step).classList.remove('active');
-                document.getElementById(s.step).classList.add('done');
-                updateProgress(s.progress, s.text);
-            }
-            
-            resultsSection.style.display = 'block';
-            showResults();
-        }
-
-        function updateProgress(progress, text) {
-            document.getElementById('progressFill').style.width = progress + '%';
-            document.getElementById('progressPercent').textContent = progress + '%';
-            document.getElementById('progressText').textContent = text;
-        }
-
-        function showResults() {
-            document.getElementById('rmseValue').textContent = (Math.random() * 2.5 + 0.5).toFixed(2);
-            document.getElementById('maeValue').textContent = (Math.random() * 1.5 + 0.3).toFixed(2);
-            document.getElementById('r2Value').textContent = (Math.random() * 0.1 + 0.85).toFixed(3);
-            document.getElementById('timeValue').textContent = (Math.random() * 3 + 2).toFixed(1) + ' sec';
-        }
-
-        function validateData() {
-            if (typeof AppUtils !== 'undefined') {
-                AppUtils.showToast('✅ Dữ liệu hợp lệ và sẵn sàng', 'success');
-            }
-        }
-
-        function previewData() {
-            if (typeof AppUtils !== 'undefined') {
-                AppUtils.showToast('👁️ Đang tải xem trước dữ liệu...', 'info');
+                const modelNames = { 'prophet': 'Prophet', 'lstm': 'LSTM' };
+                AppUtils.showToast(`✅ Đã chọn model ${modelNames[model]}`, 'success');
             }
         }
     </script>
