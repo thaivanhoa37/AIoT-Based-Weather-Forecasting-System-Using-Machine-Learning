@@ -3,10 +3,10 @@
   "node1_id": "NODE_001",
   "node2_id": "NODE_002",
   "location": {
-    "name": "Đà Nẵng",
-    "address": "",
-    "latitude": null,
-    "longitude": null,
+    "name": "Phường Ngũ Hành Sơn, Tp Đà Nẵng",
+    "address": "Phường Ngũ Hành Sơn, Tp Đà Nẵng, Việt Nam",
+    "latitude": 16.010798,
+    "longitude": 108.253178,
     "altitude": null,
     "timezone": "Asia/Ho_Chi_Minh"
   },

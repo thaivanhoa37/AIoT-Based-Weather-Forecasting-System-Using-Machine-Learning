@@ -947,6 +947,35 @@ async def get_system_temperature():
         }
 
 
+# Path to Vietnam Location JSON file
+VIETNAM_LOCATION_FILE = Path(__file__).parent / "VietNam_Localtion.json"
+
+@router.get("/locations/vietnam")
+async def get_vietnam_locations():
+    """Get list of provinces and wards from local JSON file"""
+    try:
+        if VIETNAM_LOCATION_FILE.exists():
+            with open(VIETNAM_LOCATION_FILE, 'r', encoding='utf-8') as f:
+                locations = json.load(f)
+            return {
+                "success": True,
+                "data": locations
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Location file not found",
+                "data": []
+            }
+    except Exception as e:
+        logger.error(f"Error loading Vietnam locations: {e}")
+        return {
+            "success": False,
+            "message": str(e),
+            "data": []
+        }
+
+
 @router.get("/settings")
 async def get_settings():
     """Get system settings"""
