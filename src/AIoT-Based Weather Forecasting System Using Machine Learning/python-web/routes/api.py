@@ -976,6 +976,120 @@ async def get_vietnam_locations():
         }
 
 
+# Path to .env file
+ENV_FILE = Path(__file__).parent.parent / ".env"
+
+def load_env_settings():
+    """Load settings from .env file"""
+    env_settings = {}
+    try:
+        if ENV_FILE.exists():
+            with open(ENV_FILE, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        env_settings[key.strip()] = value.strip()
+    except Exception as e:
+        logger.error(f"Error loading .env: {e}")
+    return env_settings
+
+def save_env_settings(settings: dict):
+    """Save settings to .env file"""
+    try:
+        # Read existing file to preserve comments and structure
+        lines = []
+        if ENV_FILE.exists():
+            with open(ENV_FILE, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+        
+        # Update values
+        updated_keys = set()
+        new_lines = []
+        for line in lines:
+            stripped = line.strip()
+            if stripped and not stripped.startswith('#') and '=' in stripped:
+                key = stripped.split('=', 1)[0].strip()
+                if key in settings:
+                    new_lines.append(f"{key}={settings[key]}\n")
+                    updated_keys.add(key)
+                else:
+                    new_lines.append(line)
+            else:
+                new_lines.append(line)
+        
+        # Add new keys that weren't in the file
+        for key, value in settings.items():
+            if key not in updated_keys:
+                new_lines.append(f"{key}={value}\n")
+        
+        # Write back
+        with open(ENV_FILE, 'w', encoding='utf-8') as f:
+            f.writelines(new_lines)
+        
+        return True
+    except Exception as e:
+        logger.error(f"Error saving .env: {e}")
+        return False
+
+
+@router.get("/env-settings")
+async def get_env_settings():
+    """Get database settings from .env file"""
+    try:
+        env = load_env_settings()
+        return {
+            "success": True,
+            "data": {
+                "DB_HOST": env.get("DB_HOST", "localhost"),
+                "DB_PORT": env.get("DB_PORT", "3306"),
+                "DB_USER": env.get("DB_USER", "root"),
+                "DB_PASSWORD": env.get("DB_PASSWORD", ""),
+                "DB_NAME": env.get("DB_NAME", "weather_forecasting"),
+                "APP_HOST": env.get("APP_HOST", "0.0.0.0"),
+                "APP_PORT": env.get("APP_PORT", "8000"),
+                "APP_DEBUG": env.get("APP_DEBUG", "True")
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting env settings: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+@router.post("/env-settings")
+async def update_env_settings(settings: dict):
+    """Update database settings in .env file"""
+    try:
+        # Only allow specific keys to be updated
+        allowed_keys = ["DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"]
+        filtered_settings = {k: v for k, v in settings.items() if k in allowed_keys}
+        
+        if not filtered_settings:
+            return {
+                "success": False,
+                "message": "Không có cài đặt hợp lệ để cập nhật"
+            }
+        
+        if save_env_settings(filtered_settings):
+            return {
+                "success": True,
+                "message": "Đã cập nhật file .env. Cần khởi động lại server để áp dụng thay đổi.",
+                "restart_required": True,
+                "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            }
+        else:
+            raise Exception("Failed to save .env file")
+    except Exception as e:
+        logger.error(f"Error updating env settings: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
 @router.get("/settings")
 async def get_settings():
     """Get system settings"""
@@ -1146,14 +1260,15 @@ async def backup_database():
         }
 
 
-@router.post("/database/status")
+@router.get("/database/status")
 async def get_database_status():
     """Check database connection status"""
     try:
         # Try to make a simple database query
         from database import SessionLocal
+        from sqlalchemy import text
         db = SessionLocal()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db.close()
         
         return {

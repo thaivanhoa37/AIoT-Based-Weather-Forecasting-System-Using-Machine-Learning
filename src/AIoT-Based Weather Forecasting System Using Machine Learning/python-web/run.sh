@@ -50,10 +50,10 @@ fi
 echo ""
 echo "⚙️  Configuration:"
 echo "   Host:     0.0.0.0"
-echo "   Port:     3000"
-echo "   App:      http://localhost:3000"
-echo "   Docs:     http://localhost:3000/docs"
-echo "   ReDoc:    http://localhost:3000/redoc"
+echo "   Port:     8000"
+echo "   App:      http://localhost:8000"
+echo "   Docs:     http://localhost:8000/docs"
+echo "   ReDoc:    http://localhost:8000/redoc"
 echo ""
 echo "════════════════════════════════════════════════════════════"
 echo "🚀 Starting server... (Press Ctrl+C to stop)"
@@ -61,4 +61,4 @@ echo "════════════════════════�
 echo ""
 
 # Run the application
-python3 -m uvicorn main:app --host 0.0.0.0 --port 3000 --reload
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
