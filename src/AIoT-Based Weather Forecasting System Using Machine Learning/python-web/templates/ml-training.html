@@ -468,6 +468,68 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        /* Auto-Training Scheduler Styles */
+        .auto-train-status {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator .status-dot.on {
+            background: #48bb78;
+            box-shadow: 0 0 10px rgba(72, 187, 120, 0.5);
+        }
+
+        .status-indicator .status-dot.off {
+            background: #a0aec0;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-indicator .status-text {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .auto-train-info .info-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 10px 15px;
+            background: rgba(66, 153, 225, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid var(--info);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(237, 137, 54, 0.3);
+        }
     </style>
 </head>
 
@@ -693,6 +755,75 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Auto Training Scheduler -->
+            <section class="section">
+                <h2 class="section-title">⏰ Tự động huấn luyện (Auto-Training)</h2>
+                <div class="form-section">
+                    <div class="auto-train-status" id="autoTrainStatus">
+                        <div class="status-indicator" id="autoTrainIndicator">
+                            <span class="status-dot off"></span>
+                            <span class="status-text">Đang tải...</span>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label class="form-label">🔄 Chu kỳ huấn luyện</label>
+                            <select class="form-select" id="autoTrainInterval">
+                                <option value="1">Mỗi 1 ngày</option>
+                                <option value="3">Mỗi 3 ngày</option>
+                                <option value="7" selected>Mỗi 7 ngày (Khuyến nghị)</option>
+                                <option value="14">Mỗi 14 ngày</option>
+                                <option value="30">Mỗi 30 ngày</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">🕐 Giờ chạy</label>
+                            <select class="form-select" id="autoTrainHour">
+                                <option value="0">00:00 (Nửa đêm)</option>
+                                <option value="2" selected>02:00 (Khuyến nghị)</option>
+                                <option value="4">04:00</option>
+                                <option value="6">06:00</option>
+                                <option value="12">12:00 (Trưa)</option>
+                                <option value="18">18:00 (Chiều)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">🤖 Model sử dụng</label>
+                            <select class="form-select" id="autoTrainModel">
+                                <option value="prophet" selected>Prophet</option>
+                                <option value="lstm">LSTM</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">📊 Số lượng dữ liệu</label>
+                            <input type="number" class="form-input" id="autoTrainDataPoints" value="10000" min="1000" max="20000">
+                        </div>
+                    </div>
+
+                    <div class="auto-train-info" id="autoTrainInfo" style="margin-top: 15px;">
+                        <div class="info-text">
+                            <span>📅 Lần huấn luyện tiếp theo: <strong id="nextTrainTime">--</strong></span>
+                        </div>
+                        <div class="info-text" style="margin-top: 8px;">
+                            <span>📝 Lần huấn luyện cuối: <strong id="lastAutoTrainTime">--</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="btn-group" style="margin-top: 20px;">
+                        <button class="btn btn-primary" id="btnToggleAutoTrain" onclick="toggleAutoTrain()">
+                            ▶️ Bật Auto-Training
+                        </button>
+                        <button class="btn btn-secondary" onclick="saveAutoTrainSettings()">
+                            💾 Lưu cài đặt
+                        </button>
+                        <button class="btn btn-warning" onclick="runAutoTrainNow()">
+                            ⚡ Chạy ngay
+                        </button>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -836,6 +967,156 @@
                 AppUtils.showToast(`✅ Đã chọn model ${modelNames[model]}`, 'success');
             }
         }
+
+        // ===== Auto-Training Functions =====
+        let autoTrainEnabled = false;
+
+        async function loadAutoTrainSettings() {
+            try {
+                const response = await fetch('/api/ml/auto-train/settings');
+                if (!response.ok) throw new Error('Failed to load settings');
+                const data = await response.json();
+                
+                autoTrainEnabled = data.enabled || false;
+                
+                // Update UI
+                document.getElementById('autoTrainInterval').value = data.interval_days || 7;
+                document.getElementById('autoTrainHour').value = data.hour || 2;
+                document.getElementById('autoTrainModel').value = data.model_type || 'prophet';
+                document.getElementById('autoTrainDataPoints').value = data.data_points || 10000;
+                
+                updateAutoTrainStatus();
+                updateNextTrainTime();
+                
+                if (data.last_auto_train) {
+                    document.getElementById('lastAutoTrainTime').textContent = data.last_auto_train;
+                } else {
+                    document.getElementById('lastAutoTrainTime').textContent = 'Chưa có';
+                }
+            } catch (error) {
+                console.error('Error loading auto-train settings:', error);
+                updateAutoTrainStatus();
+            }
+        }
+
+        function updateAutoTrainStatus() {
+            const indicator = document.getElementById('autoTrainIndicator');
+            const btn = document.getElementById('btnToggleAutoTrain');
+            
+            if (autoTrainEnabled) {
+                indicator.innerHTML = `
+                    <span class="status-dot on"></span>
+                    <span class="status-text">🟢 Auto-Training đang BẬT</span>
+                `;
+                btn.innerHTML = '⏹️ Tắt Auto-Training';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-danger');
+            } else {
+                indicator.innerHTML = `
+                    <span class="status-dot off"></span>
+                    <span class="status-text">⚪ Auto-Training đang TẮT</span>
+                `;
+                btn.innerHTML = '▶️ Bật Auto-Training';
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-primary');
+            }
+        }
+
+        function updateNextTrainTime() {
+            if (!autoTrainEnabled) {
+                document.getElementById('nextTrainTime').textContent = 'Không có (đã tắt)';
+                return;
+            }
+            
+            const intervalDays = parseInt(document.getElementById('autoTrainInterval').value);
+            const hour = parseInt(document.getElementById('autoTrainHour').value);
+            
+            const now = new Date();
+            const nextTrain = new Date(now);
+            nextTrain.setDate(nextTrain.getDate() + intervalDays);
+            nextTrain.setHours(hour, 0, 0, 0);
+            
+            const formatDate = (d) => {
+                return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:00`;
+            };
+            
+            document.getElementById('nextTrainTime').textContent = formatDate(nextTrain);
+        }
+
+        async function toggleAutoTrain() {
+            autoTrainEnabled = !autoTrainEnabled;
+            await saveAutoTrainSettings();
+            updateAutoTrainStatus();
+            updateNextTrainTime();
+        }
+
+        async function saveAutoTrainSettings() {
+            const settings = {
+                enabled: autoTrainEnabled,
+                interval_days: parseInt(document.getElementById('autoTrainInterval').value),
+                hour: parseInt(document.getElementById('autoTrainHour').value),
+                model_type: document.getElementById('autoTrainModel').value,
+                data_points: parseInt(document.getElementById('autoTrainDataPoints').value)
+            };
+            
+            try {
+                const response = await fetch('/api/ml/auto-train/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                
+                if (!response.ok) throw new Error('Failed to save settings');
+                
+                updateNextTrainTime();
+                AppUtils.showToast('✅ Đã lưu cài đặt Auto-Training', 'success');
+            } catch (error) {
+                console.error('Error saving auto-train settings:', error);
+                AppUtils.showToast('❌ Lỗi khi lưu cài đặt: ' + error.message, 'error');
+            }
+        }
+
+        async function runAutoTrainNow() {
+            const modelType = document.getElementById('autoTrainModel').value;
+            const dataPoints = document.getElementById('autoTrainDataPoints').value;
+            
+            AppUtils.showToast('🚀 Đang bắt đầu huấn luyện...', 'info');
+            
+            try {
+                const response = await fetch(`/api/ml/train?model_type=${modelType}&data_points=${dataPoints}`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) throw new Error('Training failed');
+                const result = await response.json();
+                
+                if (result.success) {
+                    AppUtils.showToast(`✅ Huấn luyện hoàn tất! R² Score: ${(result.accuracy * 100).toFixed(2)}%`, 'success');
+                    
+                    // Update last auto train time
+                    const now = new Date();
+                    const formatDate = (d) => {
+                        return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+                    };
+                    document.getElementById('lastAutoTrainTime').textContent = formatDate(now);
+                    
+                    // Reload model info
+                    if (typeof loadMLTrainingPage === 'function') {
+                        loadMLTrainingPage();
+                    }
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error running auto-train:', error);
+                AppUtils.showToast('❌ Lỗi huấn luyện: ' + error.message, 'error');
+            }
+        }
+
+        // Load auto-train settings on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadAutoTrainSettings, 500);
+        });
     </script>
 </body>
 
