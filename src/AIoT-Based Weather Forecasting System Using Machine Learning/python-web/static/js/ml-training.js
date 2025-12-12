@@ -181,6 +181,12 @@ async function startTraining(event) {
         
         addProgressLog(`⏱️ Thời gian: ${result.training_time}`, 'info');
         addProgressLog(`📝 Dữ liệu sử dụng: ${result.data_points_used} bản ghi`, 'info');
+        if (result.sensor_records) {
+            addProgressLog(`   → Sensor data: ${result.sensor_records} records`, 'info');
+        }
+        if (result.weather_records) {
+            addProgressLog(`   → Weather API: ${result.weather_records} records`, 'info');
+        }
         
         AppUtils.showToast(`Huấn luyện ${modelNames[result.model_type || modelType]} thành công!`, 'success');
         

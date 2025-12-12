@@ -831,12 +831,12 @@
                             <div class="settings-card-icon">💾</div>
                             <div>
                                 <div class="settings-card-title" data-i18n="settingsExt.mysqlConfig">Kết nối MySQL</div>
-                                <div class="settings-card-subtitle" data-i18n="settingsExt.mysqlSubtitle">Cơ sở dữ liệu</div>
+                                <div class="settings-card-subtitle" data-i18n="settingsExt.mysqlSubtitle">Cơ sở dữ liệu (.env)</div>
                             </div>
                         </div>
 
                         <div class="info-box">
-                            💡 <span data-i18n="settingsExt.mysqlHint">Nhập thông tin kết nối MySQL. Nhấn "Kiểm tra" để xác minh kết nối trước khi lưu.</span>
+                            💡 <span data-i18n="settingsExt.mysqlHint">Thông tin kết nối được lưu trong file .env. Nhấn "Kiểm tra" để xác minh kết nối trước khi lưu.</span>
                         </div>
 
                         <!-- Trạng thái kết nối -->
@@ -851,47 +851,52 @@
                             <div id="dbStatusDetails" style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);"></div>
                         </div>
 
-                        <!-- Thông tin kết nối -->
+                        <!-- Thông tin kết nối từ .env -->
                         <div style="margin-bottom: 20px;">
-                            <label class="form-label" style="margin-bottom: 15px;">⚙️ <span data-i18n="settingsExt.connectionInfo">Thông tin kết nối</span></label>
+                            <label class="form-label" style="margin-bottom: 15px;">⚙️ <span data-i18n="settingsExt.connectionInfo">Thông tin kết nối (từ .env)</span></label>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" data-i18n="settingsExt.host">Host</label>
+                                    <label class="form-label" data-i18n="settingsExt.host">Host (DB_HOST)</label>
                                     <input type="text" class="form-control" id="mysqlHost" placeholder="localhost" value="localhost">
                                     <div class="form-label-note" data-i18n="settingsExt.hostNote">VD: localhost, 127.0.0.1, mysql.example.com</div>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label" data-i18n="settingsExt.port">Port</label>
+                                    <label class="form-label" data-i18n="settingsExt.port">Port (DB_PORT)</label>
                                     <input type="number" class="form-control" id="mysqlPort" placeholder="3306" value="3306">
                                     <div class="form-label-note" data-i18n="settingsExt.portNote">Mặc định: 3306</div>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" data-i18n="settingsExt.username">Username</label>
+                                <label class="form-label" data-i18n="settingsExt.username">Username (DB_USER)</label>
                                 <input type="text" class="form-control" id="mysqlUser" placeholder="root">
                                 <div class="form-label-note" data-i18n="settingsExt.usernameNote">Tên đăng nhập MySQL</div>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" data-i18n="settingsExt.password">Password</label>
+                                <label class="form-label" data-i18n="settingsExt.password">Password (DB_PASSWORD)</label>
                                 <input type="password" class="form-control" id="mysqlPass" placeholder="••••••••">
                                 <div class="form-label-note" data-i18n="settingsExt.passwordNote">Mật khẩu (để trống nếu không có)</div>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" data-i18n="settingsExt.database">Database</label>
-                                <input type="text" class="form-control" id="mysqlDb" placeholder="sensor_data">
+                                <label class="form-label" data-i18n="settingsExt.database">Database (DB_NAME)</label>
+                                <input type="text" class="form-control" id="mysqlDb" placeholder="weather_forecasting">
                                 <div class="form-label-note" data-i18n="settingsExt.databaseNote">Tên cơ sở dữ liệu</div>
                             </div>
                         </div>
 
                         <!-- Nút hành động -->
                         <div class="btn-container">
+                            <button class="btn-secondary" type="button" onclick="loadEnvConfig()" style="flex: 0.5;">🔄 <span>Tải lại</span></button>
                             <button class="btn-secondary" type="button" onclick="testMysqlConnection()" style="flex: 1;">🔗 <span data-i18n="settingsExt.testConnection">Kiểm tra kết nối</span></button>
-                            <button class="btn-save" type="button" onclick="saveMysqlSettings()" style="flex: 1;">💾 <span data-i18n="settingsExt.saveSettings">Lưu cài đặt</span></button>
+                            <button class="btn-save" type="button" onclick="saveEnvConfig()" style="flex: 1;">💾 <span data-i18n="settingsExt.saveSettings">Lưu vào .env</span></button>
+                        </div>
+
+                        <div class="info-box warning" style="margin-top: 15px;">
+                            ⚠️ <span>Sau khi lưu .env, bạn cần <strong>restart server</strong> để áp dụng thay đổi.</span>
                         </div>
                     </div>
 
@@ -967,12 +972,11 @@
             updateClock();
             setInterval(updateClock, 1000);
             loadAllSettings();
-            loadMysqlEnvSettings(); // Load MySQL settings từ .env
             loadProvinces(); // Load danh sách tỉnh thành
             refreshSystemStats(); // Load initial system stats
             setInterval(refreshSystemStats, 3000); // Auto-refresh
             checkDatabaseStatus();
-            setInterval(checkDatabaseStatus, 10000); // Kiểm tra trạng thái DB mỗi 10 giây
+            loadEnvConfig(); // Load cấu hình .env
             
             // Add Enter key event to search location input
             const searchInput = document.getElementById('searchLocationInput');
@@ -984,6 +988,83 @@
                 });
             }
         });
+
+        // Load cấu hình từ .env
+        async function loadEnvConfig() {
+            try {
+                const response = await fetch('/api/env/config');
+                const data = await response.json();
+                
+                if (data.success && data.config) {
+                    const config = data.config;
+                    
+                    // Populate MySQL form
+                    document.getElementById('mysqlHost').value = config.DB_HOST || 'localhost';
+                    document.getElementById('mysqlPort').value = config.DB_PORT || '3306';
+                    document.getElementById('mysqlUser').value = config.DB_USER || 'root';
+                    document.getElementById('mysqlPass').value = config.DB_PASSWORD || '';
+                    document.getElementById('mysqlDb').value = config.DB_NAME || 'weather_forecasting';
+                    
+                    console.log('✓ Loaded .env config:', config);
+                    
+                    // Update status display
+                    updateMysqlStatusDisplay(true, 'Đã tải cấu hình từ .env');
+                }
+            } catch (error) {
+                console.error('Error loading .env config:', error);
+                AppUtils.showToast('⚠️ Không thể tải cấu hình .env', 'warning');
+            }
+        }
+
+        // Lưu cấu hình vào .env
+        async function saveEnvConfig() {
+            const config = {
+                DB_HOST: document.getElementById('mysqlHost').value.trim() || 'localhost',
+                DB_PORT: document.getElementById('mysqlPort').value.trim() || '3306',
+                DB_USER: document.getElementById('mysqlUser').value.trim() || 'root',
+                DB_PASSWORD: document.getElementById('mysqlPass').value || '',
+                DB_NAME: document.getElementById('mysqlDb').value.trim() || 'weather_forecasting',
+                APP_HOST: '0.0.0.0',
+                APP_PORT: '8000',
+                APP_DEBUG: 'True',
+                SECRET_KEY: 'your-secret-key-here-change-in-production',
+                CORS_ORIGINS: 'http://localhost:8000,http://127.0.0.1:8000'
+            };
+
+            // Validate inputs
+            if (!config.DB_HOST || !config.DB_USER || !config.DB_NAME) {
+                AppUtils.showToast('⚠️ Vui lòng điền đầy đủ Host, User và Database', 'warning');
+                return;
+            }
+
+            try {
+                AppUtils.showToast('💾 Đang lưu cấu hình...', 'info');
+                
+                const response = await fetch('/api/env/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    AppUtils.showToast('✓ ' + data.message, 'success');
+                    
+                    // Hỏi người dùng có muốn restart server không
+                    if (data.requires_restart) {
+                        if (confirm('Cấu hình đã được lưu. Bạn có muốn restart server ngay bây giờ để áp dụng thay đổi không?')) {
+                            restartWebServer();
+                        }
+                    }
+                } else {
+                    AppUtils.showToast('✗ Lỗi: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving .env config:', error);
+                AppUtils.showToast('✗ Lỗi khi lưu cấu hình: ' + error.message, 'error');
+            }
+        }
 
         // Dữ liệu tọa độ các tỉnh thành Việt Nam
         const provinceCoordinates = {
@@ -1372,67 +1453,35 @@
 
         // Check database status
         async function checkDatabaseStatus() {
-            const badge = document.getElementById('dbStatus');
-            const details = document.getElementById('dbStatusDetails');
-            
             try {
                 const response = await fetch('/api/database/status');
                 const data = await response.json();
+                const badge = document.getElementById('dbStatus');
+                const details = document.getElementById('dbStatusDetails');
                 
                 if (data.success && data.connected) {
-                    badge.innerHTML = '<span class="status-dot"></span><span>✓ Kết nối thành công</span>';
+                    badge.innerHTML = '<span class="status-dot"></span><span>✓ Kết nối OK</span>';
                     badge.className = 'status-badge';
-                    badge.style.background = 'rgba(34, 197, 94, 0.15)';
-                    badge.style.color = '#22c55e';
-                    if (details) {
-                        details.innerHTML = '🟢 Database đang hoạt động bình thường';
-                        details.style.color = '#22c55e';
+                    
+                    // Hiển thị thông tin kết nối
+                    if (data.info) {
+                        details.innerHTML = `<strong>✓ Đang kết nối:</strong><br>
+                            🖥️ Host: <code>${data.info.host}</code><br>
+                            🔌 Port: <code>${data.info.port}</code><br>
+                            👤 User: <code>${data.info.user}</code><br>
+                            💾 Database: <code>${data.info.database}</code>`;
                     }
                 } else {
                     badge.innerHTML = '<span class="status-dot"></span><span>✗ Mất kết nối</span>';
                     badge.className = 'status-badge error';
-                    badge.style.background = 'rgba(239, 68, 68, 0.15)';
-                    badge.style.color = '#ef4444';
-                    if (details) {
-                        details.innerHTML = '🔴 ' + (data.message || 'Không thể kết nối database');
-                        details.style.color = '#ef4444';
-                    }
+                    details.innerHTML = `<strong>✗ Không thể kết nối:</strong><br><code style="font-size: 11px; color: #f56565;">${data.message || 'Lỗi không xác định'}</code>`;
                 }
             } catch (error) {
-                badge.innerHTML = '<span class="status-dot"></span><span>✗ Lỗi kiểm tra</span>';
+                const badge = document.getElementById('dbStatus');
+                const details = document.getElementById('dbStatusDetails');
+                badge.innerHTML = '<span class="status-dot"></span><span>✗ Lỗi</span>';
                 badge.className = 'status-badge error';
-                badge.style.background = 'rgba(239, 68, 68, 0.15)';
-                badge.style.color = '#ef4444';
-                if (details) {
-                    details.innerHTML = '🔴 Không thể kiểm tra trạng thái: ' + error.message;
-                    details.style.color = '#ef4444';
-                }
-            }
-        }
-
-        // Cập nhật trạng thái hiển thị MySQL
-        function updateMysqlStatusDisplay(connected, message) {
-            const badge = document.getElementById('dbStatus');
-            const details = document.getElementById('dbStatusDetails');
-            
-            if (connected) {
-                badge.innerHTML = '<span class="status-dot"></span><span>✓ Kết nối thành công</span>';
-                badge.className = 'status-badge';
-                badge.style.background = 'rgba(34, 197, 94, 0.15)';
-                badge.style.color = '#22c55e';
-                if (details) {
-                    details.innerHTML = '🟢 ' + (message || 'Database đang hoạt động');
-                    details.style.color = '#22c55e';
-                }
-            } else {
-                badge.innerHTML = '<span class="status-dot"></span><span>✗ Kết nối thất bại</span>';
-                badge.className = 'status-badge error';
-                badge.style.background = 'rgba(239, 68, 68, 0.15)';
-                badge.style.color = '#ef4444';
-                if (details) {
-                    details.innerHTML = '🔴 ' + (message || 'Không thể kết nối');
-                    details.style.color = '#ef4444';
-                }
+                details.innerHTML = `<strong>✗ Lỗi kết nối:</strong><br><code style="font-size: 11px; color: #f56565;">${error.message}</code>`;
             }
         }
 
@@ -1548,87 +1597,17 @@
             await saveSetting(settings);
         }
 
-        // Load MySQL settings từ .env file
-        async function loadMysqlEnvSettings() {
-            try {
-                const response = await fetch('/api/env-settings');
-                const result = await response.json();
-                
-                if (result.success && result.data) {
-                    const data = result.data;
-                    document.getElementById('mysqlHost').value = data.DB_HOST || 'localhost';
-                    document.getElementById('mysqlPort').value = data.DB_PORT || '3306';
-                    document.getElementById('mysqlUser').value = data.DB_USER || 'root';
-                    document.getElementById('mysqlPass').value = data.DB_PASSWORD || '';
-                    document.getElementById('mysqlDb').value = data.DB_NAME || 'weather_forecasting';
-                    console.log('Loaded MySQL settings from .env');
-                }
-            } catch (error) {
-                console.error('Error loading MySQL env settings:', error);
-            }
-        }
-
         async function saveMysqlSettings() {
-            const host = document.getElementById('mysqlHost').value.trim();
-            const port = document.getElementById('mysqlPort').value.trim();
-            const user = document.getElementById('mysqlUser').value.trim();
-            const password = document.getElementById('mysqlPass').value;
-            const db = document.getElementById('mysqlDb').value.trim();
-
-            // Validate
-            if (!host || !port || !user || !db) {
-                AppUtils.showToast('⚠️ Vui lòng điền đầy đủ thông tin', 'warning');
-                return;
-            }
-
-            try {
-                AppUtils.showToast('💾 Đang lưu cài đặt...', 'info');
-                
-                // Lưu vào file .env
-                const envSettings = {
-                    DB_HOST: host,
-                    DB_PORT: port,
-                    DB_USER: user,
-                    DB_PASSWORD: password,
-                    DB_NAME: db
-                };
-
-                const response = await fetch('/api/env-settings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(envSettings)
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    AppUtils.showToast('✓ Đã lưu vào file .env', 'success');
-                    
-                    // Hiện thông báo cần restart
-                    if (result.restart_required) {
-                        setTimeout(() => {
-                            AppUtils.showToast('⚠️ Cần khởi động lại server để áp dụng thay đổi', 'warning');
-                        }, 1500);
-                    }
-
-                    // Cũng lưu vào config.json
-                    const configSettings = {
-                        mysql: {
-                            host: host,
-                            port: parseInt(port),
-                            user: user,
-                            password: password,
-                            db: db
-                        }
-                    };
-                    await saveSetting(configSettings);
-                } else {
-                    AppUtils.showToast('✗ Lỗi: ' + result.message, 'error');
+            const settings = {
+                mysql: {
+                    host: document.getElementById('mysqlHost').value,
+                    port: parseInt(document.getElementById('mysqlPort').value),
+                    user: document.getElementById('mysqlUser').value,
+                    password: document.getElementById('mysqlPass').value,
+                    db: document.getElementById('mysqlDb').value
                 }
-            } catch (error) {
-                console.error('Error saving MySQL settings:', error);
-                AppUtils.showToast('✗ Lỗi khi lưu cài đặt', 'error');
-            }
+            };
+            await saveSetting(settings);
         }
 
         async function saveSetting(settings) {

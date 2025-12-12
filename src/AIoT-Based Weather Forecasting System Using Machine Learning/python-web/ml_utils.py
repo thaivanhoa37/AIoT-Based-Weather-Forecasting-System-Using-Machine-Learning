@@ -91,13 +91,14 @@ class MLManager:
         """Get the current active model"""
         return self.models.get(self.current_model_type, prophet_model)
     
-    def train_all_models(self, records, model_type: str = None) -> dict:
+    def train_all_models(self, records, model_type: str = None, weather_records=None) -> dict:
         """
         Train a specific model type or current model
         
         Args:
             records: List of SensorData records from database
-            model_type: Type of model to train (prophet, randomforest, lstm)
+            model_type: Type of model to train (prophet, lstm)
+            weather_records: List of WeatherForecasting records from database (optional)
         
         Returns:
             dict with training results
@@ -114,11 +115,49 @@ class MLManager:
         try:
             start_time = datetime.now()
             
-            # Get the model and train it
+            # Get the model and train it with combined data
             model = self.models[model_type]
+            
+            # Train with sensor_data records
             result = model.train_all(records)
             
+            # If weather_records provided, train weather targets too
+            weather_result = None
+            if weather_records and len(weather_records) > 0:
+                weather_result = model.train_weather_targets(weather_records)
+            
+            # Combine results
             if result.get('success'):
+                models_trained = result.get('models_trained', [])
+                all_metrics = result.get('metrics', {})
+                total_training_time = result.get('training_time', 0)
+                
+                # Add weather models if successful
+                if weather_result and weather_result.get('success'):
+                    models_trained.extend(weather_result.get('models_trained', []))
+                    all_metrics.update(weather_result.get('metrics', {}))
+                    total_training_time += weather_result.get('training_time', 0)
+                
+                # Recalculate overall accuracy
+                accuracies = []
+                for m in all_metrics.values():
+                    if isinstance(m, dict):
+                        acc = m.get('accuracy', 0)
+                        if acc == 0 and 'r2' in m:
+                            acc = max(0, m.get('r2', 0) * 100)
+                        if acc > 0:
+                            accuracies.append(acc)
+                overall_accuracy = np.mean(accuracies) if accuracies else 0
+                
+                # Print final summary
+                print("\n" + "="*60)
+                print("✅ HOÀN THÀNH HUẤN LUYỆN " + model_type.upper())
+                print("="*60)
+                print(f"📊 Models đã train: {', '.join(models_trained)}")
+                print(f"🎯 Độ chính xác tổng: {overall_accuracy:.2f}%")
+                print(f"⏱️  Thời gian: {total_training_time:.2f}s")
+                print("="*60 + "\n")
+                
                 # Update current model type
                 self.current_model_type = model_type
                 self._save_current_model()
@@ -127,11 +166,12 @@ class MLManager:
                 training_record = {
                     'timestamp': datetime.now().isoformat(),
                     'model_type': model_type,
-                    'models_trained': result.get('models_trained', []),
-                    'metrics': result.get('metrics', {}),
-                    'overall_accuracy': result.get('overall_accuracy', 0),
-                    'training_time': result.get('training_time', 0),
-                    'data_points': result.get('data_points', len(records))
+                    'models_trained': models_trained,
+                    'metrics': all_metrics,
+                    'overall_accuracy': round(float(overall_accuracy), 2),
+                    'training_time': (datetime.now() - start_time).total_seconds(),
+                    'data_points': len(records),
+                    'weather_data_points': len(weather_records) if weather_records else 0
                 }
                 
                 self.training_history.append(training_record)
@@ -140,7 +180,17 @@ class MLManager:
                     self.training_history = self.training_history[-100:]
                 self._save_training_history()
                 
-                logger.info(f"Training completed for {model_type}: {result.get('overall_accuracy')}% accuracy")
+                logger.info(f"Training completed for {model_type}: {overall_accuracy:.2f}% accuracy")
+                
+                return {
+                    'success': True,
+                    'model_type': model_type,
+                    'models_trained': models_trained,
+                    'metrics': all_metrics,
+                    'overall_accuracy': round(float(overall_accuracy), 2),
+                    'training_time': round((datetime.now() - start_time).total_seconds(), 2),
+                    'data_points': len(records) + (len(weather_records) if weather_records else 0)
+                }
             
             return result
             

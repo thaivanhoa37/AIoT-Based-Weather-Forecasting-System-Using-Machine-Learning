@@ -114,7 +114,12 @@ class LSTMModel:
         self.scalers = {}
         self.metrics = {}
         self.model_type = "lstm"
-        self.supported_targets = ['temperature', 'humidity', 'aqi', 'pressure']
+        # Sensor data targets (6)
+        self.sensor_targets = ['temperature', 'humidity', 'aqi', 'pressure', 'co2', 'dust']
+        # Weather API targets (3)
+        self.weather_targets = ['wind_speed', 'rainfall', 'uv_index']
+        # All supported targets (9)
+        self.supported_targets = self.sensor_targets + self.weather_targets
         self.lookback = 24  # Use 24 hours of history
         self._load_models()
     
@@ -256,7 +261,7 @@ class LSTMModel:
             return {'success': False, 'error': str(e)}
     
     def train_all(self, records) -> dict:
-        """Train models for all supported target variables"""
+        """Train models for sensor data targets only (6 targets)"""
         start_time = datetime.now()
         models_trained = []
         all_metrics = {}
@@ -264,13 +269,14 @@ class LSTMModel:
         print("\n" + "="*60)
         print("🧠 BẮT ĐẦU HUẤN LUYỆN MODEL LSTM")
         print("="*60)
-        print(f"📊 Số lượng dữ liệu: {len(records)} records")
+        print(f"📊 Số lượng dữ liệu sensor: {len(records)} records")
         print(f"🔄 Lookback: {self.lookback} giờ")
         print(f"🕐 Thời gian bắt đầu: {start_time.strftime('%H:%M:%S')}")
         print("-"*60)
         
-        for i, target in enumerate(self.supported_targets, 1):
-            print(f"\n[{i}/{len(self.supported_targets)}] 🎯 Training: {target.upper()}")
+        # Only train sensor targets (6 targets from SensorData)
+        for i, target in enumerate(self.sensor_targets, 1):
+            print(f"\n[{i}/{len(self.sensor_targets)}] 🎯 Training: {target.upper()}")
             result = self.train(records, target)
             if result.get('success'):
                 models_trained.append(target)
@@ -290,14 +296,6 @@ class LSTMModel:
             accuracies = [m.get('accuracy', 0) for m in all_metrics.values()]
             overall_accuracy = np.mean(accuracies) if accuracies else 0
             
-            print("\n" + "="*60)
-            print("✅ HOÀN THÀNH HUẤN LUYỆN LSTM")
-            print("="*60)
-            print(f"📊 Models đã train: {', '.join(models_trained)}")
-            print(f"🎯 Độ chính xác tổng: {overall_accuracy:.2f}%")
-            print(f"⏱️  Thời gian: {training_time:.2f}s")
-            print("="*60 + "\n")
-            
             return {
                 'success': True,
                 'model_type': self.model_type,
@@ -313,6 +311,60 @@ class LSTMModel:
                 'success': False,
                 'model_type': self.model_type,
                 'error': 'Failed to train any models'
+            }
+    
+    def train_weather_targets(self, weather_records) -> dict:
+        """
+        Train models for weather API targets (wind_speed, rainfall, uv_index)
+        
+        Args:
+            weather_records: List of WeatherForecasting records from database
+        
+        Returns:
+            dict with training results
+        """
+        start_time = datetime.now()
+        models_trained = []
+        all_metrics = {}
+        
+        print(f"\n📊 Dữ liệu weather API: {len(weather_records)} records")
+        
+        # Continue numbering from sensor targets (7, 8, 9)
+        start_idx = len(self.sensor_targets) + 1
+        total = len(self.sensor_targets) + len(self.weather_targets)
+        
+        for i, target in enumerate(self.weather_targets, start_idx):
+            print(f"\n[{i}/{total}] 🎯 Training: {target.upper()}")
+            result = self.train(weather_records, target)
+            if result.get('success'):
+                models_trained.append(target)
+                all_metrics[target] = result['metrics']
+                metrics = result['metrics']
+                print(f"    ✅ Thành công!")
+                print(f"    📈 R² Score: {metrics.get('r2', 0)*100:.2f}%")
+                print(f"    📉 MAE: {metrics.get('mae', 0):.4f}")
+                print(f"    📉 RMSE: {metrics.get('rmse', 0):.4f}")
+            else:
+                print(f"    ❌ Thất bại: {result.get('error', 'Unknown error')}")
+        
+        training_time = (datetime.now() - start_time).total_seconds()
+        
+        if models_trained:
+            accuracies = [m.get('accuracy', 0) for m in all_metrics.values()]
+            overall_accuracy = np.mean(accuracies) if accuracies else 0
+            
+            return {
+                'success': True,
+                'models_trained': models_trained,
+                'metrics': all_metrics,
+                'overall_accuracy': round(float(overall_accuracy), 2),
+                'training_time': round(training_time, 2)
+            }
+        else:
+            print("\n⚠️  Không train được weather targets!")
+            return {
+                'success': False,
+                'error': 'Failed to train weather models'
             }
     
     def predict(self, target_column: str, hours_ahead: int = 24, last_values: np.ndarray = None) -> dict:
@@ -398,26 +450,37 @@ class LSTMModel:
                 for target, preds in all_predictions.items():
                     if i < len(preds):
                         value = preds[i]['value']
-                        # Apply constraints
+                        # Apply constraints for all targets
                         if target == 'temperature':
                             value = max(0, min(60, value))
                         elif target == 'humidity':
                             value = max(0, min(100, value))
                         elif target == 'aqi':
-                            value = max(0, value)
+                            value = max(0, min(500, value))
                         elif target == 'pressure':
                             value = max(900, min(1100, value))
+                        elif target == 'co2':
+                            value = max(0, min(5000, value))
+                        elif target == 'dust':
+                            value = max(0, min(1000, value))
+                        elif target == 'wind_speed':
+                            value = max(0, min(100, value))
+                        elif target == 'rainfall':
+                            value = max(0, min(500, value))
+                        elif target == 'uv_index':
+                            value = max(0, min(15, value))
                         prediction[target] = round(value, 1)
                 
                 # Fill missing values from latest data
                 if latest_data:
-                    for key in ['temperature', 'humidity', 'pressure', 'aqi']:
+                    for key in self.supported_targets:
                         if key not in prediction:
                             prediction[key] = latest_data.get(key, 0)
                 
-                # Calculate rain probability based on humidity
+                # Calculate rain probability based on humidity and rainfall
                 humidity = prediction.get('humidity', 70)
-                prediction['willRain'] = humidity > 75
+                rainfall = prediction.get('rainfall', 0)
+                prediction['willRain'] = humidity > 75 or rainfall > 0.5
                 prediction['confidence'] = max(50, 95 - i * 0.8)
                 
                 predictions.append(prediction)

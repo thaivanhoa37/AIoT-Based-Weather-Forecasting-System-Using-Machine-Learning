@@ -390,24 +390,33 @@ async def train_ml_model(
     db: Session = Depends(get_db)
 ):
     """
-    Train ML model for weather forecasting
+    Train ML model for weather forecasting with all 9 targets
     
     - **model_type**: Type of model (prophet, lstm)
     - **data_points**: Number of historical data points to use
+    
+    Trains models for:
+    - Sensor data: temperature, humidity, pressure, aqi, co2, dust (6 targets)
+    - Weather API: wind_speed, rainfall, uv_index (3 targets)
     """
     try:
-        # Get training data - order by ascending time (oldest first) for proper time series
+        # Get sensor training data - order by ascending time (oldest first) for proper time series
         records = db.query(SensorData).filter(
             SensorData.temperature > 0
         ).order_by(SensorData.timestamp).limit(data_points).all()
         
         if len(records) < 100:
-            raise HTTPException(status_code=400, detail="Không đủ dữ liệu để huấn luyện (tối thiểu 100 bản ghi)")
+            raise HTTPException(status_code=400, detail="Không đủ dữ liệu sensor để huấn luyện (tối thiểu 100 bản ghi)")
         
-        logger.info(f"Training {model_type} model with {len(records)} records...")
+        # Get weather API data for wind, rainfall, uv_index
+        weather_records = db.query(WeatherForecasting).filter(
+            WeatherForecasting.wind_speed >= 0
+        ).order_by(WeatherForecasting.timestamp).limit(data_points).all()
         
-        # Train model using MLManager
-        train_result = ml_trainer.train_all_models(records, model_type)
+        logger.info(f"Training {model_type} model with {len(records)} sensor records and {len(weather_records)} weather records...")
+        
+        # Train model using MLManager with both data sources
+        train_result = ml_trainer.train_all_models(records, model_type, weather_records)
         
         # Format response for frontend
         if train_result.get('success'):
@@ -418,6 +427,8 @@ async def train_ml_model(
                 'all_metrics': train_result.get('metrics', {}),
                 'overall_accuracy': train_result.get('overall_accuracy', 0),
                 'data_points_used': train_result.get('data_points', len(records)),
+                'sensor_records': len(records),
+                'weather_records': len(weather_records),
                 'training_time': f"{train_result.get('training_time', 0):.2f}s",
                 'timestamp': datetime.now().isoformat()
             }
@@ -976,120 +987,6 @@ async def get_vietnam_locations():
         }
 
 
-# Path to .env file
-ENV_FILE = Path(__file__).parent.parent / ".env"
-
-def load_env_settings():
-    """Load settings from .env file"""
-    env_settings = {}
-    try:
-        if ENV_FILE.exists():
-            with open(ENV_FILE, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#') and '=' in line:
-                        key, value = line.split('=', 1)
-                        env_settings[key.strip()] = value.strip()
-    except Exception as e:
-        logger.error(f"Error loading .env: {e}")
-    return env_settings
-
-def save_env_settings(settings: dict):
-    """Save settings to .env file"""
-    try:
-        # Read existing file to preserve comments and structure
-        lines = []
-        if ENV_FILE.exists():
-            with open(ENV_FILE, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-        
-        # Update values
-        updated_keys = set()
-        new_lines = []
-        for line in lines:
-            stripped = line.strip()
-            if stripped and not stripped.startswith('#') and '=' in stripped:
-                key = stripped.split('=', 1)[0].strip()
-                if key in settings:
-                    new_lines.append(f"{key}={settings[key]}\n")
-                    updated_keys.add(key)
-                else:
-                    new_lines.append(line)
-            else:
-                new_lines.append(line)
-        
-        # Add new keys that weren't in the file
-        for key, value in settings.items():
-            if key not in updated_keys:
-                new_lines.append(f"{key}={value}\n")
-        
-        # Write back
-        with open(ENV_FILE, 'w', encoding='utf-8') as f:
-            f.writelines(new_lines)
-        
-        return True
-    except Exception as e:
-        logger.error(f"Error saving .env: {e}")
-        return False
-
-
-@router.get("/env-settings")
-async def get_env_settings():
-    """Get database settings from .env file"""
-    try:
-        env = load_env_settings()
-        return {
-            "success": True,
-            "data": {
-                "DB_HOST": env.get("DB_HOST", "localhost"),
-                "DB_PORT": env.get("DB_PORT", "3306"),
-                "DB_USER": env.get("DB_USER", "root"),
-                "DB_PASSWORD": env.get("DB_PASSWORD", ""),
-                "DB_NAME": env.get("DB_NAME", "weather_forecasting"),
-                "APP_HOST": env.get("APP_HOST", "0.0.0.0"),
-                "APP_PORT": env.get("APP_PORT", "8000"),
-                "APP_DEBUG": env.get("APP_DEBUG", "True")
-            }
-        }
-    except Exception as e:
-        logger.error(f"Error getting env settings: {e}")
-        return {
-            "success": False,
-            "message": str(e)
-        }
-
-
-@router.post("/env-settings")
-async def update_env_settings(settings: dict):
-    """Update database settings in .env file"""
-    try:
-        # Only allow specific keys to be updated
-        allowed_keys = ["DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"]
-        filtered_settings = {k: v for k, v in settings.items() if k in allowed_keys}
-        
-        if not filtered_settings:
-            return {
-                "success": False,
-                "message": "Không có cài đặt hợp lệ để cập nhật"
-            }
-        
-        if save_env_settings(filtered_settings):
-            return {
-                "success": True,
-                "message": "Đã cập nhật file .env. Cần khởi động lại server để áp dụng thay đổi.",
-                "restart_required": True,
-                "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            }
-        else:
-            raise Exception("Failed to save .env file")
-    except Exception as e:
-        logger.error(f"Error updating env settings: {e}")
-        return {
-            "success": False,
-            "message": str(e)
-        }
-
-
 @router.get("/settings")
 async def get_settings():
     """Get system settings"""
@@ -1260,15 +1157,14 @@ async def backup_database():
         }
 
 
-@router.get("/database/status")
+@router.post("/database/status")
 async def get_database_status():
     """Check database connection status"""
     try:
         # Try to make a simple database query
         from database import SessionLocal
-        from sqlalchemy import text
         db = SessionLocal()
-        db.execute(text("SELECT 1"))
+        db.execute("SELECT 1")
         db.close()
         
         return {
@@ -1504,4 +1400,113 @@ async def get_database_statistics(db: Session = Depends(get_db)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Environment Configuration Endpoints =====
+
+ENV_FILE = Path(__file__).parent.parent / ".env"
+
+@router.get("/env/config")
+async def get_env_config():
+    """Get current .env configuration (without sensitive data exposed)"""
+    try:
+        env_data = {
+            "DB_HOST": os.getenv("DB_HOST", "localhost"),
+            "DB_PORT": os.getenv("DB_PORT", "3306"),
+            "DB_USER": os.getenv("DB_USER", "root"),
+            "DB_PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "DB_NAME": os.getenv("DB_NAME", "weather_forecasting"),
+            "APP_HOST": os.getenv("APP_HOST", "0.0.0.0"),
+            "APP_PORT": os.getenv("APP_PORT", "8000"),
+            "APP_DEBUG": os.getenv("APP_DEBUG", "True"),
+            "SECRET_KEY": os.getenv("SECRET_KEY", ""),
+            "CORS_ORIGINS": os.getenv("CORS_ORIGINS", "")
+        }
+        
+        return {
+            "success": True,
+            "config": env_data,
+            "message": "Environment configuration loaded"
+        }
+    except Exception as e:
+        logger.error(f"Error loading env config: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+@router.post("/env/config")
+async def save_env_config(config: dict):
+    """Save .env configuration"""
+    try:
+        # Build .env content
+        env_content = f"""# Database Configuration
+DB_HOST={config.get('DB_HOST', 'localhost')}
+DB_PORT={config.get('DB_PORT', '3306')}
+DB_USER={config.get('DB_USER', 'root')}
+DB_PASSWORD={config.get('DB_PASSWORD', '')}
+DB_NAME={config.get('DB_NAME', 'weather_forecasting')}
+
+# Application Configuration
+APP_HOST={config.get('APP_HOST', '0.0.0.0')}
+APP_PORT={config.get('APP_PORT', '8000')}
+APP_DEBUG={config.get('APP_DEBUG', 'True')}
+
+# Security (Change in production!)
+SECRET_KEY={config.get('SECRET_KEY', 'your-secret-key-here-change-in-production')}
+
+# CORS Origins (comma-separated)
+CORS_ORIGINS={config.get('CORS_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000')}
+"""
+        
+        # Write to .env file
+        with open(ENV_FILE, 'w', encoding='utf-8') as f:
+            f.write(env_content)
+        
+        logger.info("Environment configuration saved successfully")
+        
+        return {
+            "success": True,
+            "message": "Đã lưu cấu hình .env thành công. Vui lòng restart server để áp dụng thay đổi.",
+            "requires_restart": True
+        }
+    except Exception as e:
+        logger.error(f"Error saving env config: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+@router.get("/database/status")
+async def get_database_status_get():
+    """Check database connection status (GET method)"""
+    try:
+        from database import SessionLocal, DB_HOST, DB_PORT, DB_NAME, DB_USER
+        from sqlalchemy import text
+        
+        db = SessionLocal()
+        result = db.execute(text("SELECT 1"))
+        result.close()
+        db.close()
+        
+        return {
+            "success": True,
+            "connected": True,
+            "message": "Database connected",
+            "info": {
+                "host": DB_HOST,
+                "port": DB_PORT,
+                "database": DB_NAME,
+                "user": DB_USER
+            }
+        }
+    except Exception as e:
+        logger.error(f"Database connection error: {e}")
+        return {
+            "success": False,
+            "connected": False,
+            "message": str(e)
+        }
 
