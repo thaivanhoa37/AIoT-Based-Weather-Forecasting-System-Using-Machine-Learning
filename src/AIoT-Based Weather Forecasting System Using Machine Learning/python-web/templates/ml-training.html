@@ -531,6 +531,31 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(237, 137, 54, 0.3);
         }
+
+        /* Sensor Selection Checkbox Styles */
+        .checkbox-item:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .checkbox-item input[type="checkbox"]:checked + .checkbox-icon + .checkbox-label {
+            color: var(--primary-color);
+        }
+
+        .sensor-group-title {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-select-all:hover {
+            background: var(--secondary-color) !important;
+        }
+
+        .btn-deselect-all:hover {
+            background: var(--text-secondary) !important;
+            color: white !important;
+        }
     </style>
 </head>
 
@@ -674,25 +699,85 @@
                         <div class="form-group">
                             <label class="form-label">🤖 <span data-i18n="mlTrainingExt.selectModel">Chọn Model</span></label>
                             <select class="form-select" id="modelType" onchange="updateCurrentModel()">
-                                <option value="prophet" data-i18n="mlTrainingExt.prophetRecommend">Prophet (Khuyến nghị)</option>
-                                <option value="lstm" data-i18n="mlTrainingExt.lstmDeep">LSTM (Deep Learning)</option>
+                                <option value="prophet">Prophet (Khuyến nghị)</option>
+                                <option value="lightgbm">LightGBM (Boosting)</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label">📊 <span data-i18n="mlTrainingExt.dataAmount">Số lượng dữ liệu</span></label>
                             <input type="number" class="form-input" id="dataPoints" value="5000" min="100" max="20000">
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">🎯 <span data-i18n="mlTrainingExt.targetVar">Biến dự báo</span></label>
-                            <select class="form-select" id="targetSelect" disabled>
-                                <option value="all" selected data-i18n="mlTrainingExt.targetAll">Tất cả (nhiệt độ, độ ẩm, AQI, áp suất)</option>
-                            </select>
+                    </div>
+                    
+                    <!-- Sensor Selection Checkboxes -->
+                    <div class="sensor-selection-section" style="margin-top: 20px;">
+                        <label class="form-label" style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            🎯 <span data-i18n="mlTrainingExt.selectSensors">Chọn biến để huấn luyện</span>
+                            <button type="button" class="btn-select-all" onclick="toggleAllSensors(true)" style="font-size: 11px; padding: 4px 10px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">Chọn tất cả</button>
+                            <button type="button" class="btn-deselect-all" onclick="toggleAllSensors(false)" style="font-size: 11px; padding: 4px 10px; background: var(--border-color); color: var(--text); border: none; border-radius: 4px; cursor: pointer;">Bỏ chọn</button>
+                        </label>
+                        
+                        <!-- Sensor Data Group -->
+                        <div class="sensor-group" style="margin-bottom: 15px;">
+                            <div class="sensor-group-title" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">📡 Dữ liệu cảm biến</div>
+                            <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="target_temperature" value="temperature" class="sensor-checkbox" checked style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span class="checkbox-icon" style="font-size: 20px;">🌡️</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Nhiệt độ</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="target_humidity" value="humidity" class="sensor-checkbox" checked style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span class="checkbox-icon" style="font-size: 20px;">💧</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Độ ẩm</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="target_pressure" value="pressure" class="sensor-checkbox" checked style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span class="checkbox-icon" style="font-size: 20px;">📊</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Áp suất</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="target_aqi" value="aqi" class="sensor-checkbox" checked style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span class="checkbox-icon" style="font-size: 20px;">🌫️</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">AQI</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="target_co2" value="co2" class="sensor-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span class="checkbox-icon" style="font-size: 20px;">☁️</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">CO2</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="target_dust" value="dust" class="sensor-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span class="checkbox-icon" style="font-size: 20px;">🌪️</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Bụi (PM2.5)</span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">🔀 <span data-i18n="mlTrainingExt.trainTestRatio">Tỷ lệ Train/Test</span></label>
-                            <select class="form-select" id="testRatioSelect" disabled>
-                                <option value="0.2" selected data-i18n="mlTrainingExt.ratioDefault">80/20 (Mặc định)</option>
-                            </select>
+                        
+                        <!-- Weather API Data Group -->
+                        <div class="sensor-group">
+                            <div class="sensor-group-title" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">🌐 Dữ liệu Weather API</div>
+                            <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="target_wind_speed" value="wind_speed" class="sensor-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span class="checkbox-icon" style="font-size: 20px;">💨</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Tốc độ gió</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="target_rainfall" value="rainfall" class="sensor-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span class="checkbox-icon" style="font-size: 20px;">🌧️</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Lượng mưa</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="target_uv_index" value="uv_index" class="sensor-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span class="checkbox-icon" style="font-size: 20px;">☀️</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Chỉ số UV</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="selectedCount" style="margin-top: 15px; font-size: 13px; color: var(--text-secondary);">
+                            Đã chọn: <strong style="color: var(--primary-color);">4</strong> biến để huấn luyện
                         </div>
                     </div>
 
@@ -766,13 +851,13 @@
                         </div>
                     </div>
 
-                    <div class="model-item" onclick="selectModel('lstm')" id="model-lstm">
-                        <span class="model-icon">🧠</span>
-                        <div class="model-name">LSTM</div>
+                    <div class="model-item" onclick="selectModel('lightgbm')" id="model-lightgbm">
+                        <span class="model-icon">🚀</span>
+                        <div class="model-name">LightGBM</div>
                         <div class="model-info">
                             <div><span>Độ chính xác:</span> <span>⭐⭐⭐⭐⭐</span></div>
-                            <div><span>Tốc độ:</span> <span>⭐⭐⭐</span></div>
-                            <div><span>Phức tạp:</span> <span>⭐⭐⭐⭐⭐</span></div>
+                            <div><span>Tốc độ:</span> <span>⭐⭐⭐⭐⭐</span></div>
+                            <div><span>Phức tạp:</span> <span>⭐⭐⭐</span></div>
                         </div>
                     </div>
                 </div>
@@ -815,7 +900,7 @@
                             <label class="form-label">🤖 Model sử dụng</label>
                             <select class="form-select" id="autoTrainModel">
                                 <option value="prophet" selected>Prophet</option>
-                                <option value="lstm">LSTM</option>
+                                <option value="lightgbm">LightGBM</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -877,7 +962,7 @@
                 // Model names mapping
                 const modelNames = {
                     'prophet': 'Prophet',
-                    'lstm': 'LSTM'
+                    'lightgbm': 'LightGBM'
                 };
                 
                 // Update current model type
@@ -970,7 +1055,7 @@
             const model = document.getElementById('modelType').value;
             const modelNames = {
                 'prophet': 'Prophet',
-                'lstm': 'LSTM'
+                'lightgbm': 'LightGBM'
             };
             document.getElementById('currentModelType').textContent = modelNames[model] || model;
             
@@ -985,7 +1070,7 @@
             updateCurrentModel();
             
             if (typeof AppUtils !== 'undefined') {
-                const modelNames = { 'prophet': 'Prophet', 'lstm': 'LSTM' };
+                const modelNames = { 'prophet': 'Prophet', 'lightgbm': 'LightGBM' };
                 AppUtils.showToast(`✅ Đã chọn model ${modelNames[model]}`, 'success');
             }
         }

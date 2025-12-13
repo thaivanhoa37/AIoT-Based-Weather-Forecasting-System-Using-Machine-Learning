@@ -302,6 +302,75 @@ class ProphetModel:
                 'error': 'Failed to train any models'
             }
     
+    def train_selected(self, records, selected_targets: list) -> dict:
+        """
+        Train models for selected sensor data targets only
+        
+        Args:
+            records: List of SensorData records from database
+            selected_targets: List of targets to train (e.g., ['temperature', 'humidity'])
+        
+        Returns:
+            dict with training results
+        """
+        start_time = datetime.now()
+        models_trained = []
+        all_metrics = {}
+        
+        # Filter only valid sensor targets
+        targets_to_train = [t for t in selected_targets if t in self.sensor_targets]
+        
+        if not targets_to_train:
+            return {
+                'success': False,
+                'error': 'No valid sensor targets selected'
+            }
+        
+        print("\n" + "="*60)
+        print("🚀 BẮT ĐẦU HUẤN LUYỆN MODEL PROPHET (SELECTED TARGETS)")
+        print("="*60)
+        print(f"📊 Số lượng dữ liệu sensor: {len(records)} records")
+        print(f"🎯 Targets đã chọn: {', '.join(targets_to_train)}")
+        print(f"🕐 Thời gian bắt đầu: {start_time.strftime('%H:%M:%S')}")
+        print("-"*60)
+        
+        for i, target in enumerate(targets_to_train, 1):
+            print(f"\n[{i}/{len(targets_to_train)}] 🎯 Training: {target.upper()}")
+            result = self.train(records, target)
+            if result.get('success'):
+                models_trained.append(target)
+                all_metrics[target] = result['metrics']
+                metrics = result['metrics']
+                print(f"    ✅ Thành công!")
+                print(f"    📈 R² Score: {metrics.get('r2', 0)*100:.2f}%")
+                print(f"    📉 MAE: {metrics.get('mae', 0):.4f}")
+                print(f"    📉 RMSE: {metrics.get('rmse', 0):.4f}")
+            else:
+                print(f"    ❌ Thất bại: {result.get('error', 'Unknown error')}")
+        
+        training_time = (datetime.now() - start_time).total_seconds()
+        
+        if models_trained:
+            accuracies = [m.get('accuracy', 0) for m in all_metrics.values()]
+            overall_accuracy = np.mean(accuracies) if accuracies else 0
+            
+            return {
+                'success': True,
+                'model_type': self.model_type,
+                'models_trained': models_trained,
+                'metrics': all_metrics,
+                'overall_accuracy': round(float(overall_accuracy), 2),
+                'training_time': round(training_time, 2),
+                'data_points': len(records)
+            }
+        else:
+            print("\n❌ THẤT BẠI: Không train được model nào!")
+            return {
+                'success': False,
+                'model_type': self.model_type,
+                'error': 'Failed to train any models'
+            }
+    
     def train_weather_targets(self, weather_records) -> dict:
         """
         Train models for weather API targets (wind_speed, rainfall, uv_index)
@@ -354,6 +423,67 @@ class ProphetModel:
             return {
                 'success': False,
                 'error': 'Failed to train weather models'
+            }
+    
+    def train_weather_selected(self, weather_records, selected_targets: list) -> dict:
+        """
+        Train models for selected weather API targets
+        
+        Args:
+            weather_records: List of WeatherForecasting records from database
+            selected_targets: List of weather targets to train (e.g., ['wind_speed', 'rainfall'])
+        
+        Returns:
+            dict with training results
+        """
+        start_time = datetime.now()
+        models_trained = []
+        all_metrics = {}
+        
+        # Filter only valid weather targets
+        targets_to_train = [t for t in selected_targets if t in self.weather_targets]
+        
+        if not targets_to_train:
+            return {
+                'success': False,
+                'error': 'No valid weather targets selected'
+            }
+        
+        print(f"\n📊 Dữ liệu weather API: {len(weather_records)} records")
+        print(f"🎯 Weather targets đã chọn: {', '.join(targets_to_train)}")
+        
+        for i, target in enumerate(targets_to_train, 1):
+            print(f"\n[{i}/{len(targets_to_train)}] 🎯 Training: {target.upper()}")
+            result = self.train(weather_records, target)
+            if result.get('success'):
+                models_trained.append(target)
+                all_metrics[target] = result['metrics']
+                metrics = result['metrics']
+                print(f"    ✅ Thành công!")
+                print(f"    📈 R² Score: {metrics.get('r2', 0)*100:.2f}%")
+                print(f"    📉 MAE: {metrics.get('mae', 0):.4f}")
+                print(f"    📉 RMSE: {metrics.get('rmse', 0):.4f}")
+            else:
+                print(f"    ❌ Thất bại: {result.get('error', 'Unknown error')}")
+        
+        training_time = (datetime.now() - start_time).total_seconds()
+        
+        if models_trained:
+            accuracies = [m.get('accuracy', 0) for m in all_metrics.values()]
+            overall_accuracy = np.mean(accuracies) if accuracies else 0
+            
+            return {
+                'success': True,
+                'models_trained': models_trained,
+                'metrics': all_metrics,
+                'overall_accuracy': round(float(overall_accuracy), 2),
+                'training_time': round(training_time, 2)
+            }
+        else:
+            print("\n⚠️  Không train được selected weather targets!")
+            return {
+                'success': False,
+                'error': 'Failed to train selected weather models'
             }
     
     def predict(self, target_column: str, hours_ahead: int = 24) -> dict:

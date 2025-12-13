@@ -5,25 +5,115 @@ let trainingInProgress = false;
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
     loadMLTrainingPage();
+    initSensorCheckboxes();
 });
+
+// Initialize sensor checkboxes
+function initSensorCheckboxes() {
+    const checkboxes = document.querySelectorAll('.sensor-checkbox');
+    // Restore from localStorage
+    const saved = localStorage.getItem('selectedSensors');
+    if (saved) {
+        const arr = JSON.parse(saved);
+        checkboxes.forEach(cb => {
+            cb.checked = arr.includes(cb.value);
+        });
+    }
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            updateSelectedCount();
+            // Save to localStorage
+            const selected = Array.from(document.querySelectorAll('.sensor-checkbox:checked')).map(cb => cb.value);
+            localStorage.setItem('selectedSensors', JSON.stringify(selected));
+        });
+        // Add hover effect
+        const label = checkbox.closest('.checkbox-item');
+        if (label) {
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    label.style.borderColor = 'var(--primary-color)';
+                    label.style.background = 'rgba(102, 126, 234, 0.1)';
+                } else {
+                    label.style.borderColor = 'var(--border-color)';
+                    label.style.background = 'var(--bg)';
+                }
+            });
+            // Initialize state
+            if (checkbox.checked) {
+                label.style.borderColor = 'var(--primary-color)';
+                label.style.background = 'rgba(102, 126, 234, 0.1)';
+            }
+        }
+    });
+    updateSelectedCount();
+}
+
+// Toggle all sensors
+function toggleAllSensors(select) {
+    const checkboxes = document.querySelectorAll('.sensor-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = select;
+        const label = checkbox.closest('.checkbox-item');
+        if (label) {
+            if (select) {
+                label.style.borderColor = 'var(--primary-color)';
+                label.style.background = 'rgba(102, 126, 234, 0.1)';
+            } else {
+                label.style.borderColor = 'var(--border-color)';
+                label.style.background = 'var(--bg)';
+            }
+        }
+    });
+    // Save to localStorage
+    const selected = select ? Array.from(checkboxes).map(cb => cb.value) : [];
+    localStorage.setItem('selectedSensors', JSON.stringify(selected));
+    updateSelectedCount();
+}
+
+// Update selected count display
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.sensor-checkbox:checked');
+    const countEl = document.getElementById('selectedCount');
+    if (countEl) {
+        const count = checkboxes.length;
+        countEl.innerHTML = `Đã chọn: <strong style="color: var(--primary-color);">${count}</strong> biến để huấn luyện`;
+    }
+}
+
+// Get selected targets
+function getSelectedTargets() {
+    const checkboxes = document.querySelectorAll('.sensor-checkbox:checked');
+    const targets = Array.from(checkboxes).map(cb => cb.value);
+    console.log('Selected targets:', targets);  // Debug log
+    return targets;
+}
 
 // Load ML training page
 async function loadMLTrainingPage() {
     const loading = AppUtils.showLoading(document.querySelector('.content'));
-    
+    // Restore dataPoints from localStorage or default to 10000
+    const dataPointsInput = document.getElementById('dataPoints');
+    if (dataPointsInput) {
+        const savedDataPoints = localStorage.getItem('dataPoints');
+        if (savedDataPoints) {
+            dataPointsInput.value = savedDataPoints;
+        } else {
+            dataPointsInput.value = 10000;
+        }
+        // Lưu lại khi thay đổi
+        dataPointsInput.addEventListener('change', () => {
+            localStorage.setItem('dataPoints', dataPointsInput.value);
+        });
+    }
     try {
         // Get model info
         const modelInfo = await AppUtils.getMLModelInfo();
-        
         // Update model info display
         updateModelInfoDisplay(modelInfo);
-        
         // Load training history
         loadTrainingHistory(modelInfo);
-        
         // Update model type selector
         updateModelTypeSelector(modelInfo);
-        
     } catch (error) {
         console.error('Error loading ML training page:', error);
         AppUtils.showToast('Không thể tải thông tin model', 'error');
@@ -52,7 +142,7 @@ function updateModelInfoDisplay(modelInfo) {
     // Model names mapping
     const modelNames = {
         'prophet': 'Prophet',
-        'lstm': 'LSTM'
+        'lightgbm': 'LightGBM'
     };
     
     // Show current model type
@@ -103,11 +193,24 @@ async function startTraining(event) {
     
     // Get form values
     const modelType = document.getElementById('modelType')?.value || 'prophet';
-    const dataPoints = parseInt(document.getElementById('dataPoints')?.value) || 1000;
+    const dataPointsInput = document.getElementById('dataPoints');
+    const dataPoints = parseInt(dataPointsInput?.value) || 1000;
+    // Lưu lại lựa chọn khi train
+    if (dataPointsInput) {
+        localStorage.setItem('dataPoints', dataPointsInput.value);
+    }
+    
+    // Get selected targets
+    const selectedTargets = getSelectedTargets();
     
     // Validate
     if (dataPoints < 100) {
         AppUtils.showToast('Số lượng dữ liệu phải >= 100', 'error');
+        return;
+    }
+    
+    if (selectedTargets.length === 0) {
+        AppUtils.showToast('Vui lòng chọn ít nhất 1 biến để huấn luyện', 'error');
         return;
     }
     
@@ -116,7 +219,20 @@ async function startTraining(event) {
     // Model names for display
     const modelNames = {
         'prophet': 'Prophet',
-        'lstm': 'LSTM'
+        'lightgbm': 'LightGBM'
+    };
+    
+    // Target names for display
+    const targetNames = {
+        'temperature': 'Nhiệt độ',
+        'humidity': 'Độ ẩm',
+        'pressure': 'Áp suất',
+        'aqi': 'AQI',
+        'co2': 'CO2',
+        'dust': 'Bụi (PM2.5)',
+        'wind_speed': 'Tốc độ gió',
+        'rainfall': 'Lượng mưa',
+        'uv_index': 'Chỉ số UV'
     };
     
     // Update UI
@@ -138,6 +254,8 @@ async function startTraining(event) {
         // Log start
         addProgressLog('Bắt đầu quá trình huấn luyện...', 'info');
         addProgressLog(`Model: ${modelNames[modelType]}, Data points: ${dataPoints}`, 'info');
+        const targetDisplayNames = selectedTargets.map(t => targetNames[t] || t);
+        addProgressLog(`Biến huấn luyện: ${targetDisplayNames.join(', ')}`, 'info');
         addProgressLog('Đang trích xuất dữ liệu từ cơ sở dữ liệu...', 'info');
         
         // Progress simulation
@@ -150,8 +268,17 @@ async function startTraining(event) {
             if (progressText) progressText.textContent = `${Math.round(progress)}%`;
         }, 200);
         
-        // Call training API with model type
-        const result = await AppUtils.trainMLModel(modelType, dataPoints);
+        // Build API URL with targets
+        const targetsParam = selectedTargets.join(',');
+        const apiUrl = `/api/ml/train?model_type=${modelType}&data_points=${dataPoints}&targets=${encodeURIComponent(targetsParam)}`;
+        
+        // Call training API with selected targets
+        const response = await fetch(apiUrl, { method: 'POST' });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Training failed');
+        }
+        const result = await response.json();
         
         clearInterval(progressInterval);
         
@@ -248,7 +375,7 @@ function loadTrainingHistory(modelInfo) {
     // Model names
     const modelNames = {
         'prophet': 'Prophet',
-        'lstm': 'LSTM'
+        'lightgbm': 'LightGBM'
     };
     
     // Create entry from last training
@@ -290,7 +417,7 @@ async function compareModels() {
         
         if (data.comparison) {
             for (const [modelType, info] of Object.entries(data.comparison)) {
-                const modelNames = { 'prophet': 'Prophet', 'lstm': 'LSTM' };
+                const modelNames = { 'prophet': 'Prophet', 'lightgbm': 'LightGBM' };
                 const isBest = modelType === data.best_model;
                 message += `${isBest ? '🏆 ' : ''}${modelNames[modelType] || modelType}: ${info.average_accuracy.toFixed(2)}%\n`;
             }

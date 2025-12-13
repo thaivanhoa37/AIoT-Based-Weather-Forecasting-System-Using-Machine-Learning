@@ -385,21 +385,47 @@ async def get_system_stats(db: Session = Depends(get_db)):
 
 @router.post("/ml/train")
 async def train_ml_model(
-    model_type: str = Query("prophet", regex="^(prophet|lstm)$"),
+    model_type: str = Query("prophet", regex="^(prophet|lightgbm)$"),
     data_points: int = Query(5000, ge=100, le=50000),
+    targets: str = Query(None, description="Comma-separated list of targets to train"),
     db: Session = Depends(get_db)
 ):
     """
-    Train ML model for weather forecasting with all 9 targets
+    Train ML model for weather forecasting with selected targets
     
-    - **model_type**: Type of model (prophet, lstm)
+    - **model_type**: Type of model (prophet, lightgbm)
     - **data_points**: Number of historical data points to use
+    - **targets**: Comma-separated list of targets to train (e.g., "temperature,humidity,aqi")
     
-    Trains models for:
+    Available targets:
     - Sensor data: temperature, humidity, pressure, aqi, co2, dust (6 targets)
     - Weather API: wind_speed, rainfall, uv_index (3 targets)
     """
     try:
+        # Parse targets - if not provided, train all
+        sensor_targets = ['temperature', 'humidity', 'aqi', 'pressure', 'co2', 'dust']
+        weather_targets = ['wind_speed', 'rainfall', 'uv_index']
+        all_targets = sensor_targets + weather_targets
+        
+        logger.info(f"=== ML TRAINING REQUEST ===")
+        logger.info(f"Received targets parameter: '{targets}'")
+        
+        selected_targets = None
+        if targets:
+            selected_targets = [t.strip() for t in targets.split(',') if t.strip() in all_targets]
+            if not selected_targets:
+                raise HTTPException(status_code=400, detail="Không có target hợp lệ được chọn")
+            logger.info(f"Parsed selected targets: {selected_targets}")
+        else:
+            logger.info(f"No targets provided, will use defaults")
+        
+        # Separate selected targets into sensor and weather targets
+        selected_sensor_targets = [t for t in (selected_targets or sensor_targets) if t in sensor_targets]
+        selected_weather_targets = [t for t in (selected_targets or []) if t in weather_targets]
+        
+        logger.info(f"Final sensor targets: {selected_sensor_targets}")
+        logger.info(f"Final weather targets: {selected_weather_targets}")
+        
         # Get sensor training data - order by ascending time (oldest first) for proper time series
         records = db.query(SensorData).filter(
             SensorData.temperature > 0
@@ -408,15 +434,24 @@ async def train_ml_model(
         if len(records) < 100:
             raise HTTPException(status_code=400, detail="Không đủ dữ liệu sensor để huấn luyện (tối thiểu 100 bản ghi)")
         
-        # Get weather API data for wind, rainfall, uv_index
-        weather_records = db.query(WeatherForecasting).filter(
-            WeatherForecasting.wind_speed >= 0
-        ).order_by(WeatherForecasting.timestamp).limit(data_points).all()
+        # Get weather API data for wind, rainfall, uv_index if weather targets selected
+        weather_records = []
+        if selected_weather_targets:
+            weather_records = db.query(WeatherForecasting).filter(
+                WeatherForecasting.wind_speed >= 0
+            ).order_by(WeatherForecasting.timestamp).limit(data_points).all()
         
         logger.info(f"Training {model_type} model with {len(records)} sensor records and {len(weather_records)} weather records...")
+        logger.info(f"Sensor targets: {selected_sensor_targets}, Weather targets: {selected_weather_targets}")
         
-        # Train model using MLManager with both data sources
-        train_result = ml_trainer.train_all_models(records, model_type, weather_records)
+        # Train model using MLManager with selected targets
+        train_result = ml_trainer.train_selected_targets(
+            records, 
+            model_type, 
+            selected_sensor_targets,
+            weather_records,
+            selected_weather_targets
+        )
         
         # Format response for frontend
         if train_result.get('success'):
@@ -457,7 +492,7 @@ async def get_model_info():
         "last_accuracy": info.get('last_accuracy', 0),
         "last_data_points": info.get('last_data_points', 0),
         "status": info.get('status', 'Cần huấn luyện'),
-        "supported_model_types": info.get('supported_model_types', ['prophet', 'lstm'])
+        "supported_model_types": info.get('supported_model_types', ['prophet', 'lightgbm'])
     }
 
 
@@ -479,7 +514,7 @@ async def compare_models():
 
 
 @router.post("/ml/set-model")
-async def set_current_model(model_type: str = Query(..., regex="^(prophet|lstm)$")):
+async def set_current_model(model_type: str = Query(..., regex="^(prophet|lightgbm)$")):
     """Set the current active model for predictions"""
     success = ml_trainer.set_current_model(model_type)
     if success:
@@ -547,7 +582,7 @@ async def update_auto_train_settings(request_body: dict = None):
             settings["interval_days"] = max(1, min(30, int(request_body["interval_days"])))
         if "hour" in request_body:
             settings["hour"] = max(0, min(23, int(request_body["hour"])))
-        if "model_type" in request_body and request_body["model_type"] in ["prophet", "lstm"]:
+        if "model_type" in request_body and request_body["model_type"] in ["prophet", "lightgbm"]:
             settings["model_type"] = request_body["model_type"]
         if "data_points" in request_body:
             settings["data_points"] = max(1000, min(20000, int(request_body["data_points"])))
@@ -703,7 +738,7 @@ async def predict_weather(
                 'accuracy': model_info.get('last_accuracy', 0),
                 'dataRows': model_info.get('last_data_points', 0),
                 'trainingCount': model_info.get('training_count', 0),
-                'supportedModelTypes': model_info.get('supported_model_types', ['prophet', 'lstm'])
+                'supportedModelTypes': model_info.get('supported_model_types', ['prophet', 'lightgbm'])
             },
             'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         }

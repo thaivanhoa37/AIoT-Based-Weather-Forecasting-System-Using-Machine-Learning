@@ -1,6 +1,6 @@
 """
 Machine Learning Utilities Module
-Central manager for all ML models (Prophet, Random Forest, LSTM)
+Central manager for all ML models (Prophet, LightGBM/XGBoost)
 """
 
 import json
@@ -23,7 +23,7 @@ CURRENT_MODEL_FILE = MODELS_DIR / 'current_model.json'
 
 # Import model classes
 from models.prophet_model import prophet_model
-from models.lstm_model import lstm_model
+from models.lightgbm_model import lightgbm_model
 
 
 class MLManager:
@@ -32,7 +32,7 @@ class MLManager:
     def __init__(self):
         self.models = {
             'prophet': prophet_model,
-            'lstm': lstm_model
+            'lightgbm': lightgbm_model
         }
         self.current_model_type = 'prophet'
         self.training_history = []
@@ -93,12 +93,41 @@ class MLManager:
     
     def train_all_models(self, records, model_type: str = None, weather_records=None) -> dict:
         """
-        Train a specific model type or current model
+        Train a specific model type or current model with all targets
         
         Args:
             records: List of SensorData records from database
-            model_type: Type of model to train (prophet, lstm)
+            model_type: Type of model to train (prophet, lightgbm)
             weather_records: List of WeatherForecasting records from database (optional)
+        
+        Returns:
+            dict with training results
+        """
+        # Use train_selected_targets with all targets
+        sensor_targets = ['temperature', 'humidity', 'aqi', 'pressure', 'co2', 'dust']
+        weather_targets = ['wind_speed', 'rainfall', 'uv_index'] if weather_records else []
+        
+        return self.train_selected_targets(
+            records, 
+            model_type, 
+            sensor_targets, 
+            weather_records, 
+            weather_targets
+        )
+    
+    def train_selected_targets(self, records, model_type: str = None, 
+                               sensor_targets: list = None, 
+                               weather_records=None, 
+                               weather_targets: list = None) -> dict:
+        """
+        Train a specific model type with selected targets
+        
+        Args:
+            records: List of SensorData records from database
+            model_type: Type of model to train (prophet, lightgbm)
+            sensor_targets: List of sensor targets to train (e.g., ['temperature', 'humidity'])
+            weather_records: List of WeatherForecasting records from database (optional)
+            weather_targets: List of weather targets to train (e.g., ['wind_speed'])
         
         Returns:
             dict with training results
@@ -112,19 +141,25 @@ class MLManager:
                 'error': f'Unknown model type: {model_type}'
             }
         
+        # Default targets if not specified
+        if sensor_targets is None:
+            sensor_targets = ['temperature', 'humidity', 'aqi', 'pressure', 'co2', 'dust']
+        if weather_targets is None:
+            weather_targets = []
+        
         try:
             start_time = datetime.now()
             
-            # Get the model and train it with combined data
+            # Get the model and train it with selected targets
             model = self.models[model_type]
             
-            # Train with sensor_data records
-            result = model.train_all(records)
+            # Train with sensor_data records for selected sensor targets
+            result = model.train_selected(records, sensor_targets)
             
-            # If weather_records provided, train weather targets too
+            # If weather_records and weather_targets provided, train weather targets too
             weather_result = None
-            if weather_records and len(weather_records) > 0:
-                weather_result = model.train_weather_targets(weather_records)
+            if weather_records and len(weather_records) > 0 and weather_targets:
+                weather_result = model.train_weather_selected(weather_records, weather_targets)
             
             # Combine results
             if result.get('success'):

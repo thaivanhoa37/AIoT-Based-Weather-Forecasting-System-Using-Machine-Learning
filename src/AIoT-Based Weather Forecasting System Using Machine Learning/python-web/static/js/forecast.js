@@ -329,7 +329,7 @@ function updateModelInfo(modelInfo) {
     const modelNames = {
         'prophet': 'Prophet',
         'randomforest': 'Random Forest',
-        'lstm': 'LSTM'
+        'lightgbm': 'LightGBM'
     };
     
     // Get current model type
@@ -383,7 +383,7 @@ function updateModelInfo(modelInfo) {
         const colors = {
             'prophet': '#667eea',
             'randomforest': '#48bb78',
-            'lstm': '#ed8936'
+            'lightgbm': '#ed8936'
         };
         modelTypeBadge.textContent = modelTypeName;
         modelTypeBadge.style.backgroundColor = colors[currentModelType] || '#667eea';
