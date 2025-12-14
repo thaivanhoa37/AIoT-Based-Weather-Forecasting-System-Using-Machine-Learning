@@ -530,11 +530,6 @@ async def set_current_model(model_type: str = Query(..., regex="^(prophet|lightg
 # ===== Auto-Training Settings =====
 AUTO_TRAIN_CONFIG_FILE = Path(__file__).parent.parent / "models_storage" / "auto_train_config.json"
 
-# Ensure models_storage directory exists
-AUTO_TRAIN_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-logger.info(f"Auto-train config file path: {AUTO_TRAIN_CONFIG_FILE}")
-
 def load_auto_train_settings():
     """Load auto-training settings from config file"""
     default_settings = {
@@ -543,15 +538,20 @@ def load_auto_train_settings():
         "hour": 2,
         "model_type": "prophet",
         "data_points": 10000,
-        "targets": ["temperature", "humidity", "pressure", "aqi"],
+        "targets": ["temperature", "humidity"],  # Default targets (sensor + API)
         "last_auto_train": None,
-        "next_train_time": None
+        "training_history": []  # Store training history
     }
     try:
         if AUTO_TRAIN_CONFIG_FILE.exists():
             with open(AUTO_TRAIN_CONFIG_FILE, 'r', encoding='utf-8') as f:
                 saved = json.load(f)
                 default_settings.update(saved)
+                # Validate targets - support both sensor and API targets
+                if "targets" in saved and isinstance(saved["targets"], list):
+                    valid_targets = ["temperature", "humidity", "pressure", "aqi", "co2", "dust",
+                                   "wind_speed", "rainfall", "uv_index"]
+                    default_settings["targets"] = [t for t in saved["targets"] if t in valid_targets]
     except Exception as e:
         logger.error(f"Error loading auto-train settings: {e}")
     return default_settings
@@ -559,24 +559,12 @@ def load_auto_train_settings():
 def save_auto_train_settings(settings: dict):
     """Save auto-training settings to config file"""
     try:
-        # Ensure directory exists
         AUTO_TRAIN_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Write file
         with open(AUTO_TRAIN_CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(settings, f, indent=2, ensure_ascii=False)
-        
-        # Verify file was written
-        if AUTO_TRAIN_CONFIG_FILE.exists():
-            logger.info(f"✓ Auto-train settings saved to {AUTO_TRAIN_CONFIG_FILE}")
-            logger.info(f"  Settings: {settings}")
-            return True
-        else:
-            logger.error(f"File was not created at {AUTO_TRAIN_CONFIG_FILE}")
-            return False
-            
+        return True
     except Exception as e:
-        logger.error(f"Error saving auto-train settings: {e}", exc_info=True)
+        logger.error(f"Error saving auto-train settings: {e}")
         return False
 
 @router.get("/ml/auto-train/settings")
@@ -586,131 +574,44 @@ async def get_auto_train_settings():
     return settings
 
 @router.post("/ml/auto-train/settings")
-async def update_auto_train_settings(settings_data: dict):
+async def update_auto_train_settings(request_body: dict = None):
     """Update auto-training configuration settings"""
-    logger.info(f"📨 Received POST request to /ml/auto-train/settings")
-    logger.info(f"📝 Request body: {settings_data}")
+    from fastapi import Request
     
     # Load current settings
     settings = load_auto_train_settings()
-    logger.info(f"📂 Current settings before update: {settings}")
     
     # Handle body data
-    if settings_data:
-        logger.info(f"🔄 Processing request data...")
-        if "enabled" in settings_data:
-            settings["enabled"] = bool(settings_data["enabled"])
-            logger.info(f"  ✓ Set enabled: {settings['enabled']}")
-        if "interval_days" in settings_data:
-            settings["interval_days"] = max(1, min(30, int(settings_data["interval_days"])))
-            logger.info(f"  ✓ Set interval_days: {settings['interval_days']}")
-        if "hour" in settings_data:
-            settings["hour"] = max(0, min(23, int(settings_data["hour"])))
-            logger.info(f"  ✓ Set hour: {settings['hour']}")
-        if "model_type" in settings_data and settings_data["model_type"] in ["prophet", "lightgbm"]:
-            settings["model_type"] = settings_data["model_type"]
-            logger.info(f"  ✓ Set model_type: {settings['model_type']}")
-        if "data_points" in settings_data:
-            settings["data_points"] = max(1000, min(20000, int(settings_data["data_points"])))
-            logger.info(f"  ✓ Set data_points: {settings['data_points']}")
-        if "targets" in settings_data and isinstance(settings_data["targets"], list):
-            settings["targets"] = settings_data["targets"]
-            logger.info(f"  ✓ Set targets: {settings['targets']}")
-        else:
-            logger.warning(f"  ⚠️ No valid targets in request. targets={settings_data.get('targets')}")
-    
-    logger.info(f"📝 Settings before save: {settings}")
+    if request_body:
+        if "enabled" in request_body:
+            settings["enabled"] = bool(request_body["enabled"])
+        if "interval_days" in request_body:
+            settings["interval_days"] = max(1, min(30, int(request_body["interval_days"])))
+        if "hour" in request_body:
+            settings["hour"] = max(0, min(23, int(request_body["hour"])))
+        if "model_type" in request_body and request_body["model_type"] in ["prophet", "lightgbm"]:
+            settings["model_type"] = request_body["model_type"]
+        if "data_points" in request_body:
+            settings["data_points"] = max(1000, min(20000, int(request_body["data_points"])))
+        if "targets" in request_body and isinstance(request_body["targets"], list):
+            # Validate targets - support both sensor and API targets
+            valid_targets = ["temperature", "humidity", "pressure", "aqi", "co2", "dust",
+                           "wind_speed", "rainfall", "uv_index"]
+            settings["targets"] = [t for t in request_body["targets"] if t in valid_targets]
+            if not settings["targets"]:
+                settings["targets"] = ["temperature", "humidity"]  # Fallback
     
     # Save settings
     if save_auto_train_settings(settings):
-        logger.info(f"✅ Auto-train settings saved successfully")
-        logger.info(f"📂 Settings file path: {AUTO_TRAIN_CONFIG_FILE}")
-        
-        # Verify by reading back
-        verify_settings = load_auto_train_settings()
-        logger.info(f"✓ Verification - Settings from file: {verify_settings}")
-        
+        logger.info(f"Auto-train settings updated: {settings}")
         return {
             "success": True,
             "message": "Đã cập nhật cài đặt Auto-Training",
             **settings
         }
     else:
-        logger.error(f"❌ Failed to save auto-train settings")
         raise HTTPException(status_code=500, detail="Lỗi khi lưu cài đặt")
 
-@router.get("/ml/auto-train/debug")
-async def debug_auto_train_settings():
-    """Debug endpoint to check auto-train configuration"""
-    return {
-        "config_file_path": str(AUTO_TRAIN_CONFIG_FILE),
-        "config_file_exists": AUTO_TRAIN_CONFIG_FILE.exists(),
-        "config_directory_exists": AUTO_TRAIN_CONFIG_FILE.parent.exists(),
-        "config_directory_path": str(AUTO_TRAIN_CONFIG_FILE.parent),
-        "current_settings": load_auto_train_settings(),
-        "readable_permissions": str(AUTO_TRAIN_CONFIG_FILE.parent.stat().st_mode) if AUTO_TRAIN_CONFIG_FILE.parent.exists() else "N/A"
-    }
-
-@router.post("/ml/auto-train/toggle")
-async def toggle_auto_train(toggle_data: dict = None):
-    """Toggle auto-training on/off"""
-    settings = load_auto_train_settings()
-    
-    if toggle_data and "enabled" in toggle_data:
-        settings["enabled"] = bool(toggle_data["enabled"])
-    else:
-        settings["enabled"] = not settings.get("enabled", False)
-    
-    if save_auto_train_settings(settings):
-        return {
-            "success": True,
-            "enabled": settings["enabled"],
-            "message": "Đã cập nhật trạng thái Auto-Training"
-        }
-    else:
-        raise HTTPException(status_code=500, detail="Lỗi khi cập nhật trạng thái")
-
-@router.post("/ml/auto-train/run-now")
-async def run_auto_train_now(db: Session = Depends(get_db)):
-    """Manually trigger auto-training now"""
-    settings = load_auto_train_settings()
-    model_type = settings.get("model_type", "prophet")
-    data_points = settings.get("data_points", 10000)
-    targets = settings.get("targets", ["temperature", "humidity", "pressure", "aqi"])
-    
-    try:
-        # Get training data
-        records = db.query(SensorData).filter(
-            SensorData.temperature > 0
-        ).order_by(desc(SensorData.timestamp)).limit(data_points).all()
-        
-        if len(records) < 100:
-            raise HTTPException(status_code=400, detail="Không đủ dữ liệu để huấn luyện")
-        
-        # Convert targets to string for API
-        targets_param = ",".join(targets)
-        
-        # Train using the trainer
-        result = ml_trainer.train_specific_targets(
-            records=records,
-            model_type=model_type,
-            targets=targets
-        )
-        
-        # Update last train time
-        settings["last_auto_train"] = datetime.now().isoformat()
-        save_auto_train_settings(settings)
-        
-        logger.info(f"Auto-training completed: {result}")
-        
-        return {
-            "success": True,
-            "message": "Tự động huấn luyện hoàn thành",
-            "result": result
-        }
-    except Exception as e:
-        logger.error(f"Error in auto-training: {e}")
-        raise HTTPException(status_code=500, detail=f"Lỗi huấn luyện: {str(e)}")
 
 @router.post("/ml/auto-train/run")
 async def run_auto_train(db: Session = Depends(get_db)):
@@ -718,46 +619,99 @@ async def run_auto_train(db: Session = Depends(get_db)):
     settings = load_auto_train_settings()
     model_type = settings.get("model_type", "prophet")
     data_points = settings.get("data_points", 10000)
+    targets = settings.get("targets", ["temperature", "humidity"])
     
     try:
         # Get training data
         records = db.query(SensorData).filter(
             SensorData.temperature > 0
-        ).order_by(desc(SensorData.timestamp)).limit(data_points).all()
+        ).order_by(SensorData.timestamp).limit(data_points).all()
         
         if len(records) < 100:
             raise HTTPException(status_code=400, detail="Không đủ dữ liệu để huấn luyện")
         
-        # Prepare data
-        data = [{
-            'timestamp': r.timestamp.isoformat() if hasattr(r.timestamp, 'isoformat') else str(r.timestamp),
-            'temperature': r.temperature,
-            'humidity': r.humidity,
-            'pressure': r.pressure,
-            'aqi': r.aqi or 0
-        } for r in records]
+        # Separate selected targets into sensor and weather targets
+        sensor_targets = [t for t in targets if t in ["temperature", "humidity", "pressure", "aqi", "co2", "dust"]]
+        weather_targets = [t for t in targets if t in ["wind_speed", "rainfall", "uv_index"]]
         
-        # Train model
-        result = ml_trainer.train_model(model_type, data)
+        # Use default sensor targets if none specified
+        if not sensor_targets:
+            sensor_targets = ["temperature", "humidity"]
+        
+        # Get weather records if needed
+        weather_records = []
+        if weather_targets:
+            weather_records = db.query(WeatherForecasting).filter(
+                WeatherForecasting.wind_speed >= 0
+            ).order_by(WeatherForecasting.timestamp).limit(data_points).all()
+        
+        logger.info(f"Auto-training: model={model_type}, sensor_targets={sensor_targets}, api_targets={weather_targets}")
+        
+        # Train model with selected targets
+        result = ml_trainer.train_selected_targets(
+            records, 
+            model_type, 
+            sensor_targets,
+            weather_records,
+            weather_targets
+        )
         
         if result.get('success'):
-            # Update last auto train time
-            settings["last_auto_train"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            # Update last auto train time and history
+            now = datetime.now()
+            settings["last_auto_train"] = now.strftime("%d/%m/%Y %H:%M")
+            accuracy = result.get("overall_accuracy", 0)
+            
+            # Add to history
+            if "training_history" not in settings:
+                settings["training_history"] = []
+            
+            history_entry = {
+                "timestamp": now.isoformat(),
+                "model_type": model_type,
+                "data_points": data_points,
+                "targets": targets,
+                "accuracy": accuracy / 100,  # Store as decimal
+                "training_time": result.get("training_time", 0),
+                "status": "success",
+                "message": "Auto training completed successfully"
+            }
+            
+            settings["training_history"].insert(0, history_entry)
+            settings["training_history"] = settings["training_history"][:50]  # Keep last 50
+            
             save_auto_train_settings(settings)
             
             return {
                 "success": True,
                 "message": f"Auto-training hoàn tất với model {model_type}",
-                "accuracy": result.get("accuracy", 0),
-                "training_time": result.get("training_time", 0)
+                "accuracy": accuracy / 100,
+                "training_time": result.get("training_time", 0),
+                "targets": targets,
+                "sensor_targets": sensor_targets,
+                "api_targets": weather_targets
             }
         else:
-            raise HTTPException(status_code=500, detail=result.get("message", "Training failed"))
+            raise HTTPException(status_code=500, detail=result.get("error", "Training failed"))
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Auto-train error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ml/auto-train/history")
+async def get_training_history(limit: int = 10):
+    """Get auto-training history"""
+    settings = load_auto_train_settings()
+    history = settings.get("training_history", [])
+    
+    # Return limited history
+    return {
+        "success": True,
+        "total": len(history),
+        "history": history[:limit]
+    }
 
 
 @router.get("/ml/predict")

@@ -90,8 +90,6 @@ function getSelectedTargets() {
 
 // Load ML training page
 async function loadMLTrainingPage() {
-    console.log('🚀 Loading ML Training page...');
-    
     const loading = AppUtils.showLoading(document.querySelector('.content'));
     // Restore dataPoints from localStorage or default to 10000
     const dataPointsInput = document.getElementById('dataPoints');
@@ -107,16 +105,6 @@ async function loadMLTrainingPage() {
             localStorage.setItem('dataPoints', dataPointsInput.value);
         });
     }
-    
-    // Load saved training configuration
-    loadTrainingConfiguration();
-    
-    // Initialize auto-train checkbox listeners - with delay to ensure DOM is ready
-    setTimeout(() => {
-        console.log('⏱️ Initializing auto-train checkboxes after delay...');
-        initAutoTrainCheckboxes();
-    }, 100);
-    
     try {
         // Get model info
         const modelInfo = await AppUtils.getMLModelInfo();
@@ -126,116 +114,11 @@ async function loadMLTrainingPage() {
         loadTrainingHistory(modelInfo);
         // Update model type selector
         updateModelTypeSelector(modelInfo);
-        
-        // Load auto-train settings
-        console.log('📥 Loading auto-train settings...');
-        await loadAutoTrainSettings();
-        
     } catch (error) {
         console.error('Error loading ML training page:', error);
         AppUtils.showToast('Không thể tải thông tin model', 'error');
     } finally {
         AppUtils.hideLoading(loading);
-    }
-}
-
-// Load training configuration from localStorage
-function loadTrainingConfiguration() {
-    try {
-        const savedConfig = localStorage.getItem('trainingConfig');
-        if (savedConfig) {
-            const config = JSON.parse(savedConfig);
-            
-            // Restore model type
-            if (config.modelType) {
-                const modelTypeSelect = document.getElementById('modelType');
-                if (modelTypeSelect) {
-                    modelTypeSelect.value = config.modelType;
-                }
-            }
-            
-            // Restore data points
-            if (config.dataPoints) {
-                const dataPointsInput = document.getElementById('dataPoints');
-                if (dataPointsInput) {
-                    dataPointsInput.value = config.dataPoints;
-                }
-            }
-            
-            // Restore selected sensors/targets
-            if (config.selectedTargets && Array.isArray(config.selectedTargets)) {
-                // Uncheck all first
-                document.querySelectorAll('.sensor-checkbox').forEach(cb => {
-                    cb.checked = false;
-                });
-                
-                // Check saved targets
-                config.selectedTargets.forEach(target => {
-                    const checkbox = document.querySelector(`.sensor-checkbox[value="${target}"]`);
-                    if (checkbox) {
-                        checkbox.checked = true;
-                        // Update UI styles
-                        const label = checkbox.closest('.checkbox-item');
-                        if (label) {
-                            label.style.borderColor = 'var(--primary-color)';
-                            label.style.background = 'rgba(102, 126, 234, 0.1)';
-                        }
-                    }
-                });
-                
-                // Update count display
-                updateSelectedCount();
-            }
-            
-            // Show status bar if config was loaded
-            const statusBar = document.getElementById('configStatusBar');
-            if (statusBar && savedConfig) {
-                statusBar.style.display = 'block';
-            }
-            
-            // Show toast notification
-            AppUtils.showToast('✓ Đã load cấu hình huấn luyện từ trước', 'success');
-        }
-    } catch (error) {
-        console.error('Error loading training configuration:', error);
-    }
-}
-
-// Clear training configuration
-function clearTrainingConfiguration() {
-    if (confirm('Bạn chắc chắn muốn xóa cấu hình huấn luyện đã lưu?')) {
-        try {
-            localStorage.removeItem('trainingConfig');
-            
-            // Hide status bar
-            const statusBar = document.getElementById('configStatusBar');
-            if (statusBar) {
-                statusBar.style.display = 'none';
-            }
-            
-            AppUtils.showToast('✓ Đã xóa cấu hình', 'success');
-        } catch (error) {
-            console.error('Error clearing configuration:', error);
-            AppUtils.showToast('✗ Lỗi khi xóa cấu hình', 'error');
-        }
-    }
-}
-
-// Save training configuration to localStorage
-function saveTrainingConfiguration() {
-    try {
-        const config = {
-            modelType: document.getElementById('modelType')?.value || 'prophet',
-            dataPoints: document.getElementById('dataPoints')?.value || '10000',
-            selectedTargets: getSelectedTargets(),
-            timestamp: new Date().toISOString()
-        };
-        
-        localStorage.setItem('trainingConfig', JSON.stringify(config));
-        return config;
-    } catch (error) {
-        console.error('Error saving training configuration:', error);
-        return null;
     }
 }
 
@@ -330,9 +213,6 @@ async function startTraining(event) {
         AppUtils.showToast('Vui lòng chọn ít nhất 1 biến để huấn luyện', 'error');
         return;
     }
-    
-    // Save current configuration for next time
-    saveTrainingConfiguration();
     
     trainingInProgress = true;
     
@@ -655,292 +535,130 @@ async function switchModel(modelType) {
     }
 }
 
-// ===== Auto-Training Functions =====
+// ===== AUTO-TRAINING FUNCTIONS =====
 
-// Initialize auto-train checkboxes
-function initAutoTrainCheckboxes() {
-    console.log('🔧 Initializing auto-train checkboxes...');
-    
-    const checkboxes = document.querySelectorAll('.auto-train-checkbox');
-    console.log(`✓ Found ${checkboxes.length} auto-train checkboxes`);
-    
-    // First, load saved targets from localStorage (temporary storage before API load)
-    const savedTargets = localStorage.getItem('autoTrainTargets');
-    if (savedTargets) {
-        try {
-            const targets = JSON.parse(savedTargets);
-            console.log(`📥 Restoring from localStorage: ${JSON.stringify(targets)}`);
-            checkboxes.forEach(cb => {
-                cb.checked = targets.includes(cb.value);
-            });
-        } catch (e) {
-            console.warn('Failed to parse saved targets:', e);
+// Load auto-training settings
+async function loadAutoTrainSettings() {
+    try {
+        const response = await fetch('/api/ml/auto-train/settings');
+        if (!response.ok) throw new Error('Cannot load settings');
+        
+        const settings = await response.json();
+        
+        // Update UI
+        const enabledBtn = document.getElementById('btnToggleAutoTrain');
+        const intervalSelect = document.getElementById('autoTrainInterval');
+        const hourSelect = document.getElementById('autoTrainHour');
+        const modelSelect = document.getElementById('autoTrainModel');
+        const dataPointsInput = document.getElementById('autoTrainDataPoints');
+        const statusIndicator = document.getElementById('autoTrainIndicator');
+        const nextTrainTime = document.getElementById('nextTrainTime');
+        const lastAutoTrainTime = document.getElementById('lastAutoTrainTime');
+        const autoTrainCheckboxes = document.querySelectorAll('.auto-train-sensor-checkbox');
+        
+        // Update form values
+        if (intervalSelect) intervalSelect.value = settings.interval_days || 7;
+        if (hourSelect) hourSelect.value = settings.hour || 2;
+        if (modelSelect) modelSelect.value = settings.model_type || 'prophet';
+        if (dataPointsInput) dataPointsInput.value = settings.data_points || 10000;
+        
+        // Update button state
+        if (enabledBtn) {
+            if (settings.enabled) {
+                enabledBtn.className = 'btn btn-danger';
+                enabledBtn.innerHTML = '⏹️ <span data-i18n="mlTrainingExt.disableAutoTrain">Tắt Auto-Training</span>';
+            } else {
+                enabledBtn.className = 'btn btn-primary';
+                enabledBtn.innerHTML = '▶️ <span data-i18n="mlTrainingExt.enableAutoTrain">Bật Auto-Training</span>';
+            }
         }
-    }
-    
-    checkboxes.forEach(checkbox => {
-        // Add change event listener
-        checkbox.addEventListener('change', () => {
-            console.log(`Checkbox ${checkbox.value} changed to ${checkbox.checked}`);
-            updateAutoTrainSelectedCount();
-            
-            // Save to localStorage immediately
-            saveAutoTrainTargetsToLocalStorage();
-            
-            // Update UI styles
-            const label = checkbox.closest('.checkbox-item');
-            if (label) {
-                if (checkbox.checked) {
-                    label.style.borderColor = 'var(--primary-color)';
-                    label.style.background = 'rgba(102, 126, 234, 0.1)';
+        
+        // Update status indicator
+        if (statusIndicator) {
+            const statusDot = statusIndicator.querySelector('.status-dot');
+            const statusText = statusIndicator.querySelector('.status-text');
+            if (statusDot && statusText) {
+                if (settings.enabled) {
+                    statusDot.className = 'status-dot on';
+                    statusText.textContent = '✓ Auto-Training đang hoạt động';
                 } else {
-                    label.style.borderColor = 'var(--border-color)';
-                    label.style.background = 'var(--bg)';
+                    statusDot.className = 'status-dot off';
+                    statusText.textContent = '✗ Auto-Training đã tắt';
                 }
             }
-        });
-        // Initialize state
-        const label = checkbox.closest('.checkbox-item');
-        if (checkbox.checked && label) {
-            label.style.borderColor = 'var(--primary-color)';
-            label.style.background = 'rgba(102, 126, 234, 0.1)';
         }
-    });
-    updateAutoTrainSelectedCount();
-    console.log('✓ Auto-train checkboxes initialized');
+        
+        // Update next train time
+        if (nextTrainTime) {
+            const nextTime = settings.next_train_time || 'Chưa xác định';
+            nextTrainTime.textContent = nextTime;
+        }
+        
+        // Update last train time
+        if (lastAutoTrainTime) {
+            const lastTime = settings.last_auto_train || 'Chưa huấn luyện';
+            lastAutoTrainTime.textContent = lastTime;
+        }
+        
+        // Update target checkboxes (support both sensor and API targets)
+        const selectedTargets = settings.targets || ["temperature", "humidity"];
+        autoTrainCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectedTargets.includes(checkbox.value);
+        });
+        
+        updateAutoTrainSelectedCount();
+        
+    } catch (error) {
+        console.error('Load settings error:', error);
+    }
 }
 
-// Save auto-train targets to localStorage
-function saveAutoTrainTargetsToLocalStorage() {
-    const targets = getSelectedAutoTrainTargets();
-    localStorage.setItem('autoTrainTargets', JSON.stringify(targets));
-    console.log(`💾 Saved to localStorage: ${JSON.stringify(targets)}`);
-}
-
-// Toggle all auto-train sensors
-function toggleAllAutoTrainSensors(select) {
-    const checkboxes = document.querySelectorAll('.auto-train-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = select;
-        const label = checkbox.closest('.checkbox-item');
-        if (label) {
-            if (select) {
-                label.style.borderColor = 'var(--primary-color)';
-                label.style.background = 'rgba(102, 126, 234, 0.1)';
-            } else {
-                label.style.borderColor = 'var(--border-color)';
-                label.style.background = 'var(--bg)';
-            }
+// Update auto-train selected target count
+function updateAutoTrainSelectedCount() {
+    const checkboxes = document.querySelectorAll('.auto-train-sensor-checkbox:checked');
+    const sensorTargets = ['temperature', 'humidity', 'pressure', 'aqi', 'co2'];
+    const apiTargets = ['wind_speed', 'rainfall', 'uv_index'];
+    
+    let sensorCount = 0;
+    let apiCount = 0;
+    
+    checkboxes.forEach(cb => {
+        if (sensorTargets.includes(cb.value)) {
+            sensorCount++;
+        } else if (apiTargets.includes(cb.value)) {
+            apiCount++;
         }
     });
     
-    // Save to localStorage immediately
-    saveAutoTrainTargetsToLocalStorage();
-    updateAutoTrainSelectedCount();
-}
-
-// Update auto-train selected count
-function updateAutoTrainSelectedCount() {
-    const checkboxes = document.querySelectorAll('.auto-train-checkbox:checked');
     const countEl = document.getElementById('autoTrainSelectedCount');
     if (countEl) {
-        const count = checkboxes.length;
-        countEl.innerHTML = `Đã chọn: <strong style="color: var(--primary-color);">${count}</strong> biến`;
-        console.log(`📊 Updated count display: ${count} sensors selected`);
-    } else {
-        console.warn('⚠️ autoTrainSelectedCount element not found');
+        countEl.innerHTML = `📊 Đã chọn: <strong style="color: var(--primary-color);">${sensorCount}</strong> biến cảm biến + <strong style="color: #667eea;">${apiCount}</strong> biến API`;
     }
 }
 
 // Get selected auto-train targets
-function getSelectedAutoTrainTargets() {
-    const checkboxes = document.querySelectorAll('.auto-train-checkbox:checked');
-    console.log(`🔍 Querying: document.querySelectorAll('.auto-train-checkbox:checked')`);
-    console.log(`✓ Found ${checkboxes.length} checked checkboxes`);
-    
-    // Debug: list all checkboxes
-    console.log('📋 All checkboxes:');
-    document.querySelectorAll('.auto-train-checkbox').forEach(cb => {
-        console.log(`  [${cb.checked ? 'x' : ' '}] ${cb.id} = "${cb.value}" (checked=${cb.checked})`);
-    });
-    
-    const targets = Array.from(checkboxes).map(cb => cb.value);
-    console.log(`✅ Selected auto-train targets: [${targets.join(', ')}] (${targets.length} total)`);
-    return targets;
+function getAutoTrainTargets() {
+    const checkboxes = document.querySelectorAll('.auto-train-sensor-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
 }
 
-// Load auto-train settings
-async function loadAutoTrainSettings() {
+// Toggle auto-train
+async function toggleAutoTrain() {
     try {
-        console.log('🔄 Loading auto-train settings...');
-        
-        const response = await fetch('/api/ml/auto-train/settings');
-        if (!response.ok) throw new Error('Không thể tải cài đặt');
-        
-        const settings = await response.json();
-        console.log('📥 Loaded settings from API:', settings);
-        
-        // Update UI with loaded settings
-        if (settings.interval_days) {
-            document.getElementById('autoTrainInterval').value = settings.interval_days;
-            console.log(`✓ Set interval_days: ${settings.interval_days}`);
-        }
-        if (settings.hour !== undefined) {
-            document.getElementById('autoTrainHour').value = settings.hour;
-            console.log(`✓ Set hour: ${settings.hour}`);
-        }
-        if (settings.model_type) {
-            document.getElementById('autoTrainModel').value = settings.model_type;
-            console.log(`✓ Set model_type: ${settings.model_type}`);
-        }
-        if (settings.data_points) {
-            document.getElementById('autoTrainDataPoints').value = settings.data_points;
-            console.log(`✓ Set data_points: ${settings.data_points}`);
-        }
-        
-        // Load selected targets
-        // Priority: localStorage > API > default
-        let targets = null;
-        
-        // First try localStorage (user's current selections that haven't been saved to server)
-        const savedTargets = localStorage.getItem('autoTrainTargets');
-        if (savedTargets) {
-            try {
-                targets = JSON.parse(savedTargets);
-                console.log(`📥 [HIGH PRIORITY] Using targets from localStorage: ${JSON.stringify(targets)}`);
-                console.log(`⚠️  Note: These targets are only in browser storage, not yet saved to server!`);
-            } catch (e) {
-                console.warn('Failed to parse localStorage targets:', e);
-                targets = null;
-            }
-        }
-        
-        // If no localStorage, use API settings (server-saved targets)
-        if (!targets && settings.targets && Array.isArray(settings.targets)) {
-            targets = settings.targets;
-            console.log(`📥 [MEDIUM PRIORITY] Using targets from API (server): ${JSON.stringify(targets)}`);
-        }
-        
-        // If still no targets, use default
-        if (!targets) {
-            targets = ['temperature', 'humidity', 'pressure', 'aqi'];
-            console.log(`📥 [LOW PRIORITY] Using default targets: ${JSON.stringify(targets)}`);
-        }
-        
-        // Apply targets to checkboxes
-        console.log(`📋 Applying targets to checkboxes: ${JSON.stringify(targets)}`);
-        document.querySelectorAll('.auto-train-checkbox').forEach(cb => {
-            const shouldCheck = targets.includes(cb.value);
-            cb.checked = shouldCheck;
-            console.log(`  - ${cb.value}: ${shouldCheck}`);
-            
-            // Trigger change event so event listeners fire
-            cb.dispatchEvent(new Event('change', { bubbles: true }));
-            
-            const label = cb.closest('.checkbox-item');
-            if (label) {
-                if (cb.checked) {
-                    label.style.borderColor = 'var(--primary-color)';
-                    label.style.background = 'rgba(102, 126, 234, 0.1)';
-                } else {
-                    label.style.borderColor = 'var(--border-color)';
-                    label.style.background = 'var(--bg)';
-                }
-            }
-        });
-        
-        // Final sync to localStorage
-        localStorage.setItem('autoTrainTargets', JSON.stringify(targets));
-        console.log(`💾 Targets synced to localStorage: ${JSON.stringify(targets)}`);
-        
-        updateAutoTrainSelectedCount();
-        
-        // Update status display
-        updateAutoTrainStatus(settings);
-        console.log('✓ Settings loaded and UI updated');
-        
-    } catch (error) {
-        console.error('❌ Error loading auto-train settings:', error);
-    }
-}
-
-// Update auto-train status display
-function updateAutoTrainStatus(settings) {
-    const indicator = document.getElementById('autoTrainIndicator');
-    const statusDot = indicator?.querySelector('.status-dot');
-    const statusText = indicator?.querySelector('.status-text');
-    
-    if (settings.enabled) {
-        if (statusDot) statusDot.className = 'status-dot on';
-        if (statusText) statusText.textContent = '✓ Auto-Training đang hoạt động';
-        
-        const btnToggle = document.getElementById('btnToggleAutoTrain');
-        if (btnToggle) {
-            btnToggle.innerHTML = '⏹️ <span>Tắt Auto-Training</span>';
-            btnToggle.className = 'btn btn-danger';
-        }
-    } else {
-        if (statusDot) statusDot.className = 'status-dot off';
-        if (statusText) statusText.textContent = '✗ Auto-Training đã tắt';
-        
-        const btnToggle = document.getElementById('btnToggleAutoTrain');
-        if (btnToggle) {
-            btnToggle.innerHTML = '▶️ <span>Bật Auto-Training</span>';
-            btnToggle.className = 'btn btn-primary';
-        }
-    }
-    
-    // Update next train time
-    if (settings.next_train_time) {
-        document.getElementById('nextTrainTime').textContent = new Date(settings.next_train_time).toLocaleString('vi-VN');
-    }
-    
-    // Update last train time
-    if (settings.last_auto_train) {
-        document.getElementById('lastAutoTrainTime').textContent = new Date(settings.last_auto_train).toLocaleString('vi-VN');
-    }
-}
-
-// Save auto-train settings
-async function saveAutoTrainSettings() {
-    try {
-        AppUtils.showToast('💾 Đang lưu cài đặt...', 'info');
-        
-        console.log('=== SAVING AUTO-TRAIN SETTINGS ===');
-        
-        // Get selected targets
-        const selectedTargets = getSelectedAutoTrainTargets();
-        console.log(`🎯 Selected targets from checkboxes: ${JSON.stringify(selectedTargets)}`);
-        console.log(`📊 Number of targets selected: ${selectedTargets.length}`);
-        
-        // Log each checkbox state for debugging
-        console.log('📋 Checkbox states:');
-        document.querySelectorAll('.auto-train-checkbox').forEach(cb => {
-            console.log(`  [${cb.checked ? 'x' : ' '}] ${cb.value} (${cb.id})`);
-        });
-        
-        // Validate
-        if (selectedTargets.length === 0) {
-            console.warn('⚠️ No targets selected');
-            AppUtils.showToast('Vui lòng chọn ít nhất 1 cảm biến', 'error');
-            return;
-        }
-        
-        // Get other settings
-        const interval = parseInt(document.getElementById('autoTrainInterval').value);
-        const hour = parseInt(document.getElementById('autoTrainHour').value);
-        const model = document.getElementById('autoTrainModel').value;
-        const dataPoints = parseInt(document.getElementById('autoTrainDataPoints').value);
-        
         const settings = {
-            interval_days: interval,
-            hour: hour,
-            model_type: model,
-            data_points: dataPoints,
-            targets: selectedTargets
+            enabled: !document.getElementById('btnToggleAutoTrain').classList.contains('btn-danger'),
+            interval_days: parseInt(document.getElementById('autoTrainInterval')?.value || 7),
+            hour: parseInt(document.getElementById('autoTrainHour')?.value || 2),
+            model_type: document.getElementById('autoTrainModel')?.value || 'prophet',
+            data_points: parseInt(document.getElementById('autoTrainDataPoints')?.value || 10000),
+            targets: getAutoTrainTargets()
         };
         
-        console.log('📝 Full settings object to send:', JSON.stringify(settings, null, 2));
+        // Validate
+        if (settings.enabled && settings.targets.length === 0) {
+            AppUtils.showToast('Vui lòng chọn ít nhất 1 cảm biến', 'warning');
+            return;
+        }
         
         const response = await fetch('/api/ml/auto-train/settings', {
             method: 'POST',
@@ -950,99 +668,181 @@ async function saveAutoTrainSettings() {
             body: JSON.stringify(settings)
         });
         
-        console.log('📨 Response status:', response.status, response.statusText);
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('❌ API Error:', errorData);
-            throw new Error(errorData.detail || 'Không thể lưu cài đặt');
-        }
+        if (!response.ok) throw new Error('Cannot update settings');
         
         const result = await response.json();
-        console.log('✅ Save successful, API returned:', result);
-        console.log(`🎯 Targets on server after save: ${JSON.stringify(result.targets || [])}`);
         
-        // Check debug info
-        try {
-            const debugResponse = await fetch('/api/ml/auto-train/debug');
-            const debugInfo = await debugResponse.json();
-            console.log('🔍 Debug info after save:', {
-                file_path: debugInfo.config_file_path,
-                file_exists: debugInfo.config_file_exists,
-                saved_targets: debugInfo.current_settings?.targets
-            });
-        } catch (e) {
-            console.warn('Could not fetch debug info:', e);
+        if (result.success) {
+            AppUtils.showToast(result.message, 'success');
+            loadAutoTrainSettings();
         }
-        
-        AppUtils.showToast('✓ Cài đặt đã được lưu thành công!', 'success');
-        console.log('✓ Toast notification shown');
-        
-        // Reload settings to update display
-        console.log('🔄 Reloading settings from API...');
-        await loadAutoTrainSettings();
-        console.log('✓ Settings reloaded from API');
-        console.log('=== END SAVE ===\n');
-        
     } catch (error) {
-        console.error('❌ Error saving auto-train settings:', error);
-        AppUtils.showToast('✗ Lỗi khi lưu cài đặt: ' + error.message, 'error');
+        console.error('Toggle error:', error);
+        AppUtils.showToast('Lỗi: ' + error.message, 'error');
     }
 }
 
-// Toggle auto-train
-async function toggleAutoTrain() {
+// Save auto-train settings
+async function saveAutoTrainSettings() {
     try {
-        const currentSettings = await (await fetch('/api/ml/auto-train/settings')).json();
-        const newEnabled = !currentSettings.enabled;
+        const settings = {
+            enabled: document.getElementById('btnToggleAutoTrain').classList.contains('btn-danger'),
+            interval_days: parseInt(document.getElementById('autoTrainInterval')?.value || 7),
+            hour: parseInt(document.getElementById('autoTrainHour')?.value || 2),
+            model_type: document.getElementById('autoTrainModel')?.value || 'prophet',
+            data_points: parseInt(document.getElementById('autoTrainDataPoints')?.value || 10000),
+            targets: getAutoTrainTargets()
+        };
         
-        const response = await fetch('/api/ml/auto-train/toggle', {
+        // Validate
+        if (settings.targets.length === 0) {
+            AppUtils.showToast('Vui lòng chọn ít nhất 1 cảm biến', 'warning');
+            return;
+        }
+        
+        const response = await fetch('/api/ml/auto-train/settings', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ enabled: newEnabled })
+            body: JSON.stringify(settings)
         });
         
-        if (!response.ok) throw new Error('Không thể đổi trạng thái');
+        if (!response.ok) throw new Error('Cannot save settings');
         
         const result = await response.json();
         
-        if (newEnabled) {
-            AppUtils.showToast('✓ Đã bật Auto-Training', 'success');
-        } else {
-            AppUtils.showToast('✓ Đã tắt Auto-Training', 'success');
+        if (result.success) {
+            AppUtils.showToast('✓ Cài đặt đã được lưu!', 'success');
+            loadAutoTrainSettings();
         }
-        
-        // Reload settings
-        await loadAutoTrainSettings();
-        
     } catch (error) {
-        console.error('Error toggling auto-train:', error);
-        AppUtils.showToast('✗ Lỗi: ' + error.message, 'error');
+        console.error('Save error:', error);
+        AppUtils.showToast('Lỗi: ' + error.message, 'error');
     }
 }
 
 // Run auto-train now
 async function runAutoTrainNow() {
     try {
-        AppUtils.showToast('⚡ Đang chạy tự động huấn luyện...', 'info');
+        // Check if targets are selected
+        const targets = getAutoTrainTargets();
+        if (targets.length === 0) {
+            AppUtils.showToast('Vui lòng chọn ít nhất 1 cảm biến để huấn luyện', 'warning');
+            return;
+        }
         
-        const response = await fetch('/api/ml/auto-train/run-now', {
+        AppUtils.showToast('⏳ Đang khởi động quá trình huấn luyện tự động...', 'info');
+        
+        const response = await fetch('/api/ml/auto-train/run', {
             method: 'POST'
         });
         
-        if (!response.ok) throw new Error('Không thể chạy auto-train');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Training failed');
+        }
         
         const result = await response.json();
         
-        AppUtils.showToast('✓ Auto-training đã bắt đầu!', 'success');
+        if (result.success) {
+            AppUtils.showToast('✓ ' + result.message, 'success');
+            addProgressLog(`✓ Auto-Training hoàn tất!`, 'success');
+            addProgressLog(`📈 Độ chính xác: ${(result.accuracy * 100).toFixed(2)}%`, 'info');
+            addProgressLog(`⏱️ Thời gian: ${result.training_time.toFixed(1)}s`, 'info');
+            
+            // Show sensor targets
+            if (result.sensor_targets && result.sensor_targets.length > 0) {
+                addProgressLog(`📡 Biến cảm biến: ${result.sensor_targets.join(', ')}`, 'info');
+            }
+            
+            // Show API targets
+            if (result.api_targets && result.api_targets.length > 0) {
+                addProgressLog(`🌐 Biến Weather API: ${result.api_targets.join(', ')}`, 'info');
+            }
+            
+            // Reload settings
+            setTimeout(() => {
+                loadAutoTrainSettings();
+                loadTrainingHistory();
+            }, 1000);
+        }
+    } catch (error) {
+        console.error('Run error:', error);
+        AppUtils.showToast('Lỗi: ' + error.message, 'error');
+        addProgressLog(`✗ Auto-Training thất bại: ${error.message}`, 'error');
+    }
+}
+
+// Load training history
+async function loadAutoTrainHistory() {
+    try {
+        const response = await fetch('/api/ml/auto-train/history?limit=10');
+        if (!response.ok) throw new Error('Cannot load history');
         
-        // Reload settings to update last train time
-        await loadAutoTrainSettings();
+        const data = await response.json();
+        const historyContainer = document.getElementById('autoTrainHistoryBody');
+        
+        if (!historyContainer) return;
+        
+        historyContainer.innerHTML = '';
+        
+        if (!data.history || data.history.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="7" style="text-align: center; color: #888;">Chưa có lịch sử huấn luyện tự động</td>';
+            historyContainer.appendChild(row);
+            return;
+        }
+        
+        data.history.forEach((record) => {
+            const row = document.createElement('tr');
+            const date = new Date(record.timestamp);
+            const dateStr = date.toLocaleString('vi-VN');
+            const modelName = record.model_type === 'prophet' ? 'Prophet' : 'LightGBM';
+            const statusBadge = record.status === 'success' 
+                ? '<span class="status-badge success">✓ Thành công</span>'
+                : '<span class="status-badge error">✗ Thất bại</span>';
+            
+            // Separate sensor and API targets
+            const targets = record.targets || [];
+            const sensorTargets = targets.filter(t => ['temperature', 'humidity', 'pressure', 'aqi', 'co2', 'dust'].includes(t));
+            const apiTargets = targets.filter(t => ['wind_speed', 'rainfall', 'uv_index'].includes(t));
+            
+            let targetsDisplay = '';
+            if (sensorTargets.length > 0) {
+                targetsDisplay += `<div style="font-size: 12px; color: #667eea;">📡 ${sensorTargets.join(', ')}</div>`;
+            }
+            if (apiTargets.length > 0) {
+                targetsDisplay += `<div style="font-size: 12px; color: #1098f0;">🌐 ${apiTargets.join(', ')}</div>`;
+            }
+            
+            const accuracy = record.accuracy 
+                ? `<span style="color: ${record.accuracy >= 0.75 ? '#51cf66' : '#ff6b6b'}">${(record.accuracy * 100).toFixed(2)}%</span>`
+                : '--';
+            
+            row.innerHTML = `
+                <td style="font-size: 13px;">${dateStr}</td>
+                <td><strong>${modelName}</strong></td>
+                <td style="font-size: 12px;">${targetsDisplay}</td>
+                <td style="text-align: center; font-size: 13px;">${record.data_points || '--'}</td>
+                <td style="text-align: center;">${accuracy}</td>
+                <td style="text-align: center; font-size: 13px;">${record.training_time ? record.training_time.toFixed(1) + 's' : '--'}</td>
+                <td style="text-align: center;">${statusBadge}</td>
+            `;
+            
+            historyContainer.appendChild(row);
+        });
         
     } catch (error) {
-        console.error('Error running auto-train:', error);
-        AppUtils.showToast('✗ Lỗi: ' + error.message, 'error');
+        console.error('Load history error:', error);
     }
+}
+
+// Initialize auto-train checkboxes
+function initAutoTrainCheckboxes() {
+    const checkboxes = document.querySelectorAll('.auto-train-sensor-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateAutoTrainSelectedCount);
+    });
+    updateAutoTrainSelectedCount();
 }

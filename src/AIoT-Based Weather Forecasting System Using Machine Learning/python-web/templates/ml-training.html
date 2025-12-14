@@ -470,37 +470,85 @@
             }
         }
 
-        /* Auto-Training Scheduler Styles */
+        /* ===== Auto-Training Scheduler Styles ===== */
         .auto-train-status {
-            background: var(--bg);
-            border-radius: 10px;
-            padding: 15px 20px;
+            background: linear-gradient(135deg, var(--card-bg) 0%, var(--card-bg) 100%);
+            border-radius: 14px;
+            padding: 24px 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            border: 2px solid transparent;
+            border-image: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) 1;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .auto-train-status::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            pointer-events: none;
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .auto-train-status:hover {
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.25);
+            border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
+            transform: translateY(-2px);
         }
 
         .status-indicator {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            position: relative;
+            z-index: 1;
         }
 
         .status-indicator .status-dot {
-            width: 12px;
-            height: 12px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             animation: pulse 2s infinite;
+            box-shadow: 0 0 8px currentColor;
+            position: relative;
         }
 
         .status-indicator .status-dot.on {
-            background: #48bb78;
-            box-shadow: 0 0 10px rgba(72, 187, 120, 0.5);
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            box-shadow: 0 0 16px rgba(72, 187, 120, 0.6);
+            animation: pulse-on 2s infinite;
         }
 
         .status-indicator .status-dot.off {
-            background: #a0aec0;
+            background: linear-gradient(135deg, #a0aec0 0%, #8892a0 100%);
+            box-shadow: 0 0 8px rgba(160, 174, 192, 0.3);
             animation: none;
+        }
+
+        @keyframes pulse-on {
+            0%, 100% { 
+                box-shadow: 0 0 16px rgba(72, 187, 120, 0.6), 
+                           0 0 28px rgba(72, 187, 120, 0.3);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 24px rgba(72, 187, 120, 0.8), 
+                           0 0 36px rgba(72, 187, 120, 0.4);
+                transform: scale(1.1);
+            }
         }
 
         @keyframes pulse {
@@ -509,52 +557,203 @@
         }
 
         .status-indicator .status-text {
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 16px;
             color: var(--text);
+            letter-spacing: 0.3px;
+        }
+
+        /* Auto-Train Info Styles */
+        .auto-train-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .auto-train-info .info-text {
-            font-size: 13px;
+            font-size: 14px;
+            font-weight: 500;
             color: var(--text-secondary);
-            padding: 10px 15px;
-            background: rgba(66, 153, 225, 0.1);
-            border-radius: 8px;
-            border-left: 3px solid var(--info);
+            padding: 14px 18px;
+            background: linear-gradient(135deg, rgba(66, 153, 225, 0.08) 0%, rgba(102, 126, 234, 0.05) 100%);
+            border-radius: 10px;
+            border-left: 4px solid var(--info);
+            border-right: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
+        .auto-train-info .info-text::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--info), transparent);
+        }
+
+        .auto-train-info .info-text:hover {
+            background: linear-gradient(135deg, rgba(66, 153, 225, 0.12) 0%, rgba(102, 126, 234, 0.08) 100%);
+            border-left-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
+            transform: translateX(4px);
+        }
+
+        .auto-train-info .info-text strong {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        /* Button Styles */
         .btn-warning {
             background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
             color: white;
+            font-weight: 600;
+            border: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .btn-warning::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-warning:hover::before {
+            left: 100%;
         }
 
         .btn-warning:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(237, 137, 54, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(237, 137, 54, 0.35);
+            border-color: #dd6b20;
+        }
+
+        .btn-warning:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(237, 137, 54, 0.25);
         }
 
         /* Sensor Selection Checkbox Styles */
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .checkbox-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.4s;
+        }
+
         .checkbox-item:hover {
             border-color: var(--primary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px var(--shadow);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(102, 126, 234, 0.02) 100%);
         }
 
-        .checkbox-item input[type="checkbox"]:checked + .checkbox-icon + .checkbox-label {
+        .checkbox-item:hover::before {
+            left: 100%;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-item input[type="checkbox"]:checked {
+            accent-color: var(--secondary-color);
+            transform: scale(1.1);
+        }
+
+        .checkbox-item input[type="checkbox"]:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .checkbox-item input[type="checkbox"]:checked + span {
             color: var(--primary-color);
+            font-weight: 600;
         }
 
+        .checkbox-item span {
+            color: var(--text);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        /* Sensor Group Styles */
         .sensor-group-title {
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
         }
 
+        /* Button Group Animations */
         .btn-select-all:hover {
-            background: var(--secondary-color) !important;
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%) !important;
+            box-shadow: 0 6px 16px rgba(118, 75, 162, 0.35) !important;
+            transform: translateY(-2px) !important;
         }
 
         .btn-deselect-all:hover {
-            background: var(--text-secondary) !important;
+            background: linear-gradient(135deg, var(--text-secondary) 0%, #626b73 100%) !important;
             color: white !important;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        /* Selected Count Badge */
+        #autoTrainSelectedCount {
+            background: linear-gradient(135deg, rgba(81, 207, 102, 0.12) 0%, rgba(72, 187, 120, 0.08) 100%);
+            border: 1.5px solid rgba(72, 187, 120, 0.3);
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        #autoTrainSelectedCount:hover {
+            background: linear-gradient(135deg, rgba(81, 207, 102, 0.16) 0%, rgba(72, 187, 120, 0.12) 100%);
+            border-color: rgba(72, 187, 120, 0.5);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.15);
+            transform: translateY(-2px);
+        }
+
+        #autoTrainSelectedCount strong {
+            color: var(--primary-color);
+            font-weight: 700;
         }
     </style>
 </head>
@@ -694,12 +893,6 @@
             <!-- Training Configuration -->
             <section class="section">
                 <h2 class="section-title">⚙️ <span data-i18n="mlTrainingExt.configStart">Cấu hình & Bắt đầu</span></h2>
-                <div id="configStatusBar" style="background: #e8f4f8; padding: 12px 15px; border-radius: 8px; border-left: 4px solid #0891b2; margin-bottom: 20px; display: none;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-                        <span><strong style="color: #0891b2;">✓ Cấu hình được tải lại</strong> - Sử dụng các tùy chọn huấn luyện từ lần trước</span>
-                        <button onclick="clearTrainingConfiguration()" style="background: none; border: none; color: #0891b2; cursor: pointer; font-weight: 600; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Xóa</button>
-                    </div>
-                </div>
                 <div class="form-section">
                     <div class="form-grid">
                         <div class="form-group">
@@ -880,12 +1073,7 @@
                         </div>
                     </div>
 
-                    <!-- Auto-Training Configuration -->
-                    <div style="background: #f0f4ff; padding: 15px; border-radius: 10px; margin-top: 20px; margin-bottom: 20px; border-left: 4px solid #667eea;">
-                        <div style="font-size: 13px; color: #667eea; font-weight: 600;">💡 Cấu hình tự động huấn luyện - Chọn cảm biến, số mẫu, model rồi lưu để chạy theo lịch</div>
-                    </div>
-
-                    <div class="form-grid" style="margin-bottom: 20px;">
+                    <div class="form-grid" style="margin-top: 20px;">
                         <div class="form-group">
                             <label class="form-label">🔄 Chu kỳ huấn luyện</label>
                             <select class="form-select" id="autoTrainInterval">
@@ -921,78 +1109,61 @@
                     </div>
 
                     <!-- Sensor Selection for Auto-Training -->
-                    <div style="margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 10px;">
-                        <label class="form-label" style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                            🎯 <span>Chọn cảm biến tự động huấn luyện</span>
-                            <button type="button" class="btn-select-all" onclick="toggleAllAutoTrainSensors(true)" style="font-size: 11px; padding: 4px 10px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">Chọn tất cả</button>
-                            <button type="button" class="btn-deselect-all" onclick="toggleAllAutoTrainSensors(false)" style="font-size: 11px; padding: 4px 10px; background: var(--border-color); color: var(--text); border: none; border-radius: 4px; cursor: pointer;">Bỏ chọn</button>
-                        </label>
+                    <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid var(--border-color);">
+                        <h3 class="section-subtitle">🎯 Chọn biến để huấn luyện tự động</h3>
                         
-                        <!-- Sensor Data Group -->
-                        <div class="sensor-group" style="margin-bottom: 15px;">
-                            <div class="sensor-group-title" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">📡 Dữ liệu cảm biến</div>
-                            <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
-                                    <input type="checkbox" id="autoTrain_temperature" value="temperature" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
-                                    <span style="font-size: 18px;">🌡️</span>
-                                    <span style="font-weight: 600; color: var(--text);">Nhiệt độ</span>
+                        <!-- Sensor Data Section -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 10px; color: var(--text-secondary);">📡 Dữ Liệu Cảm Biến</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="auto-train-sensor-checkbox" value="temperature" checked>
+                                    <span style="margin-left: 8px;">🌡️ Nhiệt độ</span>
                                 </label>
-                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
-                                    <input type="checkbox" id="autoTrain_humidity" value="humidity" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
-                                    <span style="font-size: 18px;">💧</span>
-                                    <span style="font-weight: 600; color: var(--text);">Độ ẩm</span>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="auto-train-sensor-checkbox" value="humidity" checked>
+                                    <span style="margin-left: 8px;">💧 Độ ẩm</span>
                                 </label>
-                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
-                                    <input type="checkbox" id="autoTrain_pressure" value="pressure" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
-                                    <span style="font-size: 18px;">📊</span>
-                                    <span style="font-weight: 600; color: var(--text);">Áp suất</span>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="auto-train-sensor-checkbox" value="pressure">
+                                    <span style="margin-left: 8px;">📊 Áp suất</span>
                                 </label>
-                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
-                                    <input type="checkbox" id="autoTrain_aqi" value="aqi" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
-                                    <span style="font-size: 18px;">🌫️</span>
-                                    <span style="font-weight: 600; color: var(--text);">AQI</span>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="auto-train-sensor-checkbox" value="aqi">
+                                    <span style="margin-left: 8px;">💨 AQI</span>
                                 </label>
-                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
-                                    <input type="checkbox" id="autoTrain_co2" value="co2" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
-                                    <span style="font-size: 18px;">☁️</span>
-                                    <span style="font-weight: 600; color: var(--text);">CO2</span>
-                                </label>
-                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
-                                    <input type="checkbox" id="autoTrain_dust" value="dust" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
-                                    <span style="font-size: 18px;">🌪️</span>
-                                    <span style="font-weight: 600; color: var(--text);">Bụi (PM2.5)</span>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="auto-train-sensor-checkbox" value="co2">
+                                    <span style="margin-left: 8px;">🔬 CO2</span>
                                 </label>
                             </div>
                         </div>
-                        
-                        <!-- Weather API Data Group -->
-                        <div class="sensor-group">
-                            <div class="sensor-group-title" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">🌐 Dữ liệu Weather API</div>
-                            <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
-                                    <input type="checkbox" id="autoTrain_wind_speed" value="wind_speed" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
-                                    <span style="font-size: 18px;">💨</span>
-                                    <span style="font-weight: 600; color: var(--text);">Tốc độ gió</span>
+
+                        <!-- Weather API Section -->
+                        <div style="padding: 12px; background: rgba(102, 126, 234, 0.05); border-left: 3px solid var(--primary-color); border-radius: 4px; margin-bottom: 15px;">
+                            <h4 style="margin-bottom: 10px; color: var(--text-secondary);">🌐 Dữ Liệu Weather API</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="auto-train-sensor-checkbox" value="wind_speed">
+                                    <span style="margin-left: 8px;">💨 Tốc độ gió</span>
                                 </label>
-                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
-                                    <input type="checkbox" id="autoTrain_rainfall" value="rainfall" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
-                                    <span style="font-size: 18px;">🌧️</span>
-                                    <span style="font-weight: 600; color: var(--text);">Lượng mưa</span>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="auto-train-sensor-checkbox" value="rainfall">
+                                    <span style="margin-left: 8px;">🌧️ Lượng mưa</span>
                                 </label>
-                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
-                                    <input type="checkbox" id="autoTrain_uv_index" value="uv_index" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
-                                    <span style="font-size: 18px;">☀️</span>
-                                    <span style="font-weight: 600; color: var(--text);">Chỉ số UV</span>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="auto-train-sensor-checkbox" value="uv_index">
+                                    <span style="margin-left: 8px;">☀️ Chỉ số UV</span>
                                 </label>
                             </div>
                         </div>
-                        
-                        <div id="autoTrainSelectedCount" style="margin-top: 10px; font-size: 13px; color: var(--text-secondary);">
-                            Đã chọn: <strong style="color: var(--primary-color);">4</strong> biến
+
+                        <div id="autoTrainSelectedCount" style="margin-top: 12px; padding: 10px; background: rgba(81, 207, 102, 0.1); border-radius: 4px; font-size: 14px; color: var(--text-secondary);">
+                            📊 Đã chọn: <strong style="color: var(--primary-color);">2</strong> biến cảm biến + <strong style="color: #667eea;">0</strong> biến API
                         </div>
                     </div>
 
-                    <div class="auto-train-info" id="autoTrainInfo" style="margin-top: 15px;">
+                    <div class="auto-train-info" id="autoTrainInfo" style="margin-top: 20px;">
                         <div class="info-text">
                             <span>📅 Lần huấn luyện tiếp theo: <strong id="nextTrainTime">--</strong></span>
                         </div>
@@ -1005,15 +1176,39 @@
                         <button class="btn btn-primary" id="btnToggleAutoTrain" onclick="toggleAutoTrain()">
                             ▶️ <span data-i18n="mlTrainingExt.enableAutoTrain">Bật Auto-Training</span>
                         </button>
-                        <button class="btn btn-success" onclick="saveAutoTrainSettings()">
+                        <button class="btn btn-secondary" onclick="saveAutoTrainSettings()">
                             💾 <span data-i18n="common.save">Lưu cài đặt</span>
                         </button>
                         <button class="btn btn-warning" onclick="runAutoTrainNow()">
                             ⚡ <span data-i18n="mlTrainingExt.trainNow">Chạy ngay</span>
                         </button>
-                        <button class="btn btn-info" onclick="(function(){console.clear(); console.log('=== DEBUG AUTO-TRAIN ==='); const cb = document.querySelectorAll('.auto-train-checkbox'); console.log('Total checkboxes:', cb.length); cb.forEach(c => console.log('[' + (c.checked ? 'x' : ' ') + '] ' + c.value)); const targets = Array.from(document.querySelectorAll('.auto-train-checkbox:checked')).map(c => c.value); console.log('Selected targets:', targets); console.log('Target count:', targets.length);})()">
-                            🔍 <span>Debug Info</span>
-                        </button>
+                    </div>
+                </div>
+
+                <!-- Training History Table -->
+                <div class="form-section" style="margin-top: 25px;">
+                    <h3 class="section-subtitle">📋 Lịch sử huấn luyện tự động</h3>
+                    <div style="overflow-x: auto; margin-top: 15px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: var(--primary-color); color: white;">
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--primary-color);">Thời gian</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--primary-color);">Model</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--primary-color);">Biến</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);">Dữ liệu</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);">Độ chính xác</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);">Thời gian</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="autoTrainHistoryBody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 20px; color: #888;">
+                                        <span data-i18n="common.loading">Đang tải...</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -1162,153 +1357,26 @@
         }
 
         // ===== Auto-Training Functions =====
-        let autoTrainEnabled = false;
 
-        async function loadAutoTrainSettings() {
-            try {
-                const response = await fetch('/api/ml/auto-train/settings');
-                if (!response.ok) throw new Error('Failed to load settings');
-                const data = await response.json();
-                
-                autoTrainEnabled = data.enabled || false;
-                
-                // Update UI
-                document.getElementById('autoTrainInterval').value = data.interval_days || 7;
-                document.getElementById('autoTrainHour').value = data.hour || 2;
-                document.getElementById('autoTrainModel').value = data.model_type || 'prophet';
-                document.getElementById('autoTrainDataPoints').value = data.data_points || 10000;
-                
-                updateAutoTrainStatus();
-                updateNextTrainTime();
-                
-                if (data.last_auto_train) {
-                    document.getElementById('lastAutoTrainTime').textContent = data.last_auto_train;
-                } else {
-                    document.getElementById('lastAutoTrainTime').textContent = 'Chưa có';
-                }
-            } catch (error) {
-                console.error('Error loading auto-train settings:', error);
-                updateAutoTrainStatus();
-            }
-        }
-
-        function updateAutoTrainStatus() {
-            const indicator = document.getElementById('autoTrainIndicator');
-            const btn = document.getElementById('btnToggleAutoTrain');
-            
-            if (autoTrainEnabled) {
-                indicator.innerHTML = `
-                    <span class="status-dot on"></span>
-                    <span class="status-text">🟢 Auto-Training đang BẬT</span>
-                `;
-                btn.innerHTML = '⏹️ Tắt Auto-Training';
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-danger');
-            } else {
-                indicator.innerHTML = `
-                    <span class="status-dot off"></span>
-                    <span class="status-text">⚪ Auto-Training đang TẮT</span>
-                `;
-                btn.innerHTML = '▶️ Bật Auto-Training';
-                btn.classList.remove('btn-danger');
-                btn.classList.add('btn-primary');
-            }
-        }
-
-        function updateNextTrainTime() {
-            if (!autoTrainEnabled) {
-                document.getElementById('nextTrainTime').textContent = 'Không có (đã tắt)';
-                return;
-            }
-            
-            const intervalDays = parseInt(document.getElementById('autoTrainInterval').value);
-            const hour = parseInt(document.getElementById('autoTrainHour').value);
-            
-            const now = new Date();
-            const nextTrain = new Date(now);
-            nextTrain.setDate(nextTrain.getDate() + intervalDays);
-            nextTrain.setHours(hour, 0, 0, 0);
-            
-            const formatDate = (d) => {
-                return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:00`;
-            };
-            
-            document.getElementById('nextTrainTime').textContent = formatDate(nextTrain);
-        }
-
-        async function toggleAutoTrain() {
-            autoTrainEnabled = !autoTrainEnabled;
-            await saveAutoTrainSettings();
-            updateAutoTrainStatus();
-            updateNextTrainTime();
-        }
-
-        async function saveAutoTrainSettings() {
-            const settings = {
-                enabled: autoTrainEnabled,
-                interval_days: parseInt(document.getElementById('autoTrainInterval').value),
-                hour: parseInt(document.getElementById('autoTrainHour').value),
-                model_type: document.getElementById('autoTrainModel').value,
-                data_points: parseInt(document.getElementById('autoTrainDataPoints').value)
-            };
-            
-            try {
-                const response = await fetch('/api/ml/auto-train/settings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(settings)
-                });
-                
-                if (!response.ok) throw new Error('Failed to save settings');
-                
-                updateNextTrainTime();
-                AppUtils.showToast('✅ Đã lưu cài đặt Auto-Training', 'success');
-            } catch (error) {
-                console.error('Error saving auto-train settings:', error);
-                AppUtils.showToast('❌ Lỗi khi lưu cài đặt: ' + error.message, 'error');
-            }
-        }
-
-        async function runAutoTrainNow() {
-            const modelType = document.getElementById('autoTrainModel').value;
-            const dataPoints = document.getElementById('autoTrainDataPoints').value;
-            
-            AppUtils.showToast('🚀 Đang bắt đầu huấn luyện...', 'info');
-            
-            try {
-                const response = await fetch(`/api/ml/train?model_type=${modelType}&data_points=${dataPoints}`, {
-                    method: 'POST'
-                });
-                
-                if (!response.ok) throw new Error('Training failed');
-                const result = await response.json();
-                
-                if (result.success) {
-                    AppUtils.showToast(`✅ Huấn luyện hoàn tất! R² Score: ${(result.accuracy * 100).toFixed(2)}%`, 'success');
-                    
-                    // Update last auto train time
-                    const now = new Date();
-                    const formatDate = (d) => {
-                        return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-                    };
-                    document.getElementById('lastAutoTrainTime').textContent = formatDate(now);
-                    
-                    // Reload model info
-                    if (typeof loadMLTrainingPage === 'function') {
-                        loadMLTrainingPage();
-                    }
-                } else {
-                    throw new Error(result.message || 'Unknown error');
-                }
-            } catch (error) {
-                console.error('Error running auto-train:', error);
-                AppUtils.showToast('❌ Lỗi huấn luyện: ' + error.message, 'error');
-            }
+        // Initialize auto-training page
+        function initAutoTrainingPage() {
+            loadAutoTrainSettings();
+            loadAutoTrainHistory();
+            initAutoTrainCheckboxes();
         }
 
         // Load auto-train settings on page load
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(loadAutoTrainSettings, 500);
+            initTheme();
+            setupHamburger();
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Load ML Training page data
+            loadMLInfo();
+            
+            // Initialize auto-training
+            setTimeout(initAutoTrainingPage, 500);
         });
     </script>
 </body>

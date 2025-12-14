@@ -238,51 +238,6 @@ class MLManager:
                 'error': str(e)
             }
     
-    def train_specific_targets(self, records, model_type: str = None, targets: list = None, 
-                               weather_records=None) -> dict:
-        """
-        Wrapper method for training with specific targets
-        Separates targets into sensor_targets and weather_targets
-        
-        Args:
-            records: List of SensorData records from database
-            model_type: Type of model to train (prophet, lightgbm)
-            targets: List of target names (e.g., ['temperature', 'humidity', 'wind_speed'])
-            weather_records: List of WeatherForecasting records from database (optional)
-        
-        Returns:
-            dict with training results
-        """
-        if targets is None:
-            targets = ['temperature', 'humidity', 'aqi', 'pressure', 'co2', 'dust']
-        
-        # Separate sensor and weather targets
-        sensor_targets = []
-        weather_targets = []
-        
-        all_sensor_targets = ['temperature', 'humidity', 'aqi', 'pressure', 'co2', 'dust']
-        all_weather_targets = ['wind_speed', 'rainfall', 'uv_index']
-        
-        for target in targets:
-            if target in all_sensor_targets:
-                sensor_targets.append(target)
-            elif target in all_weather_targets:
-                weather_targets.append(target)
-        
-        # If no valid targets, use all sensor targets
-        if not sensor_targets and not weather_targets:
-            sensor_targets = all_sensor_targets
-        
-        logger.info(f"Training with targets: sensor={sensor_targets}, weather={weather_targets}")
-        
-        return self.train_selected_targets(
-            records,
-            model_type,
-            sensor_targets,
-            weather_records,
-            weather_targets
-        )
-    
     def predict(self, hours_ahead: int = 24, latest_data: dict = None, 
                 model_type: str = None) -> dict:
         """
