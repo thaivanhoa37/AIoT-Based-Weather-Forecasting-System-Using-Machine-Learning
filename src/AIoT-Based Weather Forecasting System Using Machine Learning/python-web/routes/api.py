@@ -530,6 +530,11 @@ async def set_current_model(model_type: str = Query(..., regex="^(prophet|lightg
 # ===== Auto-Training Settings =====
 AUTO_TRAIN_CONFIG_FILE = Path(__file__).parent.parent / "models_storage" / "auto_train_config.json"
 
+# Ensure models_storage directory exists
+AUTO_TRAIN_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+logger.info(f"Auto-train config file path: {AUTO_TRAIN_CONFIG_FILE}")
+
 def load_auto_train_settings():
     """Load auto-training settings from config file"""
     default_settings = {
@@ -538,7 +543,9 @@ def load_auto_train_settings():
         "hour": 2,
         "model_type": "prophet",
         "data_points": 10000,
-        "last_auto_train": None
+        "targets": ["temperature", "humidity", "pressure", "aqi"],
+        "last_auto_train": None,
+        "next_train_time": None
     }
     try:
         if AUTO_TRAIN_CONFIG_FILE.exists():
@@ -552,12 +559,24 @@ def load_auto_train_settings():
 def save_auto_train_settings(settings: dict):
     """Save auto-training settings to config file"""
     try:
+        # Ensure directory exists
         AUTO_TRAIN_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Write file
         with open(AUTO_TRAIN_CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(settings, f, indent=2, ensure_ascii=False)
-        return True
+        
+        # Verify file was written
+        if AUTO_TRAIN_CONFIG_FILE.exists():
+            logger.info(f"✓ Auto-train settings saved to {AUTO_TRAIN_CONFIG_FILE}")
+            logger.info(f"  Settings: {settings}")
+            return True
+        else:
+            logger.error(f"File was not created at {AUTO_TRAIN_CONFIG_FILE}")
+            return False
+            
     except Exception as e:
-        logger.error(f"Error saving auto-train settings: {e}")
+        logger.error(f"Error saving auto-train settings: {e}", exc_info=True)
         return False
 
 @router.get("/ml/auto-train/settings")
@@ -567,36 +586,131 @@ async def get_auto_train_settings():
     return settings
 
 @router.post("/ml/auto-train/settings")
-async def update_auto_train_settings(request_body: dict = None):
+async def update_auto_train_settings(settings_data: dict):
     """Update auto-training configuration settings"""
-    from fastapi import Request
+    logger.info(f"📨 Received POST request to /ml/auto-train/settings")
+    logger.info(f"📝 Request body: {settings_data}")
     
     # Load current settings
     settings = load_auto_train_settings()
+    logger.info(f"📂 Current settings before update: {settings}")
     
     # Handle body data
-    if request_body:
-        if "enabled" in request_body:
-            settings["enabled"] = bool(request_body["enabled"])
-        if "interval_days" in request_body:
-            settings["interval_days"] = max(1, min(30, int(request_body["interval_days"])))
-        if "hour" in request_body:
-            settings["hour"] = max(0, min(23, int(request_body["hour"])))
-        if "model_type" in request_body and request_body["model_type"] in ["prophet", "lightgbm"]:
-            settings["model_type"] = request_body["model_type"]
-        if "data_points" in request_body:
-            settings["data_points"] = max(1000, min(20000, int(request_body["data_points"])))
+    if settings_data:
+        logger.info(f"🔄 Processing request data...")
+        if "enabled" in settings_data:
+            settings["enabled"] = bool(settings_data["enabled"])
+            logger.info(f"  ✓ Set enabled: {settings['enabled']}")
+        if "interval_days" in settings_data:
+            settings["interval_days"] = max(1, min(30, int(settings_data["interval_days"])))
+            logger.info(f"  ✓ Set interval_days: {settings['interval_days']}")
+        if "hour" in settings_data:
+            settings["hour"] = max(0, min(23, int(settings_data["hour"])))
+            logger.info(f"  ✓ Set hour: {settings['hour']}")
+        if "model_type" in settings_data and settings_data["model_type"] in ["prophet", "lightgbm"]:
+            settings["model_type"] = settings_data["model_type"]
+            logger.info(f"  ✓ Set model_type: {settings['model_type']}")
+        if "data_points" in settings_data:
+            settings["data_points"] = max(1000, min(20000, int(settings_data["data_points"])))
+            logger.info(f"  ✓ Set data_points: {settings['data_points']}")
+        if "targets" in settings_data and isinstance(settings_data["targets"], list):
+            settings["targets"] = settings_data["targets"]
+            logger.info(f"  ✓ Set targets: {settings['targets']}")
+        else:
+            logger.warning(f"  ⚠️ No valid targets in request. targets={settings_data.get('targets')}")
+    
+    logger.info(f"📝 Settings before save: {settings}")
     
     # Save settings
     if save_auto_train_settings(settings):
-        logger.info(f"Auto-train settings updated: {settings}")
+        logger.info(f"✅ Auto-train settings saved successfully")
+        logger.info(f"📂 Settings file path: {AUTO_TRAIN_CONFIG_FILE}")
+        
+        # Verify by reading back
+        verify_settings = load_auto_train_settings()
+        logger.info(f"✓ Verification - Settings from file: {verify_settings}")
+        
         return {
             "success": True,
             "message": "Đã cập nhật cài đặt Auto-Training",
             **settings
         }
     else:
+        logger.error(f"❌ Failed to save auto-train settings")
         raise HTTPException(status_code=500, detail="Lỗi khi lưu cài đặt")
+
+@router.get("/ml/auto-train/debug")
+async def debug_auto_train_settings():
+    """Debug endpoint to check auto-train configuration"""
+    return {
+        "config_file_path": str(AUTO_TRAIN_CONFIG_FILE),
+        "config_file_exists": AUTO_TRAIN_CONFIG_FILE.exists(),
+        "config_directory_exists": AUTO_TRAIN_CONFIG_FILE.parent.exists(),
+        "config_directory_path": str(AUTO_TRAIN_CONFIG_FILE.parent),
+        "current_settings": load_auto_train_settings(),
+        "readable_permissions": str(AUTO_TRAIN_CONFIG_FILE.parent.stat().st_mode) if AUTO_TRAIN_CONFIG_FILE.parent.exists() else "N/A"
+    }
+
+@router.post("/ml/auto-train/toggle")
+async def toggle_auto_train(toggle_data: dict = None):
+    """Toggle auto-training on/off"""
+    settings = load_auto_train_settings()
+    
+    if toggle_data and "enabled" in toggle_data:
+        settings["enabled"] = bool(toggle_data["enabled"])
+    else:
+        settings["enabled"] = not settings.get("enabled", False)
+    
+    if save_auto_train_settings(settings):
+        return {
+            "success": True,
+            "enabled": settings["enabled"],
+            "message": "Đã cập nhật trạng thái Auto-Training"
+        }
+    else:
+        raise HTTPException(status_code=500, detail="Lỗi khi cập nhật trạng thái")
+
+@router.post("/ml/auto-train/run-now")
+async def run_auto_train_now(db: Session = Depends(get_db)):
+    """Manually trigger auto-training now"""
+    settings = load_auto_train_settings()
+    model_type = settings.get("model_type", "prophet")
+    data_points = settings.get("data_points", 10000)
+    targets = settings.get("targets", ["temperature", "humidity", "pressure", "aqi"])
+    
+    try:
+        # Get training data
+        records = db.query(SensorData).filter(
+            SensorData.temperature > 0
+        ).order_by(desc(SensorData.timestamp)).limit(data_points).all()
+        
+        if len(records) < 100:
+            raise HTTPException(status_code=400, detail="Không đủ dữ liệu để huấn luyện")
+        
+        # Convert targets to string for API
+        targets_param = ",".join(targets)
+        
+        # Train using the trainer
+        result = ml_trainer.train_specific_targets(
+            records=records,
+            model_type=model_type,
+            targets=targets
+        )
+        
+        # Update last train time
+        settings["last_auto_train"] = datetime.now().isoformat()
+        save_auto_train_settings(settings)
+        
+        logger.info(f"Auto-training completed: {result}")
+        
+        return {
+            "success": True,
+            "message": "Tự động huấn luyện hoàn thành",
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"Error in auto-training: {e}")
+        raise HTTPException(status_code=500, detail=f"Lỗi huấn luyện: {str(e)}")
 
 @router.post("/ml/auto-train/run")
 async def run_auto_train(db: Session = Depends(get_db)):
@@ -1140,52 +1254,6 @@ async def clear_cache():
         }
     except Exception as e:
         logger.error(f"Error clearing cache: {e}")
-        return {
-            "success": False,
-            "message": str(e)
-        }
-
-
-@router.post("/system/backup-db")
-async def backup_database():
-    """Create a backup of the database"""
-    try:
-        import shutil
-        from datetime import datetime
-        
-        backup_dir = "backups"
-        if not os.path.exists(backup_dir):
-            os.makedirs(backup_dir)
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_filename = f"backup_{timestamp}.sql"
-        backup_path = os.path.join(backup_dir, backup_filename)
-        
-        # Try to create MySQL backup using mysqldump
-        try:
-            # Note: This is a placeholder. In production, you'd need proper DB credentials
-            # subprocess.run(['mysqldump', '-u', 'user', '-p', 'password', 'database_name'], 
-            #                stdout=open(backup_path, 'w'))
-            
-            # For now, just create a placeholder backup file
-            with open(backup_path, 'w') as f:
-                f.write(f"-- Backup created at {datetime.now()}\n")
-                f.write("-- Database backup placeholder\n")
-            
-            logger.info(f"Database backup created: {backup_filename}")
-            
-            return {
-                "success": True,
-                "message": "Database backup created",
-                "filename": backup_filename
-            }
-        except Exception as e:
-            logger.error(f"Error during backup: {e}")
-            return {
-                "success": False,
-                "message": str(e)
-            }
-    except Exception as e:
         return {
             "success": False,
             "message": str(e)

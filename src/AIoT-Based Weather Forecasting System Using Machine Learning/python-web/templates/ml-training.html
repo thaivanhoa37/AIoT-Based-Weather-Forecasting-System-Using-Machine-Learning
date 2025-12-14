@@ -694,6 +694,12 @@
             <!-- Training Configuration -->
             <section class="section">
                 <h2 class="section-title">⚙️ <span data-i18n="mlTrainingExt.configStart">Cấu hình & Bắt đầu</span></h2>
+                <div id="configStatusBar" style="background: #e8f4f8; padding: 12px 15px; border-radius: 8px; border-left: 4px solid #0891b2; margin-bottom: 20px; display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+                        <span><strong style="color: #0891b2;">✓ Cấu hình được tải lại</strong> - Sử dụng các tùy chọn huấn luyện từ lần trước</span>
+                        <button onclick="clearTrainingConfiguration()" style="background: none; border: none; color: #0891b2; cursor: pointer; font-weight: 600; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Xóa</button>
+                    </div>
+                </div>
                 <div class="form-section">
                     <div class="form-grid">
                         <div class="form-group">
@@ -874,7 +880,12 @@
                         </div>
                     </div>
 
-                    <div class="form-grid" style="margin-top: 20px;">
+                    <!-- Auto-Training Configuration -->
+                    <div style="background: #f0f4ff; padding: 15px; border-radius: 10px; margin-top: 20px; margin-bottom: 20px; border-left: 4px solid #667eea;">
+                        <div style="font-size: 13px; color: #667eea; font-weight: 600;">💡 Cấu hình tự động huấn luyện - Chọn cảm biến, số mẫu, model rồi lưu để chạy theo lịch</div>
+                    </div>
+
+                    <div class="form-grid" style="margin-bottom: 20px;">
                         <div class="form-group">
                             <label class="form-label">🔄 Chu kỳ huấn luyện</label>
                             <select class="form-select" id="autoTrainInterval">
@@ -909,6 +920,78 @@
                         </div>
                     </div>
 
+                    <!-- Sensor Selection for Auto-Training -->
+                    <div style="margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 10px;">
+                        <label class="form-label" style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            🎯 <span>Chọn cảm biến tự động huấn luyện</span>
+                            <button type="button" class="btn-select-all" onclick="toggleAllAutoTrainSensors(true)" style="font-size: 11px; padding: 4px 10px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">Chọn tất cả</button>
+                            <button type="button" class="btn-deselect-all" onclick="toggleAllAutoTrainSensors(false)" style="font-size: 11px; padding: 4px 10px; background: var(--border-color); color: var(--text); border: none; border-radius: 4px; cursor: pointer;">Bỏ chọn</button>
+                        </label>
+                        
+                        <!-- Sensor Data Group -->
+                        <div class="sensor-group" style="margin-bottom: 15px;">
+                            <div class="sensor-group-title" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">📡 Dữ liệu cảm biến</div>
+                            <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="autoTrain_temperature" value="temperature" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span style="font-size: 18px;">🌡️</span>
+                                    <span style="font-weight: 600; color: var(--text);">Nhiệt độ</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="autoTrain_humidity" value="humidity" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span style="font-size: 18px;">💧</span>
+                                    <span style="font-weight: 600; color: var(--text);">Độ ẩm</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="autoTrain_pressure" value="pressure" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span style="font-size: 18px;">📊</span>
+                                    <span style="font-weight: 600; color: var(--text);">Áp suất</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="autoTrain_aqi" value="aqi" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span style="font-size: 18px;">🌫️</span>
+                                    <span style="font-weight: 600; color: var(--text);">AQI</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="autoTrain_co2" value="co2" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span style="font-size: 18px;">☁️</span>
+                                    <span style="font-weight: 600; color: var(--text);">CO2</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="autoTrain_dust" value="dust" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span style="font-size: 18px;">🌪️</span>
+                                    <span style="font-weight: 600; color: var(--text);">Bụi (PM2.5)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Weather API Data Group -->
+                        <div class="sensor-group">
+                            <div class="sensor-group-title" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">🌐 Dữ liệu Weather API</div>
+                            <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="autoTrain_wind_speed" value="wind_speed" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span style="font-size: 18px;">💨</span>
+                                    <span style="font-weight: 600; color: var(--text);">Tốc độ gió</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="autoTrain_rainfall" value="rainfall" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span style="font-size: 18px;">🌧️</span>
+                                    <span style="font-weight: 600; color: var(--text);">Lượng mưa</span>
+                                </label>
+                                <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                    <input type="checkbox" id="autoTrain_uv_index" value="uv_index" class="auto-train-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                    <span style="font-size: 18px;">☀️</span>
+                                    <span style="font-weight: 600; color: var(--text);">Chỉ số UV</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="autoTrainSelectedCount" style="margin-top: 10px; font-size: 13px; color: var(--text-secondary);">
+                            Đã chọn: <strong style="color: var(--primary-color);">4</strong> biến
+                        </div>
+                    </div>
+
                     <div class="auto-train-info" id="autoTrainInfo" style="margin-top: 15px;">
                         <div class="info-text">
                             <span>📅 Lần huấn luyện tiếp theo: <strong id="nextTrainTime">--</strong></span>
@@ -922,11 +1005,14 @@
                         <button class="btn btn-primary" id="btnToggleAutoTrain" onclick="toggleAutoTrain()">
                             ▶️ <span data-i18n="mlTrainingExt.enableAutoTrain">Bật Auto-Training</span>
                         </button>
-                        <button class="btn btn-secondary" onclick="saveAutoTrainSettings()">
+                        <button class="btn btn-success" onclick="saveAutoTrainSettings()">
                             💾 <span data-i18n="common.save">Lưu cài đặt</span>
                         </button>
                         <button class="btn btn-warning" onclick="runAutoTrainNow()">
                             ⚡ <span data-i18n="mlTrainingExt.trainNow">Chạy ngay</span>
+                        </button>
+                        <button class="btn btn-info" onclick="(function(){console.clear(); console.log('=== DEBUG AUTO-TRAIN ==='); const cb = document.querySelectorAll('.auto-train-checkbox'); console.log('Total checkboxes:', cb.length); cb.forEach(c => console.log('[' + (c.checked ? 'x' : ' ') + '] ' + c.value)); const targets = Array.from(document.querySelectorAll('.auto-train-checkbox:checked')).map(c => c.value); console.log('Selected targets:', targets); console.log('Target count:', targets.length);})()">
+                            🔍 <span>Debug Info</span>
                         </button>
                     </div>
                 </div>

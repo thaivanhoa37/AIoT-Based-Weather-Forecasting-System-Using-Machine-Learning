@@ -29,14 +29,17 @@ class AutoTrainScheduler:
             "hour": 2,
             "model_type": "prophet",
             "data_points": 10000,
+            "targets": ["temperature", "humidity", "pressure", "aqi"],
             "last_auto_train": None,
-            "last_auto_train_timestamp": None
+            "last_auto_train_timestamp": None,
+            "next_train_time": None
         }
         try:
             if AUTO_TRAIN_CONFIG_FILE.exists():
                 with open(AUTO_TRAIN_CONFIG_FILE, 'r', encoding='utf-8') as f:
                     saved = json.load(f)
                     default_settings.update(saved)
+                    logger.info(f"✓ Loaded auto-train settings: {saved}")
         except Exception as e:
             logger.error(f"Error loading auto-train settings: {e}")
         return default_settings
@@ -47,6 +50,7 @@ class AutoTrainScheduler:
             AUTO_TRAIN_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
             with open(AUTO_TRAIN_CONFIG_FILE, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, indent=2, ensure_ascii=False)
+            logger.info(f"✓ Auto-train settings saved")
             return True
         except Exception as e:
             logger.error(f"Error saving auto-train settings: {e}")
@@ -88,15 +92,17 @@ class AutoTrainScheduler:
         settings = self.load_settings()
         model_type = settings.get("model_type", "prophet")
         data_points = settings.get("data_points", 10000)
+        targets = settings.get("targets", ["temperature", "humidity", "pressure", "aqi"])
         
-        logger.info(f"🤖 Auto-Training started: model={model_type}, data_points={data_points}")
-        print(f"\n{'='*60}")
+        logger.info(f"🤖 Auto-Training started: model={model_type}, data_points={data_points}, targets={targets}")
+        print(f"\n{'='*70}")
         print(f"⏰ AUTO-TRAINING SCHEDULER")
-        print(f"{'='*60}")
+        print(f"{'='*70}")
         print(f"🤖 Model: {model_type}")
         print(f"📊 Data points: {data_points}")
+        print(f"🎯 Targets: {', '.join(targets)}")
         print(f"🕐 Time: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
-        print(f"{'='*60}\n")
+        print(f"{'='*70}\n")
         
         try:
             db = SessionLocal()
@@ -108,37 +114,45 @@ class AutoTrainScheduler:
             
             if len(records) < 100:
                 logger.warning("Not enough data for auto-training")
-                print("⚠️ Không đủ dữ liệu để huấn luyện")
+                print("⚠️ Không đủ dữ liệu để huấn luyện (cần >= 100 records)")
                 db.close()
                 return False
             
-            # Prepare data
-            data = [{
-                'timestamp': r.timestamp.isoformat() if hasattr(r.timestamp, 'isoformat') else str(r.timestamp),
-                'temperature': r.temperature,
-                'humidity': r.humidity,
-                'pressure': r.pressure,
-                'aqi': r.aqi or 0
-            } for r in records]
+            logger.info(f"📥 Got {len(records)} records for training")
+            print(f"📥 Lấy {len(records)} bản ghi từ cơ sở dữ liệu")
             
             db.close()
             
-            # Train model
-            result = ml_trainer.train_model(model_type, data)
+            # Train model with specific targets
+            logger.info(f"🚀 Training model with targets: {targets}")
+            print(f"🚀 Đang huấn luyện model...")
+            
+            result = ml_trainer.train_specific_targets(
+                records=records,
+                model_type=model_type,
+                targets=targets
+            )
             
             if result.get('success'):
                 # Update last auto train time
                 now = datetime.now()
-                settings["last_auto_train"] = now.strftime("%d/%m/%Y %H:%M")
+                settings["last_auto_train"] = now.strftime("%d/%m/%Y %H:%M:%S")
                 settings["last_auto_train_timestamp"] = now.isoformat()
+                
+                # Calculate next train time
+                next_train = now + timedelta(days=settings.get("interval_days", 7))
+                settings["next_train_time"] = next_train.isoformat()
+                
                 self.save_settings(settings)
                 
-                accuracy = result.get("accuracy", 0) * 100
+                accuracy = result.get("accuracy", 0)
                 logger.info(f"✅ Auto-Training completed: accuracy={accuracy:.2f}%")
                 print(f"\n✅ AUTO-TRAINING HOÀN TẤT!")
-                print(f"📈 R² Score: {accuracy:.2f}%")
-                print(f"⏱️ Thời gian: {result.get('training_time', 0):.1f}s")
-                print(f"{'='*60}\n")
+                print(f"📈 Độ chính xác: {accuracy:.2f}%")
+                if 'training_time' in result:
+                    print(f"⏱️  Thời gian: {result.get('training_time', 0):.1f}s")
+                print(f"📅 Lần tới: {next_train.strftime('%d/%m/%Y %H:%M:%S')}")
+                print(f"{'='*70}\n")
                 return True
             else:
                 logger.error(f"Auto-Training failed: {result.get('message')}")
@@ -146,7 +160,7 @@ class AutoTrainScheduler:
                 return False
                 
         except Exception as e:
-            logger.error(f"Auto-Training error: {e}")
+            logger.error(f"Auto-Training error: {e}", exc_info=True)
             print(f"❌ Auto-Training lỗi: {e}")
             return False
     
@@ -154,23 +168,53 @@ class AutoTrainScheduler:
         """Check if training should run and execute if needed"""
         settings = self.load_settings()
         
+        if not settings.get("enabled"):
+            return  # Training is disabled
+        
         if self.should_train(settings):
-            logger.info("Auto-training triggered by scheduler")
+            logger.info("⏰ Auto-training triggered by scheduler")
+            print(f"\n🔴 AUTO-TRAINING TRIGGERED at {datetime.now().strftime('%H:%M:%S')}\n")
             self.run_training()
+        
+        # Update next train time
+        now = datetime.now()
+        interval_days = settings.get("interval_days", 7)
+        target_hour = settings.get("hour", 2)
+        
+        # Calculate next train time
+        next_train = now.replace(hour=target_hour, minute=0, second=0, microsecond=0)
+        if next_train <= now:
+            next_train += timedelta(days=1)
+        
+        settings["next_train_time"] = next_train.isoformat()
+        self.save_settings(settings)
     
     def scheduler_loop(self):
         """Main scheduler loop - runs in background thread"""
         logger.info("🔄 Auto-Training Scheduler started")
-        print("🔄 Auto-Training Scheduler đang chạy...")
+        print("🔄 Auto-Training Scheduler đang chạy...\n")
         
+        check_count = 0
         while self.running:
             try:
+                check_count += 1
+                settings = self.load_settings()
+                
+                # Log status periodically (every 60 checks = 1 minute)
+                if check_count % 60 == 0:
+                    status = "✓ BẬT" if settings.get("enabled") else "✗ TẮT"
+                    next_time = settings.get("next_train_time", "Chưa xác định")
+                    logger.info(f"⏰ Auto-Training Status: {status} | Next: {next_time}")
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Auto-Training: {status}")
+                
+                # Check and run if needed
                 self.check_and_run()
+                
             except Exception as e:
                 logger.error(f"Scheduler error: {e}")
             
-            # Sleep for 1 hour before next check
-            for _ in range(3600):  # 3600 seconds = 1 hour
+            # Sleep for 1 minute before next check (more responsive)
+            for _ in range(60):  # 60 seconds = 1 minute
                 if not self.running:
                     break
                 time.sleep(1)

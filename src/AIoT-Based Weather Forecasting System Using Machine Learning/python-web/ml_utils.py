@@ -238,6 +238,51 @@ class MLManager:
                 'error': str(e)
             }
     
+    def train_specific_targets(self, records, model_type: str = None, targets: list = None, 
+                               weather_records=None) -> dict:
+        """
+        Wrapper method for training with specific targets
+        Separates targets into sensor_targets and weather_targets
+        
+        Args:
+            records: List of SensorData records from database
+            model_type: Type of model to train (prophet, lightgbm)
+            targets: List of target names (e.g., ['temperature', 'humidity', 'wind_speed'])
+            weather_records: List of WeatherForecasting records from database (optional)
+        
+        Returns:
+            dict with training results
+        """
+        if targets is None:
+            targets = ['temperature', 'humidity', 'aqi', 'pressure', 'co2', 'dust']
+        
+        # Separate sensor and weather targets
+        sensor_targets = []
+        weather_targets = []
+        
+        all_sensor_targets = ['temperature', 'humidity', 'aqi', 'pressure', 'co2', 'dust']
+        all_weather_targets = ['wind_speed', 'rainfall', 'uv_index']
+        
+        for target in targets:
+            if target in all_sensor_targets:
+                sensor_targets.append(target)
+            elif target in all_weather_targets:
+                weather_targets.append(target)
+        
+        # If no valid targets, use all sensor targets
+        if not sensor_targets and not weather_targets:
+            sensor_targets = all_sensor_targets
+        
+        logger.info(f"Training with targets: sensor={sensor_targets}, weather={weather_targets}")
+        
+        return self.train_selected_targets(
+            records,
+            model_type,
+            sensor_targets,
+            weather_records,
+            weather_targets
+        )
+    
     def predict(self, hours_ahead: int = 24, latest_data: dict = None, 
                 model_type: str = None) -> dict:
         """
@@ -376,19 +421,37 @@ class MLManager:
         
         for mtype, model in self.models.items():
             info = model.get_info()
-            if info.get('metrics'):
-                avg_accuracy = np.mean([
+            metrics = info.get('metrics', {})
+            
+            if metrics:
+                # Extract accuracy from each metric dict
+                accuracies = [
                     m.get('accuracy', 0) 
-                    for m in info['metrics'].values()
-                ]) if info['metrics'] else 0
+                    for m in metrics.values() 
+                    if isinstance(m, dict) and m.get('accuracy', 0) > 0
+                ]
+                avg_accuracy = np.mean(accuracies) if accuracies else 0
                 
                 comparison[mtype] = {
+                    'model_name': 'Prophet' if mtype == 'prophet' else 'LightGBM',
                     'models_available': info.get('models_available', []),
+                    'models_count': len(info.get('models_available', [])),
                     'average_accuracy': round(float(avg_accuracy), 2),
-                    'metrics': info['metrics']
+                    'metrics_count': len(metrics),
+                    'metrics': metrics
+                }
+            else:
+                # Model has no metrics yet
+                comparison[mtype] = {
+                    'model_name': 'Prophet' if mtype == 'prophet' else 'LightGBM',
+                    'models_available': info.get('models_available', []),
+                    'models_count': len(info.get('models_available', [])),
+                    'average_accuracy': 0,
+                    'metrics_count': 0,
+                    'metrics': {}
                 }
         
-        # Find best model
+        # Find best model based on average accuracy
         best_model = None
         best_accuracy = 0
         for mtype, data in comparison.items():
@@ -399,7 +462,7 @@ class MLManager:
         return {
             'comparison': comparison,
             'best_model': best_model,
-            'best_accuracy': best_accuracy,
+            'best_accuracy': round(float(best_accuracy), 2) if best_accuracy > 0 else 0,
             'current_model': self.current_model_type
         }
 

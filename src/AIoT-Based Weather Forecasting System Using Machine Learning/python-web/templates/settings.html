@@ -940,14 +940,6 @@
                             <div class="control-divider"></div>
 
                             <div class="control-item">
-                                <div class="control-label">💾 <span data-i18n="settingsExt.backupDb">Sao lưu cơ sở dữ liệu</span></div>
-                                <p class="control-desc" data-i18n="settingsExt.backupDbDesc">Tạo backup của dữ liệu hiện tại</p>
-                                <button class="btn-control info" onclick="backupDatabase()">💾 <span data-i18n="settingsExt.backupDbBtn">Backup DB</span></button>
-                            </div>
-
-                            <div class="control-divider"></div>
-
-                            <div class="control-item">
                                 <div class="control-label">ℹ️ <span data-i18n="settingsExt.systemInfo">Thông tin hệ thống</span></div>
                                 <p class="control-desc" data-i18n="settingsExt.systemInfoDesc">Xem chi tiết hệ thống và tài nguyên</p>
                                 <button class="btn-control info" onclick="showSystemInfo()">ℹ️ <span data-i18n="settingsExt.systemInfoBtn">Chi tiết</span></button>
@@ -1767,25 +1759,6 @@
                 }
             } catch (error) {
                 AppUtils.showToast('✗ Lỗi khi xóa cache', 'error');
-            }
-        }
-
-        async function backupDatabase() {
-            try {
-                const loading = AppUtils.showLoading(document.querySelector('.settings-container'));
-                AppUtils.showToast('💾 Đang tạo backup...', 'info');
-                
-                const response = await fetch('/api/system/backup-db', { method: 'POST' });
-                const data = await response.json();
-                
-                AppUtils.hideLoading(loading);
-                if (data.success) {
-                    AppUtils.showToast('✓ Backup thành công: ' + data.filename, 'success');
-                } else {
-                    AppUtils.showToast('✗ Lỗi: ' + data.message, 'error');
-                }
-            } catch (error) {
-                AppUtils.showToast('✗ Lỗi khi backup database', 'error');
             }
         }
 

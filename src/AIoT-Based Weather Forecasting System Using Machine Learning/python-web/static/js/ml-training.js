@@ -90,6 +90,8 @@ function getSelectedTargets() {
 
 // Load ML training page
 async function loadMLTrainingPage() {
+    console.log('🚀 Loading ML Training page...');
+    
     const loading = AppUtils.showLoading(document.querySelector('.content'));
     // Restore dataPoints from localStorage or default to 10000
     const dataPointsInput = document.getElementById('dataPoints');
@@ -105,6 +107,16 @@ async function loadMLTrainingPage() {
             localStorage.setItem('dataPoints', dataPointsInput.value);
         });
     }
+    
+    // Load saved training configuration
+    loadTrainingConfiguration();
+    
+    // Initialize auto-train checkbox listeners - with delay to ensure DOM is ready
+    setTimeout(() => {
+        console.log('⏱️ Initializing auto-train checkboxes after delay...');
+        initAutoTrainCheckboxes();
+    }, 100);
+    
     try {
         // Get model info
         const modelInfo = await AppUtils.getMLModelInfo();
@@ -114,11 +126,116 @@ async function loadMLTrainingPage() {
         loadTrainingHistory(modelInfo);
         // Update model type selector
         updateModelTypeSelector(modelInfo);
+        
+        // Load auto-train settings
+        console.log('📥 Loading auto-train settings...');
+        await loadAutoTrainSettings();
+        
     } catch (error) {
         console.error('Error loading ML training page:', error);
         AppUtils.showToast('Không thể tải thông tin model', 'error');
     } finally {
         AppUtils.hideLoading(loading);
+    }
+}
+
+// Load training configuration from localStorage
+function loadTrainingConfiguration() {
+    try {
+        const savedConfig = localStorage.getItem('trainingConfig');
+        if (savedConfig) {
+            const config = JSON.parse(savedConfig);
+            
+            // Restore model type
+            if (config.modelType) {
+                const modelTypeSelect = document.getElementById('modelType');
+                if (modelTypeSelect) {
+                    modelTypeSelect.value = config.modelType;
+                }
+            }
+            
+            // Restore data points
+            if (config.dataPoints) {
+                const dataPointsInput = document.getElementById('dataPoints');
+                if (dataPointsInput) {
+                    dataPointsInput.value = config.dataPoints;
+                }
+            }
+            
+            // Restore selected sensors/targets
+            if (config.selectedTargets && Array.isArray(config.selectedTargets)) {
+                // Uncheck all first
+                document.querySelectorAll('.sensor-checkbox').forEach(cb => {
+                    cb.checked = false;
+                });
+                
+                // Check saved targets
+                config.selectedTargets.forEach(target => {
+                    const checkbox = document.querySelector(`.sensor-checkbox[value="${target}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        // Update UI styles
+                        const label = checkbox.closest('.checkbox-item');
+                        if (label) {
+                            label.style.borderColor = 'var(--primary-color)';
+                            label.style.background = 'rgba(102, 126, 234, 0.1)';
+                        }
+                    }
+                });
+                
+                // Update count display
+                updateSelectedCount();
+            }
+            
+            // Show status bar if config was loaded
+            const statusBar = document.getElementById('configStatusBar');
+            if (statusBar && savedConfig) {
+                statusBar.style.display = 'block';
+            }
+            
+            // Show toast notification
+            AppUtils.showToast('✓ Đã load cấu hình huấn luyện từ trước', 'success');
+        }
+    } catch (error) {
+        console.error('Error loading training configuration:', error);
+    }
+}
+
+// Clear training configuration
+function clearTrainingConfiguration() {
+    if (confirm('Bạn chắc chắn muốn xóa cấu hình huấn luyện đã lưu?')) {
+        try {
+            localStorage.removeItem('trainingConfig');
+            
+            // Hide status bar
+            const statusBar = document.getElementById('configStatusBar');
+            if (statusBar) {
+                statusBar.style.display = 'none';
+            }
+            
+            AppUtils.showToast('✓ Đã xóa cấu hình', 'success');
+        } catch (error) {
+            console.error('Error clearing configuration:', error);
+            AppUtils.showToast('✗ Lỗi khi xóa cấu hình', 'error');
+        }
+    }
+}
+
+// Save training configuration to localStorage
+function saveTrainingConfiguration() {
+    try {
+        const config = {
+            modelType: document.getElementById('modelType')?.value || 'prophet',
+            dataPoints: document.getElementById('dataPoints')?.value || '10000',
+            selectedTargets: getSelectedTargets(),
+            timestamp: new Date().toISOString()
+        };
+        
+        localStorage.setItem('trainingConfig', JSON.stringify(config));
+        return config;
+    } catch (error) {
+        console.error('Error saving training configuration:', error);
+        return null;
     }
 }
 
@@ -213,6 +330,9 @@ async function startTraining(event) {
         AppUtils.showToast('Vui lòng chọn ít nhất 1 biến để huấn luyện', 'error');
         return;
     }
+    
+    // Save current configuration for next time
+    saveTrainingConfiguration();
     
     trainingInProgress = true;
     
@@ -412,22 +532,77 @@ async function compareModels() {
         
         const data = await response.json();
         
-        // Show comparison in modal or alert
-        let message = '📊 So sánh Models:\n\n';
+        // Build comparison HTML
+        let html = '<div style="padding: 20px; font-family: Arial, sans-serif;">';
+        html += '<h2 style="color: #667eea; margin-bottom: 20px;">📊 SO SÁNH CÁC MODEL</h2>';
         
+        // Current model info
+        if (data.current_model) {
+            html += `<div style="background: #f0f4ff; padding: 10px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #667eea;">`;
+            html += `<strong>✓ Model hiện tại: ${data.current_model === 'prophet' ? 'Prophet' : 'LightGBM'}</strong>`;
+            html += `</div>`;
+        }
+        
+        // Comparison table
         if (data.comparison) {
+            html += '<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">';
+            html += '<tr style="background: #667eea; color: white;">';
+            html += '<th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Model</th>';
+            html += '<th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Số Targets</th>';
+            html += '<th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Trung Bình Accuracy</th>';
+            html += '</tr>';
+            
             for (const [modelType, info] of Object.entries(data.comparison)) {
-                const modelNames = { 'prophet': 'Prophet', 'lightgbm': 'LightGBM' };
                 const isBest = modelType === data.best_model;
-                message += `${isBest ? '🏆 ' : ''}${modelNames[modelType] || modelType}: ${info.average_accuracy.toFixed(2)}%\n`;
+                const modelName = info.model_name || (modelType === 'prophet' ? 'Prophet' : 'LightGBM');
+                const bgColor = isBest ? '#e8f4f8' : 'white';
+                const badgeColor = isBest ? 'color: #10b981; font-weight: bold;' : '';
+                
+                html += `<tr style="background: ${bgColor};">`;
+                html += `<td style="padding: 10px; border: 1px solid #ddd;"><strong>${modelName}</strong> ${isBest ? '🏆' : ''}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${info.models_count}</td>`;
+                html += `<td style="padding: 10px; border: 1px solid #ddd; text-align: center; ${badgeColor}">`;
+                html += `${info.average_accuracy.toFixed(2)}%</td>`;
+                html += `</tr>`;
             }
+            
+            html += '</table>';
         }
         
+        // Best model summary
         if (data.best_model) {
-            message += `\n✅ Model tốt nhất: ${data.best_model} (${data.best_accuracy.toFixed(2)}%)`;
+            const bestModelName = data.comparison[data.best_model]?.model_name || 
+                                 (data.best_model === 'prophet' ? 'Prophet' : 'LightGBM');
+            html += `<div style="background: #ecfdf5; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981;">`;
+            html += `<strong style="color: #10b981;">✅ Model tốt nhất: ${bestModelName}</strong><br/>`;
+            html += `<span style="color: #059669;">Độ chính xác: ${data.best_accuracy.toFixed(2)}%</span>`;
+            html += `</div>`;
+        } else {
+            html += `<div style="background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">`;
+            html += `<strong style="color: #f59e0b;">⚠️ Chưa có model nào được huấn luyện</strong><br/>`;
+            html += `<span>Vui lòng huấn luyện ít nhất một model trước khi so sánh</span>`;
+            html += `</div>`;
         }
         
-        alert(message);
+        html += '</div>';
+        
+        // Show in modal/popup
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;';
+        modal.innerHTML = `
+            <div style="background: white; padding: 0; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <div style="position: sticky; top: 0; background: white; border-bottom: 1px solid #ddd; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0; color: #667eea;">📊 So Sánh Model</h2>
+                    <button onclick="this.closest('div').parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #999;">×</button>
+                </div>
+                ${html}
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.remove();
+        };
         
     } catch (error) {
         console.error('Compare error:', error);
@@ -477,5 +652,397 @@ async function switchModel(modelType) {
     } catch (error) {
         console.error('Switch model error:', error);
         AppUtils.showToast('Lỗi chuyển model: ' + error.message, 'error');
+    }
+}
+
+// ===== Auto-Training Functions =====
+
+// Initialize auto-train checkboxes
+function initAutoTrainCheckboxes() {
+    console.log('🔧 Initializing auto-train checkboxes...');
+    
+    const checkboxes = document.querySelectorAll('.auto-train-checkbox');
+    console.log(`✓ Found ${checkboxes.length} auto-train checkboxes`);
+    
+    // First, load saved targets from localStorage (temporary storage before API load)
+    const savedTargets = localStorage.getItem('autoTrainTargets');
+    if (savedTargets) {
+        try {
+            const targets = JSON.parse(savedTargets);
+            console.log(`📥 Restoring from localStorage: ${JSON.stringify(targets)}`);
+            checkboxes.forEach(cb => {
+                cb.checked = targets.includes(cb.value);
+            });
+        } catch (e) {
+            console.warn('Failed to parse saved targets:', e);
+        }
+    }
+    
+    checkboxes.forEach(checkbox => {
+        // Add change event listener
+        checkbox.addEventListener('change', () => {
+            console.log(`Checkbox ${checkbox.value} changed to ${checkbox.checked}`);
+            updateAutoTrainSelectedCount();
+            
+            // Save to localStorage immediately
+            saveAutoTrainTargetsToLocalStorage();
+            
+            // Update UI styles
+            const label = checkbox.closest('.checkbox-item');
+            if (label) {
+                if (checkbox.checked) {
+                    label.style.borderColor = 'var(--primary-color)';
+                    label.style.background = 'rgba(102, 126, 234, 0.1)';
+                } else {
+                    label.style.borderColor = 'var(--border-color)';
+                    label.style.background = 'var(--bg)';
+                }
+            }
+        });
+        // Initialize state
+        const label = checkbox.closest('.checkbox-item');
+        if (checkbox.checked && label) {
+            label.style.borderColor = 'var(--primary-color)';
+            label.style.background = 'rgba(102, 126, 234, 0.1)';
+        }
+    });
+    updateAutoTrainSelectedCount();
+    console.log('✓ Auto-train checkboxes initialized');
+}
+
+// Save auto-train targets to localStorage
+function saveAutoTrainTargetsToLocalStorage() {
+    const targets = getSelectedAutoTrainTargets();
+    localStorage.setItem('autoTrainTargets', JSON.stringify(targets));
+    console.log(`💾 Saved to localStorage: ${JSON.stringify(targets)}`);
+}
+
+// Toggle all auto-train sensors
+function toggleAllAutoTrainSensors(select) {
+    const checkboxes = document.querySelectorAll('.auto-train-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = select;
+        const label = checkbox.closest('.checkbox-item');
+        if (label) {
+            if (select) {
+                label.style.borderColor = 'var(--primary-color)';
+                label.style.background = 'rgba(102, 126, 234, 0.1)';
+            } else {
+                label.style.borderColor = 'var(--border-color)';
+                label.style.background = 'var(--bg)';
+            }
+        }
+    });
+    
+    // Save to localStorage immediately
+    saveAutoTrainTargetsToLocalStorage();
+    updateAutoTrainSelectedCount();
+}
+
+// Update auto-train selected count
+function updateAutoTrainSelectedCount() {
+    const checkboxes = document.querySelectorAll('.auto-train-checkbox:checked');
+    const countEl = document.getElementById('autoTrainSelectedCount');
+    if (countEl) {
+        const count = checkboxes.length;
+        countEl.innerHTML = `Đã chọn: <strong style="color: var(--primary-color);">${count}</strong> biến`;
+        console.log(`📊 Updated count display: ${count} sensors selected`);
+    } else {
+        console.warn('⚠️ autoTrainSelectedCount element not found');
+    }
+}
+
+// Get selected auto-train targets
+function getSelectedAutoTrainTargets() {
+    const checkboxes = document.querySelectorAll('.auto-train-checkbox:checked');
+    console.log(`🔍 Querying: document.querySelectorAll('.auto-train-checkbox:checked')`);
+    console.log(`✓ Found ${checkboxes.length} checked checkboxes`);
+    
+    // Debug: list all checkboxes
+    console.log('📋 All checkboxes:');
+    document.querySelectorAll('.auto-train-checkbox').forEach(cb => {
+        console.log(`  [${cb.checked ? 'x' : ' '}] ${cb.id} = "${cb.value}" (checked=${cb.checked})`);
+    });
+    
+    const targets = Array.from(checkboxes).map(cb => cb.value);
+    console.log(`✅ Selected auto-train targets: [${targets.join(', ')}] (${targets.length} total)`);
+    return targets;
+}
+
+// Load auto-train settings
+async function loadAutoTrainSettings() {
+    try {
+        console.log('🔄 Loading auto-train settings...');
+        
+        const response = await fetch('/api/ml/auto-train/settings');
+        if (!response.ok) throw new Error('Không thể tải cài đặt');
+        
+        const settings = await response.json();
+        console.log('📥 Loaded settings from API:', settings);
+        
+        // Update UI with loaded settings
+        if (settings.interval_days) {
+            document.getElementById('autoTrainInterval').value = settings.interval_days;
+            console.log(`✓ Set interval_days: ${settings.interval_days}`);
+        }
+        if (settings.hour !== undefined) {
+            document.getElementById('autoTrainHour').value = settings.hour;
+            console.log(`✓ Set hour: ${settings.hour}`);
+        }
+        if (settings.model_type) {
+            document.getElementById('autoTrainModel').value = settings.model_type;
+            console.log(`✓ Set model_type: ${settings.model_type}`);
+        }
+        if (settings.data_points) {
+            document.getElementById('autoTrainDataPoints').value = settings.data_points;
+            console.log(`✓ Set data_points: ${settings.data_points}`);
+        }
+        
+        // Load selected targets
+        // Priority: localStorage > API > default
+        let targets = null;
+        
+        // First try localStorage (user's current selections that haven't been saved to server)
+        const savedTargets = localStorage.getItem('autoTrainTargets');
+        if (savedTargets) {
+            try {
+                targets = JSON.parse(savedTargets);
+                console.log(`📥 [HIGH PRIORITY] Using targets from localStorage: ${JSON.stringify(targets)}`);
+                console.log(`⚠️  Note: These targets are only in browser storage, not yet saved to server!`);
+            } catch (e) {
+                console.warn('Failed to parse localStorage targets:', e);
+                targets = null;
+            }
+        }
+        
+        // If no localStorage, use API settings (server-saved targets)
+        if (!targets && settings.targets && Array.isArray(settings.targets)) {
+            targets = settings.targets;
+            console.log(`📥 [MEDIUM PRIORITY] Using targets from API (server): ${JSON.stringify(targets)}`);
+        }
+        
+        // If still no targets, use default
+        if (!targets) {
+            targets = ['temperature', 'humidity', 'pressure', 'aqi'];
+            console.log(`📥 [LOW PRIORITY] Using default targets: ${JSON.stringify(targets)}`);
+        }
+        
+        // Apply targets to checkboxes
+        console.log(`📋 Applying targets to checkboxes: ${JSON.stringify(targets)}`);
+        document.querySelectorAll('.auto-train-checkbox').forEach(cb => {
+            const shouldCheck = targets.includes(cb.value);
+            cb.checked = shouldCheck;
+            console.log(`  - ${cb.value}: ${shouldCheck}`);
+            
+            // Trigger change event so event listeners fire
+            cb.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            const label = cb.closest('.checkbox-item');
+            if (label) {
+                if (cb.checked) {
+                    label.style.borderColor = 'var(--primary-color)';
+                    label.style.background = 'rgba(102, 126, 234, 0.1)';
+                } else {
+                    label.style.borderColor = 'var(--border-color)';
+                    label.style.background = 'var(--bg)';
+                }
+            }
+        });
+        
+        // Final sync to localStorage
+        localStorage.setItem('autoTrainTargets', JSON.stringify(targets));
+        console.log(`💾 Targets synced to localStorage: ${JSON.stringify(targets)}`);
+        
+        updateAutoTrainSelectedCount();
+        
+        // Update status display
+        updateAutoTrainStatus(settings);
+        console.log('✓ Settings loaded and UI updated');
+        
+    } catch (error) {
+        console.error('❌ Error loading auto-train settings:', error);
+    }
+}
+
+// Update auto-train status display
+function updateAutoTrainStatus(settings) {
+    const indicator = document.getElementById('autoTrainIndicator');
+    const statusDot = indicator?.querySelector('.status-dot');
+    const statusText = indicator?.querySelector('.status-text');
+    
+    if (settings.enabled) {
+        if (statusDot) statusDot.className = 'status-dot on';
+        if (statusText) statusText.textContent = '✓ Auto-Training đang hoạt động';
+        
+        const btnToggle = document.getElementById('btnToggleAutoTrain');
+        if (btnToggle) {
+            btnToggle.innerHTML = '⏹️ <span>Tắt Auto-Training</span>';
+            btnToggle.className = 'btn btn-danger';
+        }
+    } else {
+        if (statusDot) statusDot.className = 'status-dot off';
+        if (statusText) statusText.textContent = '✗ Auto-Training đã tắt';
+        
+        const btnToggle = document.getElementById('btnToggleAutoTrain');
+        if (btnToggle) {
+            btnToggle.innerHTML = '▶️ <span>Bật Auto-Training</span>';
+            btnToggle.className = 'btn btn-primary';
+        }
+    }
+    
+    // Update next train time
+    if (settings.next_train_time) {
+        document.getElementById('nextTrainTime').textContent = new Date(settings.next_train_time).toLocaleString('vi-VN');
+    }
+    
+    // Update last train time
+    if (settings.last_auto_train) {
+        document.getElementById('lastAutoTrainTime').textContent = new Date(settings.last_auto_train).toLocaleString('vi-VN');
+    }
+}
+
+// Save auto-train settings
+async function saveAutoTrainSettings() {
+    try {
+        AppUtils.showToast('💾 Đang lưu cài đặt...', 'info');
+        
+        console.log('=== SAVING AUTO-TRAIN SETTINGS ===');
+        
+        // Get selected targets
+        const selectedTargets = getSelectedAutoTrainTargets();
+        console.log(`🎯 Selected targets from checkboxes: ${JSON.stringify(selectedTargets)}`);
+        console.log(`📊 Number of targets selected: ${selectedTargets.length}`);
+        
+        // Log each checkbox state for debugging
+        console.log('📋 Checkbox states:');
+        document.querySelectorAll('.auto-train-checkbox').forEach(cb => {
+            console.log(`  [${cb.checked ? 'x' : ' '}] ${cb.value} (${cb.id})`);
+        });
+        
+        // Validate
+        if (selectedTargets.length === 0) {
+            console.warn('⚠️ No targets selected');
+            AppUtils.showToast('Vui lòng chọn ít nhất 1 cảm biến', 'error');
+            return;
+        }
+        
+        // Get other settings
+        const interval = parseInt(document.getElementById('autoTrainInterval').value);
+        const hour = parseInt(document.getElementById('autoTrainHour').value);
+        const model = document.getElementById('autoTrainModel').value;
+        const dataPoints = parseInt(document.getElementById('autoTrainDataPoints').value);
+        
+        const settings = {
+            interval_days: interval,
+            hour: hour,
+            model_type: model,
+            data_points: dataPoints,
+            targets: selectedTargets
+        };
+        
+        console.log('📝 Full settings object to send:', JSON.stringify(settings, null, 2));
+        
+        const response = await fetch('/api/ml/auto-train/settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        console.log('📨 Response status:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('❌ API Error:', errorData);
+            throw new Error(errorData.detail || 'Không thể lưu cài đặt');
+        }
+        
+        const result = await response.json();
+        console.log('✅ Save successful, API returned:', result);
+        console.log(`🎯 Targets on server after save: ${JSON.stringify(result.targets || [])}`);
+        
+        // Check debug info
+        try {
+            const debugResponse = await fetch('/api/ml/auto-train/debug');
+            const debugInfo = await debugResponse.json();
+            console.log('🔍 Debug info after save:', {
+                file_path: debugInfo.config_file_path,
+                file_exists: debugInfo.config_file_exists,
+                saved_targets: debugInfo.current_settings?.targets
+            });
+        } catch (e) {
+            console.warn('Could not fetch debug info:', e);
+        }
+        
+        AppUtils.showToast('✓ Cài đặt đã được lưu thành công!', 'success');
+        console.log('✓ Toast notification shown');
+        
+        // Reload settings to update display
+        console.log('🔄 Reloading settings from API...');
+        await loadAutoTrainSettings();
+        console.log('✓ Settings reloaded from API');
+        console.log('=== END SAVE ===\n');
+        
+    } catch (error) {
+        console.error('❌ Error saving auto-train settings:', error);
+        AppUtils.showToast('✗ Lỗi khi lưu cài đặt: ' + error.message, 'error');
+    }
+}
+
+// Toggle auto-train
+async function toggleAutoTrain() {
+    try {
+        const currentSettings = await (await fetch('/api/ml/auto-train/settings')).json();
+        const newEnabled = !currentSettings.enabled;
+        
+        const response = await fetch('/api/ml/auto-train/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ enabled: newEnabled })
+        });
+        
+        if (!response.ok) throw new Error('Không thể đổi trạng thái');
+        
+        const result = await response.json();
+        
+        if (newEnabled) {
+            AppUtils.showToast('✓ Đã bật Auto-Training', 'success');
+        } else {
+            AppUtils.showToast('✓ Đã tắt Auto-Training', 'success');
+        }
+        
+        // Reload settings
+        await loadAutoTrainSettings();
+        
+    } catch (error) {
+        console.error('Error toggling auto-train:', error);
+        AppUtils.showToast('✗ Lỗi: ' + error.message, 'error');
+    }
+}
+
+// Run auto-train now
+async function runAutoTrainNow() {
+    try {
+        AppUtils.showToast('⚡ Đang chạy tự động huấn luyện...', 'info');
+        
+        const response = await fetch('/api/ml/auto-train/run-now', {
+            method: 'POST'
+        });
+        
+        if (!response.ok) throw new Error('Không thể chạy auto-train');
+        
+        const result = await response.json();
+        
+        AppUtils.showToast('✓ Auto-training đã bắt đầu!', 'success');
+        
+        // Reload settings to update last train time
+        await loadAutoTrainSettings();
+        
+    } catch (error) {
+        console.error('Error running auto-train:', error);
+        AppUtils.showToast('✗ Lỗi: ' + error.message, 'error');
     }
 }
