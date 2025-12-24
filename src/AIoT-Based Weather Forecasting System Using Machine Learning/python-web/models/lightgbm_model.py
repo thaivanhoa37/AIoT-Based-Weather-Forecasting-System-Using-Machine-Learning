@@ -841,10 +841,89 @@ class LSTMModel:
                         if key not in prediction:
                             prediction[key] = latest_data.get(key, 0)
                 
-                # Calculate rain probability based on humidity and rainfall
-                humidity = prediction.get('humidity', 70)
+                # Calculate weather condition based on UV index, humidity and rainfall
+                humidity = prediction.get('humidity', 50)
                 rainfall = prediction.get('rainfall', 0)
-                prediction['willRain'] = humidity > 75 or rainfall > 0.5
+                uv_index = prediction.get('uv_index', 0)
+                
+                # Lấy giờ dự báo để xác định ban ngày/đêm
+                pred_hour = pred_time.hour
+                is_daytime = 10 <= pred_hour <= 18  # UV chỉ có từ 10h-18h
+                
+                # Weather determination logic:
+                # - Ban đêm (trước 10h, sau 18h): UV = 0 là bình thường, không dùng UV để xét
+                # - Ban ngày (10h-18h): UV cao = nắng, UV thấp = nhiều mây
+                # - Rainfall > 0.5 luôn = mưa
+                # - Humidity chỉ dùng kết hợp, không đơn lẻ quyết định mưa
+                
+                if rainfall > 0.5:
+                    # Có lượng mưa thực tế -> chắc chắn mưa
+                    prediction['willRain'] = True
+                    prediction['weather_condition'] = 'Mưa' if rainfall > 2 else 'Mưa nhẹ'
+                    prediction['weather_condition_key'] = 'rain' if rainfall > 2 else 'lightRain'
+                    prediction['weather_icon'] = '🌧️'
+                elif is_daytime:
+                    # Ban ngày (10h-18h): dùng UV index
+                    if uv_index >= 6:
+                        prediction['willRain'] = False
+                        prediction['weather_condition'] = 'Nắng'
+                        prediction['weather_condition_key'] = 'sunny'
+                        prediction['weather_icon'] = '☀️'
+                    elif uv_index >= 3:
+                        prediction['willRain'] = False
+                        prediction['weather_condition'] = 'Nắng nhẹ'
+                        prediction['weather_condition_key'] = 'sunnyLight'
+                        prediction['weather_icon'] = '🌤️'
+                    elif uv_index >= 1:
+                        # UV thấp ban ngày -> nhiều mây
+                        if humidity > 90 and rainfall > 0:
+                            prediction['willRain'] = True
+                            prediction['weather_condition'] = 'Có thể mưa'
+                            prediction['weather_condition_key'] = 'mayRain'
+                            prediction['weather_icon'] = '🌦️'
+                        else:
+                            prediction['willRain'] = False
+                            prediction['weather_condition'] = 'Nhiều mây'
+                            prediction['weather_condition_key'] = 'manyClouds'
+                            prediction['weather_icon'] = '☁️'
+                    else:
+                        # UV = 0 ban ngày -> rất nhiều mây
+                        prediction['willRain'] = False
+                        prediction['weather_condition'] = 'Nhiều mây'
+                        prediction['weather_condition_key'] = 'manyClouds'
+                        prediction['weather_icon'] = '☁️'
+                else:
+                    # Ban đêm (trước 10h, sau 18h): không dùng UV
+                    # Chỉ dựa vào rainfall để xác định mưa
+                    if rainfall > 0:
+                        prediction['willRain'] = True
+                        prediction['weather_condition'] = 'Mưa đêm'
+                        prediction['weather_condition_key'] = 'nightRain'
+                        prediction['weather_icon'] = '🌧️'
+                    elif humidity > 90:
+                        prediction['willRain'] = False
+                        prediction['weather_condition'] = 'Sương mù'
+                        prediction['weather_condition_key'] = 'fog'
+                        prediction['weather_icon'] = '🌫️'
+                    elif 6 <= pred_hour < 10:
+                        # Sáng sớm (6h-10h)
+                        prediction['willRain'] = False
+                        prediction['weather_condition'] = 'Sáng sớm'
+                        prediction['weather_condition_key'] = 'earlyMorning'
+                        prediction['weather_icon'] = '🌅'
+                    elif 18 < pred_hour <= 20:
+                        # Chiều tối (18h-20h)
+                        prediction['willRain'] = False
+                        prediction['weather_condition'] = 'Chiều tối'
+                        prediction['weather_condition_key'] = 'evening'
+                        prediction['weather_icon'] = '🌆'
+                    else:
+                        # Đêm khuya
+                        prediction['willRain'] = False
+                        prediction['weather_condition'] = 'Đêm quang'
+                        prediction['weather_condition_key'] = 'clearNight'
+                        prediction['weather_icon'] = '🌙'
+                
                 prediction['confidence'] = max(50, 95 - i * 0.8)
                 
                 predictions.append(prediction)

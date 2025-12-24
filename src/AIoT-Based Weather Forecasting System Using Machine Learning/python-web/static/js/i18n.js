@@ -102,8 +102,20 @@ const translations = {
             dailyForecast: 'Dự báo theo ngày (7 ngày)',
             confidence: 'Độ tin cậy',
             rainProbability: 'Xác suất mưa',
-            rain: 'Có mưa',
-            noRain: 'Không mưa'
+            rain: 'Mưa',
+            noRain: 'Không mưa',
+            // Weather conditions (short keys)
+            sunny: 'Nắng',
+            sunnyLight: 'Nắng nhẹ',
+            cloudy: 'Có mây',
+            manyClouds: 'Nhiều mây',
+            mayRain: 'Có thể mưa',
+            lightRain: 'Mưa nhẹ',
+            nightRain: 'Mưa đêm',
+            fog: 'Sương mù',
+            earlyMorning: 'Sáng sớm',
+            evening: 'Chiều tối',
+            clearNight: 'Đêm quang'
         },
         // ML Training page
         mlTraining: {
@@ -222,14 +234,17 @@ const translations = {
             pleaseWait: 'Vui lòng chờ trong giây lát',
             forecast24h: 'Dự báo 24 giờ tới',
             refreshBtn: 'Làm mới',
-            forecastDetail: 'Chi tiết dự báo',
+            forecastDetail: 'Tệp dữ liệu',
             tableTime: 'Thời gian',
             tableTemp: 'Nhiệt độ (°C)',
             tableHumidity: 'Độ ẩm (%)',
             tablePressure: 'Áp suất (mb)',
-            tableAqi: 'AQI',
-            tableRain: 'Mưa?',
-            tableConfidence: 'Tin cậy (%)',
+            tableWindSpeed: 'Tốc độ gió',
+            tableRainfall: 'Lượng mưa',
+            tableUV: 'Chỉ số UV',
+            tableSeason: 'Mùa',
+            tableWeather: 'Thời tiết',
+            tableConfidence: 'Độ chính xác',
             forecastStats: 'Thống kê dự báo',
             avgTemp: 'Nhiệt độ TB',
             avgHumidity: 'Độ ẩm TB',
@@ -242,7 +257,39 @@ const translations = {
             lastTrained: 'Lần train gần nhất',
             accuracyLabel: 'Độ chính xác',
             trainedModels: 'Models đã train',
-            notLoaded: 'Chưa tải'
+            notLoaded: 'Chưa tải',
+            // Seasons
+            seasonSpring: 'Xuân',
+            seasonSummer: 'Hạ',
+            seasonAutumn: 'Thu',
+            seasonWinter: 'Đông',
+            // Weather conditions
+            weatherSunny: 'Nắng',
+            weatherRain: 'Mưa',
+            weatherCloudy: 'Mây',
+            weatherPartlyCloudy: 'Có mây',
+            weatherSunnyLight: 'Nắng nhẹ',
+            weatherManyClouds: 'Nhiều mây',
+            weatherMayRain: 'Có thể mưa',
+            weatherLightRain: 'Mưa nhẹ',
+            weatherNightRain: 'Mưa đêm',
+            weatherFog: 'Sương mù',
+            weatherEarlyMorning: 'Sáng sớm',
+            weatherEvening: 'Chiều tối',
+            weatherClearNight: 'Đêm quang',
+            // UV levels
+            uvLow: 'Thấp',
+            uvMedium: 'TB',
+            uvHigh: 'Cao',
+            uvVeryHigh: 'Rất cao',
+            uvExtreme: 'Cực cao',
+            // Other
+            noData: 'Không có dữ liệu',
+            // Export
+            exportCSV: 'Xuất CSV',
+            exportExcel: 'Xuất Excel',
+            exportSuccess: 'Xuất file thành công!',
+            exportError: 'Lỗi xuất file'
         },
         // Extended ML Training page
         mlTrainingExt: {
@@ -526,7 +573,19 @@ const translations = {
             confidence: 'Confidence',
             rainProbability: 'Rain Probability',
             rain: 'Rain',
-            noRain: 'No Rain'
+            noRain: 'No Rain',
+            // Weather conditions (short keys)
+            sunny: 'Sunny',
+            sunnyLight: 'Partly Sunny',
+            cloudy: 'Cloudy',
+            manyClouds: 'Overcast',
+            mayRain: 'Possible Rain',
+            lightRain: 'Light Rain',
+            nightRain: 'Night Rain',
+            fog: 'Foggy',
+            earlyMorning: 'Early Morning',
+            evening: 'Evening',
+            clearNight: 'Clear Night'
         },
         // ML Training page
         mlTraining: {
@@ -645,14 +704,17 @@ const translations = {
             pleaseWait: 'Please wait a moment',
             forecast24h: '24-Hour Forecast',
             refreshBtn: 'Refresh',
-            forecastDetail: 'Forecast Details',
+            forecastDetail: 'Data File',
             tableTime: 'Time',
             tableTemp: 'Temperature (°C)',
             tableHumidity: 'Humidity (%)',
             tablePressure: 'Pressure (mb)',
-            tableAqi: 'AQI',
-            tableRain: 'Rain?',
-            tableConfidence: 'Confidence (%)',
+            tableWindSpeed: 'Wind Speed',
+            tableRainfall: 'Rainfall',
+            tableUV: 'UV Index',
+            tableSeason: 'Season',
+            tableWeather: 'Weather',
+            tableConfidence: 'Accuracy',
             forecastStats: 'Forecast Statistics',
             avgTemp: 'Avg Temperature',
             avgHumidity: 'Avg Humidity',
@@ -665,7 +727,39 @@ const translations = {
             lastTrained: 'Last Trained',
             accuracyLabel: 'Accuracy',
             trainedModels: 'Trained Models',
-            notLoaded: 'Not loaded'
+            notLoaded: 'Not loaded',
+            // Seasons
+            seasonSpring: 'Spring',
+            seasonSummer: 'Summer',
+            seasonAutumn: 'Autumn',
+            seasonWinter: 'Winter',
+            // Weather conditions
+            weatherSunny: 'Sunny',
+            weatherRain: 'Rain',
+            weatherCloudy: 'Cloudy',
+            weatherPartlyCloudy: 'Partly Cloudy',
+            weatherSunnyLight: 'Light Sunny',
+            weatherManyClouds: 'Overcast',
+            weatherMayRain: 'Possible Rain',
+            weatherLightRain: 'Light Rain',
+            weatherNightRain: 'Night Rain',
+            weatherFog: 'Foggy',
+            weatherEarlyMorning: 'Early Morning',
+            weatherEvening: 'Evening',
+            weatherClearNight: 'Clear Night',
+            // UV levels
+            uvLow: 'Low',
+            uvMedium: 'Medium',
+            uvHigh: 'High',
+            uvVeryHigh: 'Very High',
+            uvExtreme: 'Extreme',
+            // Other
+            noData: 'No data',
+            // Export
+            exportCSV: 'Export CSV',
+            exportExcel: 'Export Excel',
+            exportSuccess: 'Export successful!',
+            exportError: 'Export error'
         },
         // Extended ML Training page
         mlTrainingExt: {

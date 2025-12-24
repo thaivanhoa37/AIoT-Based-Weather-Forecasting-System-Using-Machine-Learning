@@ -790,7 +790,9 @@ async def predict_weather(
                     'temperature': p.get('temperature', '--'),
                     'humidity': p.get('humidity', '--'),
                     'pressure': p.get('pressure', 1013),
-                    'aqi': p.get('aqi', '--'),
+                    'wind_speed': p.get('wind_speed', 0),
+                    'rainfall': p.get('rainfall', 0),
+                    'uv_index': p.get('uv_index', 0),
                     'willRain': p.get('willRain', False),
                     'confidence': p.get('confidence', 0),
                     'weatherIcon': '⛈️' if p.get('willRain') else ('🌧️' if p.get('humidity', 0) > 70 else '☀️')
@@ -836,16 +838,21 @@ def _generate_basic_predictions(latest_data: dict, hours_ahead: int) -> list:
         temp_variation = math.sin(i * 0.3) * 2
         humidity_variation = math.cos(i * 0.25) * 5
         pressure_variation = math.sin(i * 0.2) * 1
+        wind_variation = abs(math.sin(i * 0.4) * 5)
+        uv_variation = max(0, 5 + math.sin(i * 0.5) * 3)
         
         will_rain = humidity + humidity_variation > 80
         confidence = max(50, 90 - i * 1)
+        rainfall = random.uniform(0.5, 5) if will_rain else 0
         
         predictions.append({
             'timestamp': pred_time.strftime("%d/%m/%Y %H:%M:%S"),
             'temperature': round(temp + temp_variation, 1),
             'humidity': round(min(100, max(0, humidity + humidity_variation)), 1),
             'pressure': round(pressure + pressure_variation, 1),
-            'aqi': round(latest_data.get('aqi', 50) + random.gauss(0, 2), 0),
+            'wind_speed': round(wind_variation + 2, 1),
+            'rainfall': round(rainfall, 1),
+            'uv_index': round(uv_variation, 1),
             'willRain': will_rain,
             'confidence': round(confidence, 1)
         })

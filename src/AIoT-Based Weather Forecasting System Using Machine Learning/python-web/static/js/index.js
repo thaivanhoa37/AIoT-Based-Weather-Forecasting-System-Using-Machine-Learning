@@ -123,86 +123,309 @@ async function loadRealtimeData() {
     }
 }
 
-// Display 7-day forecast
+// Display 7-day forecast from ML Model - Improved version
 async function displayForecast7Day() {
+    const grid = document.getElementById('forecast7DayGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '<div class="loading-text" style="grid-column: 1/-1; text-align: center; padding: 20px;">🔄 Đang tải dự báo từ ML model...</div>';
+    
+    // Helper function to get translation
+    const t = (key) => typeof getTranslation === 'function' ? getTranslation(key) : key.split('.').pop();
+    
     try {
         const response = await fetch('/api/ml/predict?hours_ahead=168');
         if (!response.ok) throw new Error('Failed to fetch forecast');
         const data = await response.json();
 
-        const forecastContainer = document.getElementById('forecast7DayContainer');
-        if (!forecastContainer || !data.predictions) return;
+        if (!data.forecasts || data.forecasts.length === 0) {
+            throw new Error('No forecast data - Model chưa được train');
+        }
 
-        forecastContainer.innerHTML = '';
-
-        // Group predictions by day
+        // Group forecasts by day
         const dailyForecasts = {};
-        data.predictions.forEach(pred => {
-            const date = pred.timestamp.split(' ')[0];
+        data.forecasts.forEach(forecast => {
+            const date = forecast.timestamp.split(' ')[0]; // Get date part (DD/MM/YYYY)
             if (!dailyForecasts[date]) {
-                dailyForecasts[date] = {
-                    temps: [],
-                    humidities: [],
-                    date: date
-                };
+                dailyForecasts[date] = [];
             }
-            dailyForecasts[date].temps.push(parseFloat(pred.temperature));
-            dailyForecasts[date].humidities.push(parseFloat(pred.humidity));
+            dailyForecasts[date].push(forecast);
         });
 
-        // Display first 7 days
+        // Calculate daily averages and display first 7 days
         const days = Object.keys(dailyForecasts).slice(0, 7);
-        days.forEach(date => {
-            const forecast = dailyForecasts[date];
-            const avgTemp = (forecast.temps.reduce((a, b) => a + b) / forecast.temps.length).toFixed(1);
-            const maxTemp = Math.max(...forecast.temps).toFixed(1);
-            const minTemp = Math.min(...forecast.temps).toFixed(1);
+        grid.innerHTML = '';
+
+        days.forEach((date, index) => {
+            const dayData = dailyForecasts[date];
+            const temps = dayData.map(d => parseFloat(d.temperature)).filter(t => !isNaN(t));
+            const humidities = dayData.map(d => parseFloat(d.humidity)).filter(h => !isNaN(h));
+            const rainfalls = dayData.map(d => parseFloat(d.rainfall) || 0);
+            const uvIndices = dayData.map(d => parseFloat(d.uv_index) || 0);
+            
+            // Count rain based on rainfall > 0.5 OR willRain flag
+            const rainCount = dayData.filter(d => d.willRain || (parseFloat(d.rainfall) || 0) > 0.5).length;
+
+            const tempMax = temps.length > 0 ? Math.max(...temps) : '--';
+            const tempMin = temps.length > 0 ? Math.min(...temps) : '--';
+            const avgHumidity = humidities.length > 0 ? humidities.reduce((a, b) => a + b, 0) / humidities.length : 0;
+            const totalRainfall = rainfalls.reduce((a, b) => a + b, 0);
+            const avgUV = uvIndices.filter(u => u > 0).length > 0 ? 
+                uvIndices.filter(u => u > 0).reduce((a, b) => a + b, 0) / uvIndices.filter(u => u > 0).length : 0;
+            const rainChance = dayData.length > 0 ? (rainCount / dayData.length) * 100 : 0;
+
+            // Improved weather determination based on rainfall, UV and humidity
+            let icon = '☀️';
+            let condition = t('forecast.sunny') || 'Nắng';
+            let conditionKey = 'sunny';
+            
+            if (totalRainfall > 10 || rainChance > 70) {
+                // Heavy rain expected
+                icon = '🌧️';
+                condition = t('forecast.rain') || 'Mưa';
+                conditionKey = 'rain';
+            } else if (totalRainfall > 2 || rainChance > 50) {
+                // Light rain possible
+                icon = '🌦️';
+                condition = t('forecast.mayRain') || 'Có thể mưa';
+                conditionKey = 'mayRain';
+            } else if (rainChance > 30) {
+                // Chance of showers
+                icon = '⛅';
+                condition = t('forecast.cloudy') || 'Có mây';
+                conditionKey = 'cloudy';
+            } else if (avgUV >= 6) {
+                // High UV - sunny day
+                icon = '☀️';
+                condition = t('forecast.sunny') || 'Nắng';
+                conditionKey = 'sunny';
+            } else if (avgUV >= 3) {
+                // Moderate UV - partly sunny
+                icon = '🌤️';
+                condition = t('forecast.sunnyLight') || 'Nắng nhẹ';
+                conditionKey = 'sunnyLight';
+            } else if (avgHumidity > 85) {
+                // High humidity, low UV - cloudy
+                icon = '☁️';
+                condition = t('forecast.manyClouds') || 'Nhiều mây';
+                conditionKey = 'manyClouds';
+            } else if (avgUV > 0) {
+                // Low UV but some sunshine
+                icon = '⛅';
+                condition = t('forecast.cloudy') || 'Có mây';
+                conditionKey = 'cloudy';
+            }
+
+            // Parse date (DD/MM/YYYY format)
+            const dateParts = date.split('/');
+            let dayName = date;
+            let displayDate = date;
+            
+            if (dateParts.length === 3) {
+                const [day, month, year] = dateParts;
+                const dateObj = new Date(year, month - 1, day);
+                const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+                dayName = dayNames[dateObj.getDay()];
+                displayDate = `${day}/${month}`;
+            }
 
             const card = document.createElement('div');
-            card.className = 'forecast-day-card';
+            card.className = 'forecast-card-7day';
+            if (index === 0) card.classList.add('today');
+
             card.innerHTML = `
-                <div class="forecast-day-name">${date}</div>
-                <div class="forecast-day-icon">🌤️</div>
-                <div class="forecast-day-temp">${avgTemp}°C</div>
-                <div class="forecast-day-range">${minTemp}° - ${maxTemp}°</div>
+                <div class="forecast-date">${dayName}, ${displayDate}</div>
+                <div class="forecast-icon" style="font-size: 32px;">${icon}</div>
+                <div class="forecast-condition">${condition}</div>
+                <div class="forecast-temp">
+                    <span class="temp-max">${typeof tempMax === 'number' ? tempMax.toFixed(0) : tempMax}°</span>
+                    <span class="temp-min">${typeof tempMin === 'number' ? tempMin.toFixed(0) : tempMin}°</span>
+                </div>
+                <div class="forecast-details">
+                    <span>💧 ${avgHumidity.toFixed(0)}%</span>
+                    ${avgUV > 0 ? `<span>☀️ UV ${avgUV.toFixed(1)}</span>` : ''}
+                </div>
+                <div class="forecast-rain">☔ ${rainChance.toFixed(0)}%${totalRainfall > 0 ? ` (${totalRainfall.toFixed(1)}mm)` : ''}</div>
             `;
-            forecastContainer.appendChild(card);
+            grid.appendChild(card);
         });
+
+        // Show model info
+        if (data.modelInfo) {
+            console.log('ML Model Info:', data.modelInfo.name, '- Accuracy:', data.modelInfo.accuracy + '%');
+        }
+
+        // Add scroll buttons (defined in index.html)
+        if (typeof addScrollButtonsFor7Day === 'function') {
+            addScrollButtonsFor7Day();
+        }
 
     } catch (error) {
         console.error('Error loading 7-day forecast:', error);
+        grid.innerHTML = `
+            <div class="error-text" style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--danger);">
+                <div style="font-size: 48px; margin-bottom: 10px;">⚠️</div>
+                <div style="font-size: 16px; font-weight: bold;">Không thể tải dự báo 7 ngày</div>
+                <div style="font-size: 14px; color: var(--text-secondary); margin-top: 10px;">
+                    ${error.message}<br>
+                    <a href="/ml-training" style="color: var(--primary-color);">👉 Vui lòng train model trước</a>
+                </div>
+            </div>
+        `;
     }
 }
 
-// Display hourly forecast
+// Display hourly forecast from ML Model (24 hours) - Using same logic as forecast page
 async function displayForecastHourly() {
+    const grid = document.getElementById('forecastHourlyGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '<div class="loading-text" style="grid-column: 1/-1; text-align: center; padding: 20px;">🔄 Đang tải dự báo...</div>';
+    
     try {
         const response = await fetch('/api/ml/predict?hours_ahead=24');
         if (!response.ok) throw new Error('Failed to fetch forecast');
         const data = await response.json();
 
-        const forecastContainer = document.getElementById('forecastHourlyContainer');
-        if (!forecastContainer || !data.predictions) return;
+        if (!data.forecasts || data.forecasts.length === 0) {
+            throw new Error('No forecast data');
+        }
 
-        forecastContainer.innerHTML = '';
+        grid.innerHTML = '';
 
-        // Display every 3 hours
-        data.predictions.filter((_, idx) => idx % 3 === 0).slice(0, 8).forEach(pred => {
-            const time = pred.timestamp.split(' ')[1].substring(0, 5);
+        // Helper function to get translation (same as forecast page)
+        const t = (key) => typeof getTranslation === 'function' ? getTranslation(key) : key.split('.').pop();
+
+        // Display all 24 hours
+        data.forecasts.slice(0, 24).forEach((forecast, index) => {
+            const tempValue = parseFloat(forecast.temperature);
+            const humidityValue = parseFloat(forecast.humidity);
+            const uvIndex = parseFloat(forecast.uv_index) || 0;
+            const rainfall = parseFloat(forecast.rainfall) || 0;
+            const confidence = parseInt(forecast.confidence) || 0;
+
+            // Get hour from timestamp
+            const timeStr = forecast.timestamp.split(' ')[1] || '00:00:00';
+            const hour = parseInt(timeStr.split(':')[0]) || 0;
+            const isDaytime = hour >= 10 && hour <= 18;  // UV chỉ có từ 10h-18h (same as forecast page)
+
+            // Determine weather icon and condition - Using same logic as forecast page
+            let weatherIcon, rainText, isRain;
+
+            if (forecast.weather_icon && forecast.weather_condition_key) {
+                // Sử dụng key dịch từ backend
+                weatherIcon = forecast.weather_icon;
+                rainText = t(`forecast.${forecast.weather_condition_key}`);
+                isRain = forecast.willRain || false;
+            } else if (forecast.weather_icon && forecast.weather_condition) {
+                // Sử dụng trực tiếp từ backend (fallback)
+                weatherIcon = forecast.weather_icon;
+                rainText = forecast.weather_condition;
+                isRain = forecast.willRain || false;
+            } else if (forecast.weather_condition) {
+                // Chỉ có condition, tự xác định icon theo giờ
+                const condition = forecast.weather_condition;
+                isRain = condition.includes('Mưa') || condition.includes('Rain');
+                rainText = condition;
+                
+                if (condition.includes('Mưa') || condition.includes('Rain')) {
+                    weatherIcon = '🌧️';
+                } else if (condition.includes('Nắng') || condition.includes('Sunny')) {
+                    weatherIcon = isDaytime ? '☀️' : '🌙';
+                } else if (condition.includes('mây') || condition.includes('Mây') || condition.includes('Cloud')) {
+                    weatherIcon = '☁️';
+                } else if (condition.includes('Đêm') || condition.includes('đêm') || condition.includes('Night')) {
+                    weatherIcon = '🌙';
+                } else if (condition.includes('Sương') || condition.includes('Fog')) {
+                    weatherIcon = '🌫️';
+                } else if (condition.includes('Sáng sớm') || condition.includes('Morning')) {
+                    weatherIcon = '🌅';
+                } else if (condition.includes('Chiều tối') || condition.includes('Evening')) {
+                    weatherIcon = '🌆';
+                } else {
+                    weatherIcon = isDaytime ? '⛅' : '🌙';
+                }
+            } else {
+                // Fallback: tính toán dựa trên giờ, UV, humidity, rainfall
+                if (rainfall > 0.5 || forecast.willRain) {
+                    isRain = true;
+                    weatherIcon = '🌧️';
+                    rainText = t('forecast.rain');
+                } else if (isDaytime) {
+                    // Ban ngày: dùng UV
+                    if (uvIndex >= 6) {
+                        isRain = false;
+                        weatherIcon = '☀️';
+                        rainText = t('forecast.sunny');
+                    } else if (uvIndex >= 3) {
+                        isRain = false;
+                        weatherIcon = '🌤️';
+                        rainText = t('forecast.sunnyLight');
+                    } else {
+                        isRain = false;
+                        weatherIcon = '☁️';
+                        rainText = t('forecast.manyClouds');
+                    }
+                } else {
+                    // Ban đêm: theo giờ cụ thể
+                    if (rainfall > 0) {
+                        isRain = true;
+                        weatherIcon = '🌧️';
+                        rainText = t('forecast.nightRain');
+                    } else if (humidityValue > 90) {
+                        isRain = false;
+                        weatherIcon = '🌫️';
+                        rainText = t('forecast.fog');
+                    } else if (hour >= 6 && hour < 10) {
+                        isRain = false;
+                        weatherIcon = '🌅';
+                        rainText = t('forecast.earlyMorning');
+                    } else if (hour > 18 && hour <= 20) {
+                        isRain = false;
+                        weatherIcon = '🌆';
+                        rainText = t('forecast.evening');
+                    } else {
+                        isRain = false;
+                        weatherIcon = '🌙';
+                        rainText = t('forecast.clearNight');
+                    }
+                }
+            }
 
             const card = document.createElement('div');
-            card.className = 'forecast-hour-card';
+            card.className = 'forecast-card';
+            card.style.animation = `fadeInUp 0.3s ease ${index * 0.03}s both`;
+
             card.innerHTML = `
-                <div class="forecast-hour-time">${time}</div>
-                <div class="forecast-hour-icon">🌤️</div>
-                <div class="forecast-hour-temp">${pred.temperature}°C</div>
-                <div class="forecast-hour-detail">${pred.humidity}%</div>
+                <div class="forecast-time">${timeStr.substring(0, 5)}</div>
+                <div class="forecast-icon">${weatherIcon}</div>
+                <div class="forecast-temp">${isNaN(tempValue) ? '--' : tempValue}°C</div>
+                <div class="forecast-details">
+                    💧 ${isNaN(humidityValue) ? '--' : humidityValue}%<br>
+                    📊 ${forecast.pressure || '--'} hPa
+                </div>
+                <div class="rain-indicator ${isRain ? 'rain-yes' : 'rain-no'}">
+                    ${weatherIcon} ${rainText}
+                </div>
+                <div class="confidence-badge" style="margin-top: 6px;">📊 ${confidence}%</div>
             `;
-            forecastContainer.appendChild(card);
+            grid.appendChild(card);
         });
+
+        // Add scroll buttons (defined in index.html)
+        if (typeof addScrollButtonsHourly === 'function') {
+            addScrollButtonsHourly();
+        }
 
     } catch (error) {
         console.error('Error loading hourly forecast:', error);
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--danger);">
+                <div style="font-size: 48px; margin-bottom: 10px;">⚠️</div>
+                <div style="font-size: 16px; font-weight: bold;">Lỗi tải dự báo</div>
+                <div style="font-size: 14px; color: var(--text-secondary); margin-top: 10px;">${error.message}</div>
+            </div>
+        `;
     }
 }
 

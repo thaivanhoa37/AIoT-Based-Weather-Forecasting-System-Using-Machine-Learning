@@ -26,6 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
         loadForecastData();
     }, 30000);
     
+    // Listen for language change to update table
+    window.addEventListener('languageChanged', () => {
+        if (forecastData && forecastData.forecasts) {
+            updateForecastTable(forecastData.forecasts);
+            updateForecastGrid(forecastData.forecasts);
+        }
+    });
+    
     // Handle hamburger menu
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const sidebar = document.getElementById('sidebar');
@@ -180,20 +188,113 @@ function updateForecastGrid(forecasts) {
     grid.innerHTML = displayForecasts.map((forecast, index) => {
         const tempValue = parseFloat(forecast.temperature);
         const humidityValue = parseFloat(forecast.humidity);
-        const rainChance = forecast.willRain ? '🌧️' : '✅';
+        const uvIndex = parseFloat(forecast.uv_index) || 0;
+        const rainfall = parseFloat(forecast.rainfall) || 0;
+        
+        // Helper function to get translation
+        const t = (key) => getTranslation(key);
+        
+        // Lấy giờ từ timestamp để xác định ban ngày/đêm
+        const timeStr = forecast.timestamp.split(' ')[1] || '00:00:00';
+        const hour = parseInt(timeStr.split(':')[0]) || 0;
+        const isDaytime = hour >= 10 && hour <= 18;  // UV chỉ có từ 10h-18h
+        
+        // Sử dụng weather_icon và weather_condition từ backend nếu có
+        let weatherIcon, rainText, isRain;
+        
+        if (forecast.weather_icon && forecast.weather_condition_key) {
+            // Sử dụng key dịch từ backend
+            weatherIcon = forecast.weather_icon;
+            rainText = t(`forecast.${forecast.weather_condition_key}`);
+            isRain = forecast.willRain || false;
+        } else if (forecast.weather_icon && forecast.weather_condition) {
+            // Sử dụng trực tiếp từ backend (fallback)
+            weatherIcon = forecast.weather_icon;
+            rainText = forecast.weather_condition;
+            isRain = forecast.willRain || false;
+        } else if (forecast.weather_condition) {
+            // Chỉ có condition, tự xác định icon theo giờ
+            const condition = forecast.weather_condition;
+            isRain = condition.includes('Mưa') || condition.includes('Rain');
+            rainText = condition;
+            
+            if (condition.includes('Mưa') || condition.includes('Rain')) {
+                weatherIcon = '🌧️';
+            } else if (condition.includes('Nắng') || condition.includes('Sunny')) {
+                weatherIcon = isDaytime ? '☀️' : '🌙';
+            } else if (condition.includes('mây') || condition.includes('Mây') || condition.includes('Cloud')) {
+                weatherIcon = '☁️';
+            } else if (condition.includes('Đêm') || condition.includes('đêm') || condition.includes('Night')) {
+                weatherIcon = '🌙';
+            } else if (condition.includes('Sương') || condition.includes('Fog')) {
+                weatherIcon = '🌫️';
+            } else if (condition.includes('Sáng sớm') || condition.includes('Morning')) {
+                weatherIcon = '🌅';
+            } else if (condition.includes('Chiều tối') || condition.includes('Evening')) {
+                weatherIcon = '🌆';
+            } else {
+                weatherIcon = isDaytime ? '⛅' : '🌙';
+            }
+        } else {
+            // Fallback: tính toán dựa trên giờ, UV, humidity, rainfall
+            if (rainfall > 0.5 || forecast.willRain) {
+                isRain = true;
+                weatherIcon = '🌧️';
+                rainText = t('forecast.rain');
+            } else if (isDaytime) {
+                // Ban ngày: dùng UV
+                if (uvIndex >= 6) {
+                    isRain = false;
+                    weatherIcon = '☀️';
+                    rainText = t('forecast.sunny');
+                } else if (uvIndex >= 3) {
+                    isRain = false;
+                    weatherIcon = '🌤️';
+                    rainText = t('forecast.sunnyLight');
+                } else {
+                    isRain = false;
+                    weatherIcon = '☁️';
+                    rainText = t('forecast.manyClouds');
+                }
+            } else {
+                // Ban đêm: theo giờ cụ thể
+                if (rainfall > 0) {
+                    isRain = true;
+                    weatherIcon = '🌧️';
+                    rainText = t('forecast.nightRain');
+                } else if (humidityValue > 90) {
+                    isRain = false;
+                    weatherIcon = '🌫️';
+                    rainText = t('forecast.fog');
+                } else if (hour >= 6 && hour < 10) {
+                    isRain = false;
+                    weatherIcon = '🌅';
+                    rainText = t('forecast.earlyMorning');
+                } else if (hour > 18 && hour <= 20) {
+                    isRain = false;
+                    weatherIcon = '🌆';
+                    rainText = t('forecast.evening');
+                } else {
+                    isRain = false;
+                    weatherIcon = '🌙';
+                    rainText = t('forecast.clearNight');
+                }
+            }
+        }
+        
         const confidence = parseInt(forecast.confidence) || 0;
         
         return `
             <div class="forecast-card" style="animation: fadeInUp 0.3s ease ${index * 0.05}s both;">
                 <div class="forecast-time">${forecast.timestamp.split(' ')[1] || '--:--'}</div>
-                <div class="forecast-icon">${forecast.weatherIcon || '🌤️'}</div>
+                <div class="forecast-icon">${weatherIcon || '🌤️'}</div>
                 <div class="forecast-temp">${isNaN(tempValue) ? '--' : tempValue}°C</div>
                 <div class="forecast-details">
                     💧 ${isNaN(humidityValue) ? '--' : humidityValue}%<br>
                     📊 ${forecast.pressure || '--'} hPa
                 </div>
-                <div class="rain-indicator ${forecast.willRain ? 'rain-yes' : 'rain-no'}">
-                    ${rainChance} ${forecast.willRain ? 'Mưa' : 'Nắng'}
+                <div class="rain-indicator ${isRain ? 'rain-yes' : 'rain-no'}">
+                    ${weatherIcon} ${rainText}
                 </div>
                 <div class="confidence-badge" style="margin-top: 6px;">📊 ${confidence}%</div>
             </div>
@@ -231,28 +332,133 @@ function updateForecastTable(forecasts) {
     const tableBody = document.getElementById('forecastTableBody');
     if (!tableBody) return;
     
+    // Helper function to get translation
+    const t = (key) => window.i18n ? window.i18n.t(key) : key;
+    
     if (forecasts.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">📭 Không có dữ liệu</td></tr>';
+        tableBody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 40px; color: var(--text-secondary);">📭 ${t('forecastExt.noData')}</td></tr>`;
         return;
     }
     
     tableBody.innerHTML = forecasts.map((forecast, index) => {
         const tempValue = parseFloat(forecast.temperature) || '--';
         const humidityValue = parseFloat(forecast.humidity) || '--';
-        const aqiValue = parseFloat(forecast.aqi) || '--';
+        const pressureValue = parseFloat(forecast.pressure) || '--';
+        const windSpeed = parseFloat(forecast.wind_speed) || '--';
+        const rainfall = parseFloat(forecast.rainfall) || 0;
+        const uvIndex = parseFloat(forecast.uv_index) || '--';
         const confidence = parseInt(forecast.confidence) || 0;
-        const rainBadge = forecast.willRain 
-            ? '<span style="color: #c53030; font-weight: 600;">🌧️ Có</span>' 
-            : '<span style="color: #22543d; font-weight: 600;">✅ Không</span>';
+        
+        // Lấy giờ từ timestamp để xác định ban ngày/đêm
+        const timeStr = forecast.timestamp.split(' ')[1] || '00:00:00';
+        const hour = parseInt(timeStr.split(':')[0]) || 0;
+        const isDaytime = hour >= 10 && hour <= 18;
+        
+        // Xác định mùa dựa trên tháng
+        const timestamp = forecast.timestamp || '';
+        const month = timestamp ? parseInt(timestamp.split('/')[1]) : new Date().getMonth() + 1;
+        let season = `🌸 ${t('forecastExt.seasonSpring')}`;
+        if (month >= 4 && month <= 6) season = `☀️ ${t('forecastExt.seasonSummer')}`;
+        else if (month >= 7 && month <= 9) season = `🍂 ${t('forecastExt.seasonAutumn')}`;
+        else if (month >= 10 || month <= 1) season = `❄️ ${t('forecastExt.seasonWinter')}`;
+        
+        // Xác định thời tiết với icon phù hợp theo giờ
+        let weatherCondition = '';
+        let weatherClass = 'weather-sunny';
+        
+        // Sử dụng weather_icon và weather_condition_key từ backend nếu có
+        if (forecast.weather_icon && forecast.weather_condition_key) {
+            weatherCondition = `${forecast.weather_icon} ${t(`forecast.${forecast.weather_condition_key}`)}`;
+            if (forecast.weather_condition_key.includes('Rain') || forecast.weather_condition_key.includes('rain')) {
+                weatherClass = 'weather-rain';
+            } else if (forecast.weather_condition_key.includes('Cloud') || forecast.weather_condition_key.includes('cloud')) {
+                weatherClass = 'weather-cloudy';
+            }
+        } else if (forecast.weather_icon && forecast.weather_condition) {
+            weatherCondition = `${forecast.weather_icon} ${forecast.weather_condition}`;
+            if (forecast.weather_condition.includes('Mưa') || forecast.weather_condition.includes('Rain')) {
+                weatherClass = 'weather-rain';
+            } else if (forecast.weather_condition.includes('mây') || forecast.weather_condition.includes('Mây') || forecast.weather_condition.includes('Cloud')) {
+                weatherClass = 'weather-cloudy';
+            }
+        } else if (forecast.weather_condition) {
+            const condition = forecast.weather_condition;
+            let icon;
+            if (condition.includes('Mưa') || condition.includes('Rain')) {
+                icon = '🌧️';
+                weatherClass = 'weather-rain';
+            } else if (condition.includes('Nắng') || condition.includes('Sunny')) {
+                icon = isDaytime ? '☀️' : '🌙';
+                weatherClass = 'weather-sunny';
+            } else if (condition.includes('mây') || condition.includes('Mây') || condition.includes('Cloud')) {
+                icon = '☁️';
+                weatherClass = 'weather-cloudy';
+            } else if (condition.includes('Đêm') || condition.includes('đêm') || condition.includes('Night')) {
+                icon = '🌙';
+            } else if (condition.includes('Sương') || condition.includes('Fog')) {
+                icon = '🌫️';
+            } else if (condition.includes('Sáng sớm') || condition.includes('Morning')) {
+                icon = '🌅';
+            } else if (condition.includes('Chiều tối') || condition.includes('Evening')) {
+                icon = '🌆';
+            } else {
+                icon = isDaytime ? '⛅' : '🌙';
+            }
+            weatherCondition = `${icon} ${condition}`;
+        } else {
+            // Fallback theo giờ và điều kiện
+            if (forecast.willRain || rainfall > 0.5) {
+                weatherCondition = `🌧️ ${t('forecast.rain')}`;
+                weatherClass = 'weather-rain';
+            } else if (isDaytime) {
+                if (uvIndex !== '--' && uvIndex >= 6) {
+                    weatherCondition = `☀️ ${t('forecast.sunny')}`;
+                } else if (uvIndex !== '--' && uvIndex >= 3) {
+                    weatherCondition = `🌤️ ${t('forecast.sunnyLight')}`;
+                } else {
+                    weatherCondition = `☁️ ${t('forecast.manyClouds')}`;
+                    weatherClass = 'weather-cloudy';
+                }
+            } else {
+                // Ban đêm
+                if (rainfall > 0) {
+                    weatherCondition = `🌧️ ${t('forecast.nightRain')}`;
+                    weatherClass = 'weather-rain';
+                } else if (humidityValue > 90) {
+                    weatherCondition = `🌫️ ${t('forecast.fog')}`;
+                } else if (hour >= 6 && hour < 10) {
+                    weatherCondition = `🌅 ${t('forecast.earlyMorning')}`;
+                } else if (hour > 18 && hour <= 20) {
+                    weatherCondition = `🌆 ${t('forecast.evening')}`;
+                } else {
+                    weatherCondition = `🌙 ${t('forecast.clearNight')}`;
+                }
+            }
+        }
+        
+        // UV Level badge
+        let uvBadge = '--';
+        if (uvIndex !== '--') {
+            let uvColor = '#22543d'; // Low
+            let uvLabel = t('forecastExt.uvLow');
+            if (uvIndex >= 3 && uvIndex < 6) { uvColor = '#744210'; uvLabel = t('forecastExt.uvMedium'); }
+            else if (uvIndex >= 6 && uvIndex < 8) { uvColor = '#c05621'; uvLabel = t('forecastExt.uvHigh'); }
+            else if (uvIndex >= 8 && uvIndex < 11) { uvColor = '#c53030'; uvLabel = t('forecastExt.uvVeryHigh'); }
+            else if (uvIndex >= 11) { uvColor = '#702459'; uvLabel = t('forecastExt.uvExtreme'); }
+            uvBadge = `<span style="background: ${uvColor}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${uvIndex} (${uvLabel})</span>`;
+        }
         
         return `
             <tr style="animation: slideIn 0.3s ease ${index * 0.02}s both; opacity: 0;">
                 <td><small><strong>${forecast.timestamp}</strong></small></td>
                 <td><strong style="font-size: 15px; color: var(--primary-color);">${tempValue}${tempValue !== '--' ? '°C' : ''}</strong></td>
                 <td>${humidityValue}${humidityValue !== '--' ? '%' : ''}</td>
-                <td>${forecast.pressure || '--'} hPa</td>
-                <td><span style="font-weight: 600;">${aqiValue}</span></td>
-                <td>${rainBadge}</td>
+                <td>${pressureValue !== '--' ? pressureValue + ' mb' : '--'}</td>
+                <td>${windSpeed !== '--' ? windSpeed + ' km/h' : '--'}</td>
+                <td>${rainfall > 0 ? rainfall + ' mm' : '0 mm'}</td>
+                <td>${uvBadge}</td>
+                <td><span style="font-size: 12px;">${season}</span></td>
+                <td><span class="${weatherClass}" style="font-weight: 600;">${weatherCondition}</span></td>
                 <td><span class="confidence-badge" style="background: ${confidence >= 80 ? '#22543d' : confidence >= 50 ? '#744210' : '#c53030'}; color: white;">📊 ${confidence}%</span></td>
             </tr>
         `;
@@ -492,4 +698,244 @@ window.addEventListener('beforeunload', () => {
         clearInterval(forecastUpdateInterval);
     }
 });
+
+// ===== Export Functions =====
+
+// Helper function to get translation
+function getTranslation(key) {
+    return window.i18n ? window.i18n.t(key) : key;
+}
+
+// Get season name based on month
+function getSeasonName(month) {
+    if (month >= 2 && month <= 3) return getTranslation('forecastExt.seasonSpring');
+    if (month >= 4 && month <= 6) return getTranslation('forecastExt.seasonSummer');
+    if (month >= 7 && month <= 9) return getTranslation('forecastExt.seasonAutumn');
+    return getTranslation('forecastExt.seasonWinter');
+}
+
+// Get weather condition based on data (sử dụng giờ + UV index để xác định)
+function getWeatherCondition(forecast, rainfall, humidityValue) {
+    // Sử dụng weather_condition_key từ backend nếu có (để dịch)
+    if (forecast.weather_condition_key) {
+        return getTranslation(`forecast.${forecast.weather_condition_key}`);
+    }
+    
+    // Sử dụng weather_condition từ backend nếu có (fallback)
+    if (forecast.weather_condition) {
+        return forecast.weather_condition;
+    }
+    
+    const uvIndex = parseFloat(forecast.uv_index) || 0;
+    
+    // Lấy giờ từ timestamp
+    const timeStr = forecast.timestamp ? forecast.timestamp.split(' ')[1] : '12:00:00';
+    const hour = parseInt(timeStr.split(':')[0]) || 12;
+    const isDaytime = hour >= 10 && hour <= 18;
+    
+    // Logic dựa trên giờ + UV index + rainfall
+    if (forecast.willRain || rainfall > 0.5) {
+        return getTranslation('forecast.rain');
+    }
+    
+    if (isDaytime) {
+        // Ban ngày: dùng UV
+        if (uvIndex >= 6) {
+            return getTranslation('forecast.sunny');
+        }
+        if (uvIndex >= 3) {
+            return getTranslation('forecast.sunnyLight');
+        }
+        return getTranslation('forecast.manyClouds');
+    } else {
+        // Ban đêm: không dùng UV
+        if (rainfall > 0) {
+            return getTranslation('forecast.nightRain');
+        }
+        if (humidityValue > 90) {
+            return getTranslation('forecast.fog');
+        }
+        if (hour >= 6 && hour < 10) {
+            return getTranslation('forecast.earlyMorning');
+        }
+        if (hour > 18 && hour <= 20) {
+            return getTranslation('forecast.evening');
+        }
+        return getTranslation('forecast.clearNight');
+    }
+}
+
+// Get UV level label
+function getUVLabel(uvIndex) {
+    if (uvIndex >= 11) return getTranslation('forecastExt.uvExtreme');
+    if (uvIndex >= 8) return getTranslation('forecastExt.uvVeryHigh');
+    if (uvIndex >= 6) return getTranslation('forecastExt.uvHigh');
+    if (uvIndex >= 3) return getTranslation('forecastExt.uvMedium');
+    return getTranslation('forecastExt.uvLow');
+}
+
+// Export to CSV
+function exportToCSV() {
+    if (!forecastData || !forecastData.forecasts || forecastData.forecasts.length === 0) {
+        AppUtils.showToast(getTranslation('forecastExt.noData'), 'error');
+        return;
+    }
+    
+    const t = getTranslation;
+    
+    // Create CSV header
+    const headers = [
+        t('forecastExt.tableTime'),
+        t('forecastExt.tableTemp'),
+        t('forecastExt.tableHumidity'),
+        t('forecastExt.tablePressure'),
+        t('forecastExt.tableWindSpeed'),
+        t('forecastExt.tableRainfall'),
+        t('forecastExt.tableUV'),
+        t('forecastExt.tableSeason'),
+        t('forecastExt.tableWeather'),
+        t('forecastExt.tableConfidence')
+    ];
+    
+    // Create CSV rows
+    const rows = forecastData.forecasts.map(forecast => {
+        const timestamp = forecast.timestamp || '';
+        const month = timestamp ? parseInt(timestamp.split('/')[1]) : new Date().getMonth() + 1;
+        const humidityValue = parseFloat(forecast.humidity) || 0;
+        const rainfall = parseFloat(forecast.rainfall) || 0;
+        const uvIndex = parseFloat(forecast.uv_index) || 0;
+        
+        return [
+            forecast.timestamp || '--',
+            (parseFloat(forecast.temperature) || '--') + '°C',
+            (parseFloat(forecast.humidity) || '--') + '%',
+            (parseFloat(forecast.pressure) || '--') + ' mb',
+            (parseFloat(forecast.wind_speed) || '--') + ' km/h',
+            rainfall + ' mm',
+            uvIndex + ' (' + getUVLabel(uvIndex) + ')',
+            getSeasonName(month),
+            getWeatherCondition(forecast, rainfall, humidityValue),
+            (parseInt(forecast.confidence) || 0) + '%'
+        ];
+    });
+    
+    // Combine headers and rows
+    const csvContent = [headers, ...rows]
+        .map(row => row.map(cell => `"${cell}"`).join(','))
+        .join('\n');
+    
+    // Add BOM for UTF-8
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Download file
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `forecast_data_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    AppUtils.showToast(t('forecastExt.exportSuccess'), 'success');
+}
+
+// Export to Excel (using HTML table format that Excel can open)
+function exportToExcel() {
+    if (!forecastData || !forecastData.forecasts || forecastData.forecasts.length === 0) {
+        AppUtils.showToast(getTranslation('forecastExt.noData'), 'error');
+        return;
+    }
+    
+    const t = getTranslation;
+    
+    // Create HTML table for Excel
+    let html = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta charset="UTF-8">
+            <!--[if gte mso 9]>
+            <xml>
+                <x:ExcelWorkbook>
+                    <x:ExcelWorksheets>
+                        <x:ExcelWorksheet>
+                            <x:Name>Forecast Data</x:Name>
+                            <x:WorksheetOptions>
+                                <x:DisplayGridlines/>
+                            </x:WorksheetOptions>
+                        </x:ExcelWorksheet>
+                    </x:ExcelWorksheets>
+                </x:ExcelWorkbook>
+            </xml>
+            <![endif]-->
+            <style>
+                table { border-collapse: collapse; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+                th { background-color: #667eea; color: white; font-weight: bold; }
+                tr:nth-child(even) { background-color: #f2f2f2; }
+            </style>
+        </head>
+        <body>
+            <table>
+                <thead>
+                    <tr>
+                        <th>${t('forecastExt.tableTime')}</th>
+                        <th>${t('forecastExt.tableTemp')}</th>
+                        <th>${t('forecastExt.tableHumidity')}</th>
+                        <th>${t('forecastExt.tablePressure')}</th>
+                        <th>${t('forecastExt.tableWindSpeed')}</th>
+                        <th>${t('forecastExt.tableRainfall')}</th>
+                        <th>${t('forecastExt.tableUV')}</th>
+                        <th>${t('forecastExt.tableSeason')}</th>
+                        <th>${t('forecastExt.tableWeather')}</th>
+                        <th>${t('forecastExt.tableConfidence')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    forecastData.forecasts.forEach(forecast => {
+        const timestamp = forecast.timestamp || '';
+        const month = timestamp ? parseInt(timestamp.split('/')[1]) : new Date().getMonth() + 1;
+        const humidityValue = parseFloat(forecast.humidity) || 0;
+        const rainfall = parseFloat(forecast.rainfall) || 0;
+        const uvIndex = parseFloat(forecast.uv_index) || 0;
+        
+        html += `
+            <tr>
+                <td>${forecast.timestamp || '--'}</td>
+                <td>${(parseFloat(forecast.temperature) || '--')}°C</td>
+                <td>${(parseFloat(forecast.humidity) || '--')}%</td>
+                <td>${(parseFloat(forecast.pressure) || '--')} mb</td>
+                <td>${(parseFloat(forecast.wind_speed) || '--')} km/h</td>
+                <td>${rainfall} mm</td>
+                <td>${uvIndex} (${getUVLabel(uvIndex)})</td>
+                <td>${getSeasonName(month)}</td>
+                <td>${getWeatherCondition(forecast, rainfall, humidityValue)}</td>
+                <td>${(parseInt(forecast.confidence) || 0)}%</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
+    
+    // Download file
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `forecast_data_${new Date().toISOString().split('T')[0]}.xls`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    AppUtils.showToast(t('forecastExt.exportSuccess'), 'success');
+}
 

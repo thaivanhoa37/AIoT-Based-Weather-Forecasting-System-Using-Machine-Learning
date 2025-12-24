@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dự báo (ML) - AIoT Weather</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <script src="/static/js/i18n.js"></script>
+    <link rel="stylesheet" href="/static/css/styles.css?v=3">
+    <script src="/static/js/i18n.js?v=3"></script>
     <style>
         /* Forecast Grid Container - Scroll horizontal */
         .forecast-grid-container {
@@ -502,7 +502,7 @@
 
             <!-- Forecast Table -->
             <section class="section">
-                <h2 class="section-title">📊 <span data-i18n="forecastExt.forecastDetail">Chi tiết dự báo</span></h2>
+                <h2 class="section-title">📊 <span data-i18n="forecastExt.forecastDetail">Tệp dữ liệu</span></h2>
                 <div class="table-container">
                     <div class="table-wrapper">
                         <table class="data-table">
@@ -512,20 +512,32 @@
                                     <th>🌡️ <span data-i18n="forecastExt.tableTemp">Nhiệt độ (°C)</span></th>
                                     <th>💧 <span data-i18n="forecastExt.tableHumidity">Độ ẩm (%)</span></th>
                                     <th>📊 <span data-i18n="forecastExt.tablePressure">Áp suất (mb)</span></th>
-                                    <th>💨 <span data-i18n="forecastExt.tableAqi">AQI</span></th>
-                                    <th>🌧️ <span data-i18n="forecastExt.tableRain">Mưa?</span></th>
-                                    <th>✅ <span data-i18n="forecastExt.tableConfidence">Tin cậy (%)</span></th>
+                                    <th>💨 <span data-i18n="forecastExt.tableWindSpeed">Tốc độ gió</span></th>
+                                    <th>🌧️ <span data-i18n="forecastExt.tableRainfall">Lượng mưa</span></th>
+                                    <th>☀️ <span data-i18n="forecastExt.tableUV">Chỉ số UV</span></th>
+                                    <th>🍂 <span data-i18n="forecastExt.tableSeason">Mùa</span></th>
+                                    <th>🌤️ <span data-i18n="forecastExt.tableWeather">Thời tiết</span></th>
+                                    <th>✅ <span data-i18n="forecastExt.tableConfidence">Độ chính xác</span></th>
                                 </tr>
                             </thead>
                             <tbody id="forecastTableBody">
                                 <tr>
-                                    <td colspan="7" style="text-align: center; padding: 40px;">
+                                    <td colspan="10" style="text-align: center; padding: 40px;">
                                         <div class="loading"></div>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
+                <!-- Export Buttons -->
+                <div class="export-buttons" style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+                    <button onclick="exportToCSV()" class="btn btn-secondary" style="display: flex; align-items: center; gap: 8px;">
+                        📄 <span data-i18n="forecastExt.exportCSV">Xuất CSV</span>
+                    </button>
+                    <button onclick="exportToExcel()" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+                        📊 <span data-i18n="forecastExt.exportExcel">Xuất Excel</span>
+                    </button>
                 </div>
             </section>
 
@@ -597,8 +609,8 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="/static/js/app.js"></script>
-    <script src="/static/js/forecast.js"></script>
+    <script src="/static/js/app.js?v=3"></script>
+    <script src="/static/js/forecast.js?v=3"></script>
 </body>
 
 </html>
