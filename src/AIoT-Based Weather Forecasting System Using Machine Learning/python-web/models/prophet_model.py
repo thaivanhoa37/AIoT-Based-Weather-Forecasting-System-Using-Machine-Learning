@@ -14,6 +14,9 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
 
+# Import hàm tính giờ ngày/đêm theo mùa Việt Nam
+from models.lightgbm_model import is_daytime_vietnam, get_time_period_vietnam
+
 logger = logging.getLogger(__name__)
 
 # Model storage paths
@@ -587,13 +590,14 @@ class ProphetModel:
                 rainfall = prediction.get('rainfall', 0)
                 uv_index = prediction.get('uv_index', 0)
                 
-                # Lấy giờ dự báo để xác định ban ngày/đêm
+                # Lấy giờ dự báo để xác định ban ngày/đêm theo mùa Việt Nam
                 pred_hour = pred_time.hour
-                is_daytime = 10 <= pred_hour <= 18  # UV chỉ có từ 10h-18h
+                is_daytime = is_daytime_vietnam(pred_time)  # Dùng hàm tính theo mùa
+                time_period = get_time_period_vietnam(pred_time)  # Khoảng thời gian chi tiết
                 
                 # Weather determination logic:
-                # - Ban đêm (trước 10h, sau 18h): UV = 0 là bình thường, không dùng UV để xét
-                # - Ban ngày (10h-18h): UV cao = nắng, UV thấp = nhiều mây
+                # - Ban đêm/sáng sớm/chiều tối: UV = 0 là bình thường, không dùng UV để xét
+                # - Ban ngày (sau bình minh 1.5h đến trước hoàng hôn 30p): UV cao = nắng, UV thấp = nhiều mây
                 # - Rainfall > 0.5 luôn = mưa
                 # - Humidity chỉ dùng kết hợp, không đơn lẻ quyết định mưa
                 
@@ -634,7 +638,7 @@ class ProphetModel:
                         prediction['weather_condition_key'] = 'weatherManyClouds'
                         prediction['weather_icon'] = '☁️'
                 else:
-                    # Ban đêm (trước 10h, sau 18h): không dùng UV
+                    # Ban đêm/sáng sớm/chiều tối: không dùng UV
                     # Chỉ dựa vào rainfall để xác định mưa
                     if rainfall > 0:
                         prediction['willRain'] = True
@@ -646,14 +650,14 @@ class ProphetModel:
                         prediction['weather_condition'] = 'Sương mù'
                         prediction['weather_condition_key'] = 'weatherFog'
                         prediction['weather_icon'] = '🌫️'
-                    elif 6 <= pred_hour < 10:
-                        # Sáng sớm (6h-10h)
+                    elif time_period == 'dawn':
+                        # Bình minh/Sáng sớm (theo mùa)
                         prediction['willRain'] = False
                         prediction['weather_condition'] = 'Sáng sớm'
                         prediction['weather_condition_key'] = 'weatherEarlyMorning'
                         prediction['weather_icon'] = '🌅'
-                    elif 18 < pred_hour <= 20:
-                        # Chiều tối (18h-20h)
+                    elif time_period == 'dusk':
+                        # Hoàng hôn/Chiều tối (theo mùa)
                         prediction['willRain'] = False
                         prediction['weather_condition'] = 'Chiều tối'
                         prediction['weather_condition_key'] = 'weatherEvening'

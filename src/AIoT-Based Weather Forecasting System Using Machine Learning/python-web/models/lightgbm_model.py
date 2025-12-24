@@ -28,6 +28,101 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
+def get_vietnam_daylight_times(dt: datetime) -> tuple:
+    """
+    Lấy giờ bình minh và hoàng hôn theo mùa ở Việt Nam
+    
+    Giờ trời sáng và tối theo mùa ở Việt Nam:
+    - Xuân (Tháng 3-5): Bình minh 5:30-5:45, Hoàng hôn 18:00-18:15
+    - Hạ (Tháng 6-8): Bình minh 5:15-5:30, Hoàng hôn 18:15-18:30
+    - Thu (Tháng 9-11): Bình minh 5:40-6:00, Hoàng hôn 17:30-17:45
+    - Đông (Tháng 12-2): Bình minh 6:10-6:30, Hoàng hôn 17:15-17:30
+    
+    Args:
+        dt: datetime object để xác định mùa
+        
+    Returns:
+        tuple: (sunrise_hour, sunrise_minute, sunset_hour, sunset_minute)
+    """
+    month = dt.month
+    
+    if month in [3, 4, 5]:  # Xuân (Spring)
+        # Bình minh: 5:30-5:45, lấy trung bình 5:38
+        # Hoàng hôn: 18:00-18:15, lấy trung bình 18:08
+        return (5, 38, 18, 8)
+    elif month in [6, 7, 8]:  # Hạ (Summer)
+        # Bình minh: 5:15-5:30, lấy trung bình 5:23
+        # Hoàng hôn: 18:15-18:30, lấy trung bình 18:23
+        return (5, 23, 18, 23)
+    elif month in [9, 10, 11]:  # Thu (Autumn)
+        # Bình minh: 5:40-6:00, lấy trung bình 5:50
+        # Hoàng hôn: 17:30-17:45, lấy trung bình 17:38
+        return (5, 50, 17, 38)
+    else:  # Đông (Winter) - tháng 12, 1, 2
+        # Bình minh: 6:10-6:30, lấy trung bình 6:20
+        # Hoàng hôn: 17:15-17:30, lấy trung bình 17:23
+        return (6, 20, 17, 23)
+
+
+def is_daytime_vietnam(dt: datetime) -> bool:
+    """
+    Kiểm tra có phải ban ngày ở Việt Nam hay không (dựa vào mùa)
+    
+    UV index chỉ có ý nghĩa khi có ánh nắng mặt trời.
+    Thời gian ban ngày tính từ sau bình minh + 1 giờ đến trước hoàng hôn.
+    
+    Args:
+        dt: datetime object cần kiểm tra
+        
+    Returns:
+        bool: True nếu là ban ngày, False nếu là ban đêm/sáng sớm/chiều tối
+    """
+    sunrise_h, sunrise_m, sunset_h, sunset_m = get_vietnam_daylight_times(dt)
+    
+    # Thời gian hiện tại tính theo phút trong ngày
+    current_minutes = dt.hour * 60 + dt.minute
+    
+    # UV có ý nghĩa từ sau bình minh khoảng 1-2 tiếng đến trước hoàng hôn
+    # Tức là từ khoảng 7h-17h tùy mùa
+    sunrise_minutes = sunrise_h * 60 + sunrise_m + 90  # +1.5 giờ sau bình minh
+    sunset_minutes = sunset_h * 60 + sunset_m - 30  # -30 phút trước hoàng hôn
+    
+    return sunrise_minutes <= current_minutes <= sunset_minutes
+
+
+def get_time_period_vietnam(dt: datetime) -> str:
+    """
+    Xác định khoảng thời gian trong ngày theo Việt Nam
+    
+    Returns:
+        str: 'dawn' (bình minh), 'morning' (sáng), 'noon' (trưa), 
+             'afternoon' (chiều), 'dusk' (hoàng hôn), 'night' (đêm)
+    """
+    sunrise_h, sunrise_m, sunset_h, sunset_m = get_vietnam_daylight_times(dt)
+    hour = dt.hour
+    minute = dt.minute
+    current_minutes = hour * 60 + minute
+    
+    sunrise_minutes = sunrise_h * 60 + sunrise_m
+    sunset_minutes = sunset_h * 60 + sunset_m
+    
+    if current_minutes < sunrise_minutes - 30:
+        return 'night'  # Đêm khuya
+    elif current_minutes < sunrise_minutes + 60:
+        return 'dawn'  # Bình minh / Sáng sớm
+    elif current_minutes < 12 * 60:
+        return 'morning'  # Buổi sáng
+    elif current_minutes < 14 * 60:
+        return 'noon'  # Buổi trưa
+    elif current_minutes < sunset_minutes - 30:
+        return 'afternoon'  # Buổi chiều
+    elif current_minutes < sunset_minutes + 60:
+        return 'dusk'  # Hoàng hôn / Chiều tối
+    else:
+        return 'night'  # Đêm
+
+
 # Model storage paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODELS_DIR = BASE_DIR / "models_storage" / "lightgbm"
@@ -846,13 +941,14 @@ class LSTMModel:
                 rainfall = prediction.get('rainfall', 0)
                 uv_index = prediction.get('uv_index', 0)
                 
-                # Lấy giờ dự báo để xác định ban ngày/đêm
+                # Lấy giờ dự báo để xác định ban ngày/đêm theo mùa Việt Nam
                 pred_hour = pred_time.hour
-                is_daytime = 10 <= pred_hour <= 18  # UV chỉ có từ 10h-18h
+                is_daytime = is_daytime_vietnam(pred_time)  # Dùng hàm tính theo mùa
+                time_period = get_time_period_vietnam(pred_time)  # Khoảng thời gian chi tiết
                 
                 # Weather determination logic:
-                # - Ban đêm (trước 10h, sau 18h): UV = 0 là bình thường, không dùng UV để xét
-                # - Ban ngày (10h-18h): UV cao = nắng, UV thấp = nhiều mây
+                # - Ban đêm/sáng sớm/chiều tối: UV = 0 là bình thường, không dùng UV để xét
+                # - Ban ngày (sau bình minh 1.5h đến trước hoàng hôn 30p): UV cao = nắng, UV thấp = nhiều mây
                 # - Rainfall > 0.5 luôn = mưa
                 # - Humidity chỉ dùng kết hợp, không đơn lẻ quyết định mưa
                 
@@ -893,7 +989,7 @@ class LSTMModel:
                         prediction['weather_condition_key'] = 'manyClouds'
                         prediction['weather_icon'] = '☁️'
                 else:
-                    # Ban đêm (trước 10h, sau 18h): không dùng UV
+                    # Ban đêm/sáng sớm/chiều tối: không dùng UV
                     # Chỉ dựa vào rainfall để xác định mưa
                     if rainfall > 0:
                         prediction['willRain'] = True
@@ -905,14 +1001,14 @@ class LSTMModel:
                         prediction['weather_condition'] = 'Sương mù'
                         prediction['weather_condition_key'] = 'fog'
                         prediction['weather_icon'] = '🌫️'
-                    elif 6 <= pred_hour < 10:
-                        # Sáng sớm (6h-10h)
+                    elif time_period == 'dawn':
+                        # Bình minh/Sáng sớm (theo mùa)
                         prediction['willRain'] = False
                         prediction['weather_condition'] = 'Sáng sớm'
                         prediction['weather_condition_key'] = 'earlyMorning'
                         prediction['weather_icon'] = '🌅'
-                    elif 18 < pred_hour <= 20:
-                        # Chiều tối (18h-20h)
+                    elif time_period == 'dusk':
+                        # Hoàng hôn/Chiều tối (theo mùa)
                         prediction['willRain'] = False
                         prediction['weather_condition'] = 'Chiều tối'
                         prediction['weather_condition_key'] = 'evening'

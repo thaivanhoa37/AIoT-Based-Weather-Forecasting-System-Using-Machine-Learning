@@ -194,10 +194,33 @@ Input (past 24h) → Create features → Model step-1 → Model step-3 → ... �
 
 ### 🌦️ Weather Condition Determination
 
-After forecasting the parameters, the system determines **weather conditions** based on the following logic:
+After forecasting the parameters, the system determines **weather conditions** based on sunrise/sunset times by season in Vietnam:
+
+#### 🌅 Vietnam Daylight Hours by Season
+
+| Season | Months | Sunrise | Sunset | UV Effective Period |
+|--------|--------|---------|--------|--------------------|
+| 🌸 **Spring** | Mar-May | 5:30-5:45 | 18:00-18:15 | ~7:08 - 17:38 |
+| ☀️ **Summer** | Jun-Aug | 5:15-5:30 | 18:15-18:30 | ~6:53 - 17:53 |
+| 🍂 **Autumn** | Sep-Nov | 5:40-6:00 | 17:30-17:45 | ~7:20 - 17:08 |
+| ❄️ **Winter** | Dec-Feb | 6:10-6:30 | 17:15-17:30 | ~7:50 - 16:53 |
 
 ```python
-# Daytime (10h-18h): UV is meaningful
+# Get sunrise/sunset by season (Vietnam)
+def get_vietnam_daylight_times(month):
+    if month in [3, 4, 5]:    # Spring
+        return (5, 38, 18, 8)   # sunrise 5:38, sunset 18:08
+    elif month in [6, 7, 8]:  # Summer  
+        return (5, 23, 18, 23)  # sunrise 5:23, sunset 18:23
+    elif month in [9, 10, 11]: # Autumn
+        return (5, 50, 17, 38)  # sunrise 5:50, sunset 17:38
+    else:                      # Winter (12, 1, 2)
+        return (6, 20, 17, 23)  # sunrise 6:20, sunset 17:23
+
+# UV is meaningful 1.5h after sunrise to 30min before sunset
+is_daytime = (sunrise + 1.5h) <= current_time <= (sunset - 30min)
+
+# Daytime: UV determines weather
 if is_daytime:
     if uv_index >= 6:
         condition = "☀️ Sunny"
@@ -206,12 +229,16 @@ if is_daytime:
     else:
         condition = "☁️ Cloudy"
 
-# Nighttime: Don't use UV
+# Dawn/Dusk/Night: Don't use UV
 else:
-    if rainfall > 0.5:
+    if rainfall > 0:
         condition = "🌧️ Night Rain"
     elif humidity > 90:
         condition = "🌫️ Foggy"
+    elif time_period == 'dawn':
+        condition = "🌅 Early Morning"
+    elif time_period == 'dusk':
+        condition = "🌆 Evening"
     else:
         condition = "🌙 Clear Night"
 
@@ -222,16 +249,16 @@ if rainfall > 0.5:
 
 #### Weather Conditions Table
 
-| Condition | UV Index | Rainfall | Humidity | Time |
-|-----------|----------|----------|----------|------|
-| ☀️ Sunny | ≥ 6 | < 0.5 | - | 10h-18h |
-| 🌤️ Partly Sunny | 3-6 | < 0.5 | - | 10h-18h |
-| ☁️ Cloudy | < 3 | < 0.5 | - | 10h-18h |
+| Condition | UV Index | Rainfall | Humidity | Time Period |
+|-----------|----------|----------|----------|-------------|
+| ☀️ Sunny | ≥ 6 | < 0.5 | - | Daytime (by season) |
+| 🌤️ Partly Sunny | 3-6 | < 0.5 | - | Daytime (by season) |
+| ☁️ Cloudy | < 3 | < 0.5 | - | Daytime (by season) |
 | 🌧️ Rainy | - | > 0.5 | - | Any |
 | 🌫️ Foggy | - | < 0.5 | > 90% | Night |
-| 🌅 Early Morning | - | < 0.5 | - | 6h-10h |
-| 🌆 Evening | - | < 0.5 | - | 18h-20h |
-| 🌙 Clear Night | - | < 0.5 | < 90% | 20h-6h |
+| 🌅 Early Morning | - | < 0.5 | - | Dawn (30min before ~ 1h after sunrise) |
+| 🌆 Evening | - | < 0.5 | - | Dusk (30min before ~ 1h after sunset) |
+| 🌙 Clear Night | - | < 0.5 | < 90% | Night (after dusk ~ before dawn) |
 
 ---
 

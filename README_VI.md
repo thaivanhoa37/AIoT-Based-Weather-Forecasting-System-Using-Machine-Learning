@@ -195,10 +195,33 @@ Input (24h trước) → Tạo features → Model step-1 → Model step-3 → ..
 
 ### 🌦️ Xác định điều kiện thời tiết
 
-Sau khi dự báo các thông số, hệ thống xác định **điều kiện thời tiết** dựa trên logic sau:
+Sau khi dự báo các thông số, hệ thống xác định **điều kiện thời tiết** dựa trên giờ bình minh/hoàng hôn theo mùa ở Việt Nam:
+
+#### 🌅 Giờ trời sáng và tối theo mùa ở Việt Nam
+
+| Mùa | Tháng | Bình minh | Hoàng hôn | UV có hiệu lực |
+|-----|-------|-----------|-----------|----------------|
+| 🌸 **Xuân** | 3-5 | 5:30-5:45 | 18:00-18:15 | ~7:08 - 17:38 |
+| ☀️ **Hạ** | 6-8 | 5:15-5:30 | 18:15-18:30 | ~6:53 - 17:53 |
+| 🍂 **Thu** | 9-11 | 5:40-6:00 | 17:30-17:45 | ~7:20 - 17:08 |
+| ❄️ **Đông** | 12-2 | 6:10-6:30 | 17:15-17:30 | ~7:50 - 16:53 |
 
 ```python
-# Thời gian ban ngày (10h-18h): UV có ý nghĩa
+# Lấy giờ bình minh/hoàng hôn theo mùa (Việt Nam)
+def get_vietnam_daylight_times(month):
+    if month in [3, 4, 5]:    # Xuân
+        return (5, 38, 18, 8)   # bình minh 5:38, hoàng hôn 18:08
+    elif month in [6, 7, 8]:  # Hạ  
+        return (5, 23, 18, 23)  # bình minh 5:23, hoàng hôn 18:23
+    elif month in [9, 10, 11]: # Thu
+        return (5, 50, 17, 38)  # bình minh 5:50, hoàng hôn 17:38
+    else:                      # Đông (12, 1, 2)
+        return (6, 20, 17, 23)  # bình minh 6:20, hoàng hôn 17:23
+
+# UV có ý nghĩa từ sau bình minh 1.5h đến trước hoàng hôn 30p
+is_daytime = (bình_minh + 1.5h) <= giờ_hiện_tại <= (hoàng_hôn - 30p)
+
+# Ban ngày: UV xác định thời tiết
 if is_daytime:
     if uv_index >= 6:
         condition = "☀️ Nắng"
@@ -207,12 +230,16 @@ if is_daytime:
     else:
         condition = "☁️ Nhiều mây"
 
-# Thời gian ban đêm: Không dùng UV
+# Sáng sớm/Chiều tối/Đêm: Không dùng UV
 else:
-    if rainfall > 0.5:
+    if rainfall > 0:
         condition = "🌧️ Mưa đêm"
     elif humidity > 90:
         condition = "🌫️ Sương mù"
+    elif time_period == 'dawn':
+        condition = "🌅 Sáng sớm"
+    elif time_period == 'dusk':
+        condition = "🌆 Chiều tối"
     else:
         condition = "🌙 Đêm quang"
 
@@ -223,16 +250,16 @@ if rainfall > 0.5:
 
 #### Bảng điều kiện thời tiết
 
-| Điều kiện | UV Index | Rainfall | Humidity | Giờ |
-|-----------|----------|----------|----------|-----|
-| ☀️ Nắng | ≥ 6 | < 0.5 | - | 10h-18h |
-| 🌤️ Nắng nhẹ | 3-6 | < 0.5 | - | 10h-18h |
-| ☁️ Nhiều mây | < 3 | < 0.5 | - | 10h-18h |
+| Điều kiện | UV Index | Rainfall | Humidity | Khoảng thời gian |
+|-----------|----------|----------|----------|------------------|
+| ☀️ Nắng | ≥ 6 | < 0.5 | - | Ban ngày (theo mùa) |
+| 🌤️ Nắng nhẹ | 3-6 | < 0.5 | - | Ban ngày (theo mùa) |
+| ☁️ Nhiều mây | < 3 | < 0.5 | - | Ban ngày (theo mùa) |
 | 🌧️ Mưa | - | > 0.5 | - | Bất kỳ |
 | 🌫️ Sương mù | - | < 0.5 | > 90% | Đêm |
-| 🌅 Sáng sớm | - | < 0.5 | - | 6h-10h |
-| 🌆 Chiều tối | - | < 0.5 | - | 18h-20h |
-| 🌙 Đêm quang | - | < 0.5 | < 90% | 20h-6h |
+| 🌅 Sáng sớm | - | < 0.5 | - | Bình minh (30p trước ~ 1h sau mặt trời mọc) |
+| 🌆 Chiều tối | - | < 0.5 | - | Hoàng hôn (30p trước ~ 1h sau mặt trời lặn) |
+| 🌙 Đêm quang | - | < 0.5 | < 90% | Đêm (sau hoàng hôn ~ trước bình minh) |
 
 ---
 
