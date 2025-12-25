@@ -282,20 +282,25 @@ async def get_realtime_data(db: Session = Depends(get_db)):
 
 @router.get("/charts-data")
 async def get_charts_data(
-    time_range: str = Query("24h", regex="^(24h|7d|30d)$"),
+    time_range: str = Query("24h", regex="^(today|24h|7d|30d)$"),
     sensors: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     """
     Get data for charts visualization from real database
     
-    - **time_range**: Time range for data (24h, 7d, or 30d)
+    - **time_range**: Time range for data (today, 24h, 7d, or 30d)
     - **sensors**: Comma-separated list of sensors (e.g., "temperature,humidity,co2,wind_speed,rainfall,uv_index")
     """
     # Calculate time range
-    hours_map = {"24h": 24, "7d": 168, "30d": 720}
-    hours = hours_map.get(time_range, 24)
-    cutoff_time = datetime.now() - timedelta(hours=hours)
+    if time_range == "today":
+        # Get data from start of today (00:00:00)
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        cutoff_time = today_start
+    else:
+        hours_map = {"24h": 24, "7d": 168, "30d": 720}
+        hours = hours_map.get(time_range, 24)
+        cutoff_time = datetime.now() - timedelta(hours=hours)
     
     # Default sensors if not specified
     if not sensors:
@@ -1353,6 +1358,66 @@ async def count_records_in_range(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/database/count-id-range")
+async def count_records_in_id_range(
+    start_id: int = Query(..., description="Start ID", ge=1),
+    end_id: int = Query(..., description="End ID", ge=1),
+    db: Session = Depends(get_db)
+):
+    """Count records within a specific ID range"""
+    try:
+        if start_id > end_id:
+            raise HTTPException(status_code=400, detail="Start ID must be less than or equal to End ID")
+        
+        # Count records in ID range
+        count = db.query(func.count(SensorData.id)).filter(
+            SensorData.id >= start_id,
+            SensorData.id <= end_id
+        ).scalar() or 0
+        
+        return {
+            "success": True,
+            "count": count,
+            "start_id": start_id,
+            "end_id": end_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/database/delete-id-range")
+async def delete_data_in_id_range(
+    start_id: int = Query(..., description="Start ID", ge=1),
+    end_id: int = Query(..., description="End ID", ge=1),
+    db: Session = Depends(get_db)
+):
+    """Delete records within a specific ID range"""
+    try:
+        if start_id > end_id:
+            raise HTTPException(status_code=400, detail="Start ID must be less than or equal to End ID")
+        
+        # Delete records in ID range
+        deleted_count = db.query(SensorData).filter(
+            SensorData.id >= start_id,
+            SensorData.id <= end_id
+        ).delete(synchronize_session='fetch')
+        
+        db.commit()
+        
+        logger.info(f"Deleted {deleted_count} records from ID {start_id} to ID {end_id}")
+        
+        return {
+            "success": True,
+            "deleted_records": deleted_count,
+            "start_id": start_id,
+            "end_id": end_id,
+            "message": f"Deleted {deleted_count} records from ID {start_id} to ID {end_id}"
+        }
+    except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 

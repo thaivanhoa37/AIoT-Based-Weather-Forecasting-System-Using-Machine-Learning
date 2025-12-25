@@ -57,6 +57,14 @@ function initializeMySQLPage() {
         deleteStartDate.addEventListener('change', previewDeleteCount);
         deleteEndDate.addEventListener('change', previewDeleteCount);
     }
+
+    // Initialize delete ID inputs change event
+    const deleteStartId = document.getElementById('deleteStartId');
+    const deleteEndId = document.getElementById('deleteEndId');
+    if (deleteStartId && deleteEndId) {
+        deleteStartId.addEventListener('input', previewDeleteIdCount);
+        deleteEndId.addEventListener('input', previewDeleteIdCount);
+    }
 }
 
 // ===== Time Filter Management =====
@@ -615,6 +623,110 @@ async function deleteDataByRange(startDate, endDate) {
     } catch (error) {
         console.error('Delete error:', error);
         AppUtils.showToast('Không thể xóa dữ liệu: ' + error.message, 'error');
+    } finally {
+        AppUtils.hideLoading(loading);
+    }
+}
+
+// ===== Delete by ID Range Functions =====
+// Helper function to get translation
+function t(key) {
+    return typeof getTranslation === 'function' ? getTranslation(key) : key.split('.').pop();
+}
+
+async function previewDeleteIdCount() {
+    const startId = parseInt(document.getElementById('deleteStartId').value);
+    const endId = parseInt(document.getElementById('deleteEndId').value);
+    const previewEl = document.getElementById('deleteIdPreviewCount');
+    
+    if (!startId || !endId) {
+        previewEl.innerHTML = `<span>⏳ ${t('mysqlExt.selectIdRangeHint')}</span>`;
+        previewEl.className = 'info-text mt-10';
+        return;
+    }
+    
+    if (startId > endId) {
+        previewEl.innerHTML = `<span style="color: var(--danger);">⚠️ ${t('mysqlExt.idStartMustBeLess')}</span>`;
+        previewEl.className = 'info-text mt-10';
+        return;
+    }
+    
+    if (startId < 1 || endId < 1) {
+        previewEl.innerHTML = `<span style="color: var(--danger);">⚠️ ${t('mysqlExt.idMustBePositive')}</span>`;
+        previewEl.className = 'info-text mt-10';
+        return;
+    }
+    
+    previewEl.innerHTML = `<span>⏳ ${t('mysqlExt.countingRecords')}</span>`;
+    
+    try {
+        const response = await fetch(`/api/database/count-id-range?start_id=${startId}&end_id=${endId}`);
+        if (!response.ok) throw new Error('Failed to count');
+        const data = await response.json();
+        
+        const count = data.count || 0;
+        previewEl.className = 'info-text mt-10 warning';
+        previewEl.innerHTML = `<span>⚠️ ${t('mysqlExt.willDeleteRecords')} <span class="count">${count.toLocaleString()}</span> ${t('mysqlExt.recordsFromId')} <strong>${startId}</strong> ${t('mysqlExt.toIdText')} <strong>${endId}</strong></span>`;
+    } catch (error) {
+        console.error('Count error:', error);
+        previewEl.innerHTML = `<span style="color: var(--danger);">❌ ${t('mysqlExt.cannotCountRecords')}</span>`;
+        previewEl.className = 'info-text mt-10';
+    }
+}
+
+function confirmDeleteByIdRange() {
+    const startId = parseInt(document.getElementById('deleteStartId').value);
+    const endId = parseInt(document.getElementById('deleteEndId').value);
+    
+    if (!startId || !endId) {
+        AppUtils.showToast(t('mysqlExt.pleaseEnterIdRange'), 'warning');
+        return;
+    }
+    
+    if (startId > endId) {
+        AppUtils.showToast(t('mysqlExt.idStartMustBeLess'), 'error');
+        return;
+    }
+    
+    if (startId < 1 || endId < 1) {
+        AppUtils.showToast(t('mysqlExt.idMustBePositive'), 'error');
+        return;
+    }
+    
+    const confirmMsg = t('mysqlExt.confirmDeleteByIdMsg').replace('{start}', startId).replace('{end}', endId);
+    AppUtils.showModal(
+        t('mysqlExt.confirmDeleteByIdTitle'),
+        `⚠️ ${confirmMsg}`,
+        () => deleteDataByIdRange(startId, endId)
+    );
+}
+
+async function deleteDataByIdRange(startId, endId) {
+    const loading = AppUtils.showLoading(document.querySelector('.content'), true);
+    
+    try {
+        const result = await fetch(`/api/database/delete-id-range?start_id=${startId}&end_id=${endId}`, { 
+            method: 'DELETE' 
+        }).then(r => {
+            if (!r.ok) throw new Error('Delete failed');
+            return r.json();
+        });
+
+        if (result.success) {
+            const successMsg = t('mysqlExt.deletedRecords').replace('{count}', result.deleted_records || 0);
+            AppUtils.showToast(`✅ ${successMsg}`, 'success');
+            currentPage = 0;
+            loadTableData();
+            
+            // Reset form
+            document.getElementById('deleteStartId').value = '';
+            document.getElementById('deleteEndId').value = '';
+            document.getElementById('deleteIdPreviewCount').innerHTML = `<span>⏳ ${t('mysqlExt.selectIdRangeHint')}</span>`;
+            document.getElementById('deleteIdPreviewCount').className = 'info-text mt-10';
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        AppUtils.showToast(`${t('mysqlExt.cannotDeleteData')}: ${error.message}`, 'error');
     } finally {
         AppUtils.hideLoading(loading);
     }

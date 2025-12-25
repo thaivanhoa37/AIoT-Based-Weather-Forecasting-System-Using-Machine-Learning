@@ -65,7 +65,11 @@ const translations = {
             lastUpdateTime: 'Cập nhật lần cuối',
             time: 'Thời gian',
             status: 'Trạng thái',
-            system: 'Hệ thống'
+            system: 'Hệ thống',
+            loadingForecastML: 'Đang tải dự báo từ ML model...',
+            loadingForecast: 'Đang tải dự báo...',
+            errorLoadForecast: 'Lỗi tải dự báo',
+            noData: 'Không có dữ liệu'
         },
         // Charts page
         charts: {
@@ -88,7 +92,22 @@ const translations = {
             timeRangeViewing: 'Khoảng thời gian đang xem:',
             allSensors: 'Tất cả cảm biến - Xem chi tiết',
             allSensorsDesc: 'Hiển thị tất cả dữ liệu cảm biến IoT và API thời tiết trong một giao diện thống nhất',
-            statistics: 'Thống kê tổng hợp'
+            statistics: 'Thống kê tổng hợp',
+            advancedOptions: 'Tùy chọn nâng cao',
+            min: 'Thấp nhất',
+            max: 'Cao nhất',
+            avg: 'Trung bình',
+            // Sensor names
+            sensors: {
+                temperature: 'Nhiệt độ',
+                humidity: 'Độ ẩm',
+                pressure: 'Áp suất',
+                co2: 'CO₂',
+                dust: 'Bụi mịn',
+                windSpeed: 'Tốc độ gió',
+                rainfall: 'Lượng mưa',
+                uvIndex: 'Chỉ số UV'
+            }
         },
         // Forecast page
         forecast: {
@@ -313,20 +332,72 @@ const translations = {
             startTraining: 'Bắt đầu huấn luyện',
             stopTraining: 'Dừng huấn luyện',
             trainingProgress: 'Tiến trình huấn luyện',
+            readyToTrain: 'Sẵn sàng huấn luyện',
             step: 'Bước',
             trainingStatus: 'Trạng thái huấn luyện',
             logs: 'Logs',
             results: 'Kết quả huấn luyện',
-            autoScheduler: 'Lập lịch tự động huấn luyện',
+            autoScheduler: 'Tự động huấn luyện (Auto-Training)',
             autoTrainEnabled: 'Tự động huấn luyện đã bật',
             autoTrainDisabled: 'Tự động huấn luyện đã tắt',
-            enableAutoTrain: 'Bật tự động',
+            enableAutoTrain: 'Bật Auto-Training',
             disableAutoTrain: 'Tắt tự động',
-            trainNow: 'Huấn luyện ngay',
+            trainNow: 'Chạy ngay',
             history: 'Lịch sử huấn luyện',
             modelComparison: 'So sánh Model',
             noHistory: 'Chưa có lịch sử huấn luyện',
-            trainFirstModel: 'Hãy huấn luyện model đầu tiên!'
+            trainFirstModel: 'Hãy huấn luyện model đầu tiên!',
+            // Sensors
+            sensorData: 'Dữ liệu cảm biến',
+            weatherApiData: 'Dữ liệu Weather API',
+            temperature: 'Nhiệt độ',
+            humidity: 'Độ ẩm',
+            pressure: 'Áp suất',
+            windSpeed: 'Tốc độ gió',
+            rainfall: 'Lượng mưa',
+            uvIndex: 'Chỉ số UV',
+            selectAll: 'Chọn tất cả',
+            deselectAll: 'Bỏ chọn',
+            selectedVars: 'Đã chọn',
+            varsToTrain: 'biến để huấn luyện',
+            sensorVars: 'biến cảm biến',
+            apiVars: 'biến API',
+            // Auto-training
+            trainingCycle: 'Chu kỳ huấn luyện',
+            every1Day: 'Mỗi 1 ngày',
+            every3Days: 'Mỗi 3 ngày',
+            every7Days: 'Mỗi 7 ngày (Khuyến nghị)',
+            every14Days: 'Mỗi 14 ngày',
+            every30Days: 'Mỗi 30 ngày',
+            runTime: 'Giờ chạy',
+            midnight: 'Nửa đêm',
+            recommended: 'Khuyến nghị',
+            noon: 'Trưa',
+            evening: 'Chiều',
+            modelUsed: 'Model sử dụng',
+            nextTraining: 'Lần huấn luyện tiếp theo',
+            lastAutoTrain: 'Lần huấn luyện cuối',
+            saveSettings: 'Lưu cài đặt',
+            autoTrainHistory: 'Lịch sử huấn luyện tự động',
+            // History table
+            histTime: 'Thời gian',
+            histModel: 'Model',
+            histVariables: 'Biến',
+            histData: 'Dữ liệu',
+            histAccuracy: 'Độ chính xác',
+            histDuration: 'Thời gian',
+            histStatus: 'Trạng thái',
+            notTrained: 'Chưa huấn luyện',
+            swipeToSeeMore: 'Kéo sang để xem thêm',
+            supportedModels: 'Models được hỗ trợ',
+            compareDesc: 'So sánh các model và chọn model phù hợp với nhu cầu của bạn.',
+            accuracyLabel: 'Độ chính xác',
+            speedLabel: 'Tốc độ',
+            complexityLabel: 'Phức tạp',
+            // Results
+            modelType: 'Loại Model',
+            accuracy: 'Độ chính xác',
+            trainingTime: 'Thời gian huấn luyện'
         },
         // Extended MySQL page
         mysqlExt: {
@@ -387,7 +458,25 @@ const translations = {
             confirmDelete: 'Xác nhận xóa dữ liệu',
             confirmDeleteMsg: 'Bạn có chắc chắn muốn xóa dữ liệu cũ không?',
             cancel: 'Hủy',
-            confirm: 'Xác nhận'
+            confirm: 'Xác nhận',
+            // Delete by ID Range
+            deleteByIdRange: 'Xóa theo khoảng ID',
+            fromId: 'Từ ID',
+            toId: 'Đến ID',
+            selectIdRangeHint: 'Nhập khoảng ID để xem số bản ghi sẽ bị xóa',
+            deleteByIdRangeBtn: 'Xóa theo khoảng ID',
+            countingRecords: 'Đang đếm số bản ghi...',
+            willDeleteRecords: 'Sẽ xóa',
+            recordsFromId: 'bản ghi từ ID',
+            toIdText: 'đến ID',
+            idStartMustBeLess: 'ID bắt đầu phải nhỏ hơn hoặc bằng ID kết thúc',
+            idMustBePositive: 'ID phải là số dương',
+            pleaseEnterIdRange: 'Vui lòng nhập khoảng ID',
+            confirmDeleteByIdTitle: 'Xác nhận xóa dữ liệu theo khoảng ID',
+            confirmDeleteByIdMsg: 'Bạn sắp xóa dữ liệu từ ID {start} đến ID {end}. Hành động này KHÔNG THỂ HOÀN TÁC. Bạn có chắc chắn?',
+            deletedRecords: 'Đã xóa {count} bản ghi',
+            cannotCountRecords: 'Không thể đếm số bản ghi',
+            cannotDeleteData: 'Không thể xóa dữ liệu'
         },
         // Extended Settings page
         settingsExt: {
@@ -535,7 +624,11 @@ const translations = {
             lastUpdateTime: 'Last Update',
             time: 'Time',
             status: 'Status',
-            system: 'System'
+            system: 'System',
+            loadingForecastML: 'Loading forecast from ML model...',
+            loadingForecast: 'Loading forecast...',
+            errorLoadForecast: 'Error loading forecast',
+            noData: 'No data'
         },
         // Charts page
         charts: {
@@ -558,7 +651,22 @@ const translations = {
             timeRangeViewing: 'Time range viewing:',
             allSensors: 'All Sensors - Detailed View',
             allSensorsDesc: 'Display all IoT sensor and Weather API data in a unified interface',
-            statistics: 'Overall Statistics'
+            statistics: 'Overall Statistics',
+            advancedOptions: 'Advanced Options',
+            min: 'Min',
+            max: 'Max',
+            avg: 'Average',
+            // Sensor names
+            sensors: {
+                temperature: 'Temperature',
+                humidity: 'Humidity',
+                pressure: 'Pressure',
+                co2: 'CO₂',
+                dust: 'Fine Dust',
+                windSpeed: 'Wind Speed',
+                rainfall: 'Rainfall',
+                uvIndex: 'UV Index'
+            }
         },
         // Forecast page
         forecast: {
@@ -783,6 +891,7 @@ const translations = {
             startTraining: 'Start Training',
             stopTraining: 'Stop Training',
             trainingProgress: 'Training Progress',
+            readyToTrain: 'Ready to train',
             step: 'Step',
             trainingStatus: 'Training Status',
             logs: 'Logs',
@@ -790,13 +899,64 @@ const translations = {
             autoScheduler: 'Auto Training Scheduler',
             autoTrainEnabled: 'Auto training enabled',
             autoTrainDisabled: 'Auto training disabled',
-            enableAutoTrain: 'Enable Auto',
+            enableAutoTrain: 'Enable Auto-Training',
             disableAutoTrain: 'Disable Auto',
-            trainNow: 'Train Now',
+            trainNow: 'Run Now',
             history: 'Training History',
             modelComparison: 'Model Comparison',
             noHistory: 'No training history yet',
-            trainFirstModel: 'Train your first model!'
+            trainFirstModel: 'Train your first model!',
+            // Sensors
+            sensorData: 'Sensor Data',
+            weatherApiData: 'Weather API Data',
+            temperature: 'Temperature',
+            humidity: 'Humidity',
+            pressure: 'Pressure',
+            windSpeed: 'Wind Speed',
+            rainfall: 'Rainfall',
+            uvIndex: 'UV Index',
+            selectAll: 'Select All',
+            deselectAll: 'Deselect All',
+            selectedVars: 'Selected',
+            varsToTrain: 'variables to train',
+            sensorVars: 'sensor vars',
+            apiVars: 'API vars',
+            // Auto-training
+            trainingCycle: 'Training Cycle',
+            every1Day: 'Every 1 day',
+            every3Days: 'Every 3 days',
+            every7Days: 'Every 7 days (Recommended)',
+            every14Days: 'Every 14 days',
+            every30Days: 'Every 30 days',
+            runTime: 'Run Time',
+            midnight: 'Midnight',
+            recommended: 'Recommended',
+            noon: 'Noon',
+            evening: 'Evening',
+            modelUsed: 'Model Used',
+            nextTraining: 'Next training',
+            lastAutoTrain: 'Last auto train',
+            saveSettings: 'Save Settings',
+            autoTrainHistory: 'Auto Training History',
+            // History table
+            histTime: 'Time',
+            histModel: 'Model',
+            histVariables: 'Variables',
+            histData: 'Data',
+            histAccuracy: 'Accuracy',
+            histDuration: 'Duration',
+            histStatus: 'Status',
+            notTrained: 'Not trained',
+            swipeToSeeMore: 'Swipe to see more',
+            supportedModels: 'Supported Models',
+            compareDesc: 'Compare models and choose the one that fits your needs.',
+            accuracyLabel: 'Accuracy',
+            speedLabel: 'Speed',
+            complexityLabel: 'Complexity',
+            // Results
+            modelType: 'Model Type',
+            accuracy: 'Accuracy',
+            trainingTime: 'Training Time'
         },
         // Extended MySQL page
         mysqlExt: {
@@ -857,7 +1017,25 @@ const translations = {
             confirmDelete: 'Confirm Delete',
             confirmDeleteMsg: 'Are you sure you want to delete old data?',
             cancel: 'Cancel',
-            confirm: 'Confirm'
+            confirm: 'Confirm',
+            // Delete by ID Range
+            deleteByIdRange: 'Delete by ID Range',
+            fromId: 'From ID',
+            toId: 'To ID',
+            selectIdRangeHint: 'Enter ID range to see number of records to be deleted',
+            deleteByIdRangeBtn: 'Delete by ID Range',
+            countingRecords: 'Counting records...',
+            willDeleteRecords: 'Will delete',
+            recordsFromId: 'records from ID',
+            toIdText: 'to ID',
+            idStartMustBeLess: 'Start ID must be less than or equal to End ID',
+            idMustBePositive: 'ID must be a positive number',
+            pleaseEnterIdRange: 'Please enter ID range',
+            confirmDeleteByIdTitle: 'Confirm delete data by ID range',
+            confirmDeleteByIdMsg: 'You are about to delete data from ID {start} to ID {end}. This action CANNOT BE UNDONE. Are you sure?',
+            deletedRecords: 'Deleted {count} records',
+            cannotCountRecords: 'Cannot count records',
+            cannotDeleteData: 'Cannot delete data'
         },
         // Extended Settings page
         settingsExt: {
@@ -1033,6 +1211,15 @@ const i18n = {
             }
         });
         
+        // Update select option elements with data-i18n attribute
+        document.querySelectorAll('select option[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const translation = this.t(key);
+            if (translation) {
+                el.textContent = translation;
+            }
+        });
+        
         // Update page title
         const pageTitleEl = document.querySelector('[data-i18n-page-title]');
         if (pageTitleEl) {
@@ -1084,8 +1271,36 @@ const i18n = {
 // Initialize i18n when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     i18n.init();
+    updateLanguageToggleButton();
 });
+
+// Global toggle language function for onclick handler
+function toggleLanguage() {
+    i18n.toggleLanguage();
+    updateLanguageToggleButton();
+}
+
+// Update the language toggle button visual state
+function updateLanguageToggleButton() {
+    const langFlagVi = document.getElementById('langFlagVi');
+    const langFlagEn = document.getElementById('langFlagEn');
+    
+    if (langFlagVi && langFlagEn) {
+        if (i18n.currentLang === 'vi') {
+            langFlagVi.style.opacity = '1';
+            langFlagVi.style.transform = 'scale(1.1)';
+            langFlagEn.style.opacity = '0.5';
+            langFlagEn.style.transform = 'scale(0.9)';
+        } else {
+            langFlagVi.style.opacity = '0.5';
+            langFlagVi.style.transform = 'scale(0.9)';
+            langFlagEn.style.opacity = '1';
+            langFlagEn.style.transform = 'scale(1.1)';
+        }
+    }
+}
 
 // Export for use in other scripts
 window.i18n = i18n;
 window.translations = translations;
+window.toggleLanguage = toggleLanguage;

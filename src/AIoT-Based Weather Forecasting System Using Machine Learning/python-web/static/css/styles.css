@@ -447,6 +447,36 @@ body {
     font-weight: 500;
 }
 
+/* Section title responsive */
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 18px;
+        gap: 8px;
+    }
+    
+    .section-subtitle {
+        font-size: 13px;
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .section-title {
+        font-size: 16px;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .section-subtitle {
+        font-size: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .section {
+        margin-bottom: 25px;
+    }
+}
+
 /* ===== Cards ===== */
 .cards-grid {
     display: grid;
@@ -455,12 +485,134 @@ body {
     margin-bottom: 20px;
 }
 
-/* IoT Data Cards in single row */
+/* IoT Data Cards - Responsive layout */
 #iotDataCards {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 20px;
     margin-bottom: 30px;
+}
+
+/* IoT Cards Mobile Compact Style */
+#iotDataCards .card {
+    position: relative;
+}
+
+/* Tablet - 3 columns */
+@media (max-width: 1024px) {
+    #iotDataCards {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+}
+
+/* Mobile Large - 2 columns with compact cards */
+@media (max-width: 768px) {
+    #iotDataCards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    #iotDataCards .card {
+        padding: 16px;
+    }
+    
+    #iotDataCards .card-header {
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+    
+    #iotDataCards .card-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        border-radius: 8px;
+    }
+    
+    #iotDataCards .card-label {
+        font-size: 12px;
+    }
+    
+    #iotDataCards .card-value {
+        font-size: 24px;
+    }
+    
+    #iotDataCards .card-unit {
+        font-size: 12px;
+    }
+    
+    #iotDataCards .card-footer {
+        font-size: 10px;
+    }
+}
+
+/* Mobile Small - scrollable horizontal layout */
+@media (max-width: 480px) {
+    #iotDataCards {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        gap: 10px;
+        padding-bottom: 10px;
+        margin-left: -15px;
+        margin-right: -15px;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    #iotDataCards::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    #iotDataCards::-webkit-scrollbar-track {
+        background: var(--border);
+        border-radius: 2px;
+    }
+    
+    #iotDataCards::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: 2px;
+    }
+    
+    #iotDataCards .card {
+        flex: 0 0 140px;
+        min-width: 140px;
+        scroll-snap-align: start;
+        padding: 14px;
+    }
+    
+    #iotDataCards .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+    
+    #iotDataCards .card-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+    
+    #iotDataCards .card-label {
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    #iotDataCards .card-value {
+        font-size: 22px;
+        line-height: 1.2;
+    }
+    
+    #iotDataCards .card-unit {
+        font-size: 11px;
+    }
+    
+    #iotDataCards .card-footer {
+        font-size: 9px;
+        margin-top: 6px;
+    }
 }
 
 /* Weather API Cards - keep flexible layout */
@@ -469,6 +621,63 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
+}
+
+/* Weather API Cards Mobile */
+@media (max-width: 768px) {
+    #weatherApiCards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    #weatherApiCards .card {
+        padding: 16px;
+    }
+    
+    #weatherApiCards .card-header {
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+    
+    #weatherApiCards .card-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+    
+    #weatherApiCards .card-value {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    #weatherApiCards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    #weatherApiCards .card {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 12px 16px;
+        gap: 15px;
+    }
+    
+    #weatherApiCards .card-header {
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+    
+    #weatherApiCards .card-value {
+        flex: 1;
+        text-align: right;
+        font-size: 22px;
+    }
+    
+    #weatherApiCards .card-footer {
+        display: none;
+    }
 }
 
 .card {
@@ -663,6 +872,20 @@ body {
     flex-wrap: wrap;
 }
 
+/* Button responsive for mobile */
+@media (max-width: 480px) {
+    .btn {
+        padding: 10px 18px;
+        font-size: 13px;
+        gap: 6px;
+    }
+    
+    .text-center .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* ===== Forms ===== */
 .form-group {
     margin-bottom: 20px;
@@ -805,6 +1028,7 @@ body {
     margin-bottom: 20px;
     border: 1px solid var(--border);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
 }
 
 .chart-container:hover {
@@ -825,6 +1049,7 @@ body {
 .chart-canvas {
     width: 100%;
     height: 300px;
+    display: block;
 }
 
 .mini-chart {
@@ -1985,9 +2210,25 @@ to {
 /* ===== Stats Cards (Updated) ===== */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
     margin-bottom: 20px;
+}
+
+/* Database Overview specific - equal height cards */
+.stats-grid-db {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.stats-grid-db .stat-card {
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .stat-card {
@@ -2040,6 +2281,29 @@ to {
     margin-bottom: 12px;
     font-weight: 700;
     line-height: 1.3;
+}
+
+/* Stat Card Content wrapper for DB Overview */
+.stat-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.stats-grid-db .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+/* Smaller font for time display */
+.stats-grid-db #latestRecord {
+    font-size: 16px;
+    line-height: 1.5;
+    text-align: center;
 }
 
 .stat-details {
@@ -2180,6 +2444,56 @@ to {
         gap: 10px;
     }
 
+    .stats-grid-db {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        align-items: stretch;
+        height: auto;
+        min-height: 420px;
+        display: grid;
+    }
+
+    .stats-grid-db .stat-card {
+        min-height: 140px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 18px 12px;
+        gap: 8px;
+        box-sizing: border-box;
+    }
+
+    .stats-grid-db .stat-card-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        gap: 4px;
+        height: 100%;
+    }
+
+    .stats-grid-db .stat-card .stat-label {
+        text-align: center;
+        margin-bottom: 2px;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .stats-grid-db .stat-card .stat-value {
+        text-align: center;
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    .stats-grid-db #latestRecord {
+        font-size: 14px;
+        white-space: nowrap;
+        text-align: center;
+    }
+
     .stat-card {
         padding: 15px;
     }
@@ -2203,5 +2517,898 @@ to {
 
     .trend-chart-title {
         font-size: 14px;
+    }
+}
+
+/* ==========================================
+   CHARTS PAGE - REDESIGNED FOR MOBILE
+   ========================================== */
+
+/* ===== Charts Grid ===== */
+#allSensorsChartsGrid,
+.charts-grid-responsive {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+/* ===== Filter Panel - Clean Design ===== */
+.filter-panel-mobile {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 12px var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.filter-title-mobile {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-section-mobile {
+    margin-bottom: 16px;
+}
+
+/* Time Range Row */
+.time-range-row {
+    margin-bottom: 12px;
+}
+
+.time-range-row .mobile-label {
+    display: none;
+}
+
+/* Time Range Buttons - Pill Style */
+.time-range-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    background: var(--bg);
+    padding: 4px;
+    border-radius: 12px;
+}
+
+.btn-time {
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: fit-content;
+    text-align: center;
+}
+
+.btn-time.btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
+}
+
+.btn-time.btn-secondary {
+    background: transparent;
+    color: var(--text);
+}
+
+.btn-time.btn-secondary:hover {
+    background: var(--border);
+}
+
+/* Custom Range Row */
+.custom-range-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.custom-date-group {
+    margin: 0 !important;
+}
+
+/* Filter Details - Collapsible */
+.filter-details {
+    margin: 12px 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg);
+}
+
+.filter-summary {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    list-style: none;
+    color: var(--text-secondary);
+}
+
+.filter-summary::-webkit-details-marker {
+    display: none;
+}
+
+.filter-summary::after {
+    content: '▾';
+    margin-left: auto;
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.filter-details[open] .filter-summary::after {
+    transform: rotate(180deg);
+}
+
+.advanced-filters {
+    padding: 12px;
+    background: var(--card-bg);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.advanced-filters .form-group {
+    margin: 0;
+}
+
+/* Action Buttons */
+.action-buttons-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.btn-action {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Mobile Labels */
+.mobile-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+/* ===== Section Headers ===== */
+.section-header-mobile {
+    margin-bottom: 12px;
+}
+
+.section-header-mobile .section-title {
+    font-size: 16px;
+    margin-bottom: 2px;
+}
+
+.section-header-mobile .section-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.charts-section-mobile {
+    margin-bottom: 20px;
+}
+
+/* ===== Stats Section - Redesigned ===== */
+.stats-section-mobile {
+    margin-bottom: 20px;
+}
+
+.stats-section-mobile .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stats-scroll-container {
+    position: relative;
+    width: 100%;
+}
+
+.stats-grid-scroll {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap !important;
+    align-items: stretch;
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 8px 20px 8px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+    touch-action: pan-x;
+    cursor: grab;
+}
+
+.stats-grid-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.stat-card {
+    flex: 0 0 160px;
+    min-width: 160px;
+    max-width: 160px;
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 2px 10px var(--shadow);
+    border: 1px solid var(--border);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    scroll-snap-align: start;
+    user-select: none;
+    margin-right: 4px;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px var(--shadow-lg);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+/* Scroll indicator */
+.stats-scroll-hint {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.scroll-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.2s ease;
+}
+
+.scroll-dot.active {
+    width: 18px;
+    border-radius: 3px;
+    background: var(--accent);
+}
+
+.stat-card .stat-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.stat-card .stat-values {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-card .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.stat-card .stat-row-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-card .stat-row-value {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.stat-card .stat-row-value.min {
+    color: #4299e1;
+}
+
+.stat-card .stat-row-value.max {
+    color: #f56565;
+}
+
+.stat-card .stat-row-value.avg {
+    color: #48bb78;
+}
+.chart-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 2px 8px var(--shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.chart-container:hover {
+    box-shadow: 0 4px 12px var(--shadow-lg);
+}
+
+/* Chart Header */
+.chart-header-mobile {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 8px;
+}
+
+.chart-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text);
+}
+
+.chart-value-display {
+    text-align: right;
+}
+
+.chart-current-value {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.chart-update-time {
+    font-size: 9px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* Canvas Wrapper */
+.chart-canvas-wrapper {
+    position: relative;
+    width: 100%;
+    min-height: 180px;
+}
+
+.chart-canvas-responsive {
+    display: block;
+    width: 100% !important;
+    height: 180px !important;
+    border-radius: 8px;
+    background: transparent;
+}
+
+/* Ensure canvas displays properly */
+.chart-container canvas {
+    display: block;
+    width: 100% !important;
+    max-width: 100%;
+}
+
+/* Info Panel */
+.info-panel {
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(66, 153, 225, 0.1));
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 10px;
+}
+
+.info-panel-content {
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* ==========================================
+   RESPONSIVE BREAKPOINTS
+   ========================================== */
+
+/* Desktop */
+@media (min-width: 1025px) {
+    #allSensorsChartsGrid,
+    .charts-grid-responsive {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .chart-container {
+        padding: 18px;
+    }
+    
+    .chart-title {
+        font-size: 15px;
+    }
+    
+    .chart_current-value {
+        font-size: 22px;
+    }
+    
+    /* Stats Slider Desktop - Keep as horizontal slider */
+    .stats-grid-scroll {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 16px;
+        overflow-x: auto;
+    }
+    
+    .stat-card {
+        flex: 0 0 170px;
+        min-width: 170px;
+        max-width: 170px;
+    }
+}
+
+/* Tablet */
+@media (max-width: 1024px) and (min-width: 769px) {
+    #allSensorsChartsGrid,
+    .charts-grid-responsive {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .filter-panel-mobile {
+        padding: 18px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .content {
+        padding: 12px;
+    }
+    
+    #allSensorsChartsGrid,
+    .charts-grid-responsive {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .filter-panel-mobile {
+        padding: 14px;
+        border-radius: 14px;
+    }
+    
+    .filter-title-mobile {
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+    
+    .time-range-buttons {
+        padding: 3px;
+        border-radius: 10px;
+    }
+    
+    .btn-time {
+        padding: 8px 10px;
+        font-size: 11px;
+        border-radius: 8px;
+    }
+    
+    .filter-details {
+        margin: 10px 0;
+    }
+    
+    .filter-summary {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .advanced-filters {
+        padding: 10px;
+        gap: 8px;
+    }
+    
+    .action-buttons-row {
+        margin-top: 10px;
+    }
+    
+    .btn-action {
+        padding: 10px 14px;
+        font-size: 12px;
+        border-radius: 8px;
+    }
+    
+    .chart-container {
+        padding: 12px;
+        border-radius: 10px;
+    }
+    
+    .chart-header-mobile {
+        margin-bottom: 8px;
+    }
+    
+    .chart-title {
+        font-size: 12px;
+    }
+    
+    .chart-current-value {
+        font-size: 16px;
+    }
+    
+    .chart-update-time {
+        display: none;
+    }
+    
+    /* Canvas size for mobile */
+    .chart-canvas-wrapper {
+        min-height: 160px;
+    }
+    
+    .chart-canvas-responsive {
+        height: 160px !important;
+    }
+    
+    .section-header-mobile .section-title {
+        font-size: 15px;
+    }
+    
+    .stats-section-mobile .section-title {
+        font-size: 16px;
+    }
+    
+    /* Stats Slider Mobile */
+    .stats-grid-scroll {
+        flex-wrap: nowrap !important;
+        gap: 10px;
+        padding: 6px 2px 12px 2px;
+    }
+    
+    .stat-card {
+        flex: 0 0 145px;
+        min-width: 145px;
+        max-width: 145px;
+        padding: 12px;
+        border-radius: 12px;
+    }
+    
+    .stat-card .stat-label {
+        font-size: 12px;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+    }
+    
+    .stat-card .stat-label span:first-child {
+        font-size: 14px !important;
+    }
+    
+    .stat-card .stat-row {
+        font-size: 11px;
+    }
+    
+    .stat-card .stat-values {
+        gap: 6px;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .content {
+        padding: 10px 8px;
+    }
+    
+    .filter-panel-mobile {
+        padding: 12px;
+        border-radius: 12px;
+    }
+    
+    .filter-title-mobile {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    
+    .time-range-buttons {
+        gap: 4px;
+    }
+    
+    .btn-time {
+        padding: 7px 8px;
+        font-size: 10px;
+    }
+    
+    .custom-range-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .advanced-filters {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons-row {
+        gap: 6px;
+    }
+    
+    .btn-action {
+        padding: 9px 12px;
+        font-size: 11px;
+    }
+    
+    .section-header-mobile {
+        margin-bottom: 10px;
+    }
+    
+    .section-header-mobile .section-title {
+        font-size: 14px;
+    }
+    
+    .section-header-mobile .section-subtitle {
+        font-size: 11px;
+    }
+    
+    /* Stats Slider Small Mobile */
+    .stats-grid-scroll {
+        flex-wrap: nowrap !important;
+        gap: 8px;
+        padding: 4px 2px 10px 2px;
+    }
+    
+    .stat-card {
+        flex: 0 0 130px;
+        min-width: 130px;
+        max-width: 130px;
+        padding: 10px;
+        border-radius: 10px;
+    }
+    
+    .stat-card .stat-label {
+        font-size: 11px;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+    }
+    
+    .stat-card .stat-label span:first-child {
+        font-size: 13px !important;
+    }
+    
+    .stat-card .stat-row {
+        font-size: 10px;
+    }
+    
+    .stat-card .stat-values {
+        gap: 5px;
+    }
+    
+    .chart-container {
+        padding: 10px;
+        border-radius: 10px;
+    }
+    
+    .chart-title {
+        font-size: 11px;
+        gap: 3px;
+    }
+    
+    .chart-current-value {
+        font-size: 15px;
+    }
+    
+    /* Canvas size for small mobile */
+    .chart-canvas-wrapper {
+        min-height: 140px;
+    }
+    
+    .chart-canvas-responsive {
+        height: 140px !important;
+    }
+    
+    .info-panel {
+        padding: 8px 10px;
+    }
+    
+    .info-panel-content {
+        font-size: 10px;
+    }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 360px) {
+    .content {
+        padding: 8px 6px;
+    }
+    
+    .filter-panel-mobile {
+        padding: 10px;
+    }
+    
+    .filter-title-mobile {
+        font-size: 13px;
+    }
+    
+    .btn-time {
+        padding: 6px 6px;
+        font-size: 9px;
+    }
+    
+    .btn-action {
+        padding: 8px 10px;
+        font-size: 10px;
+    }
+    
+    .chart-container {
+        padding: 8px;
+    }
+    
+    .chart-title {
+        font-size: 10px;
+    }
+    
+    .chart-current-value {
+        font-size: 14px;
+    }
+    
+    /* Canvas size for extra small mobile */
+    .chart-canvas-wrapper {
+        min-height: 120px;
+    }
+    
+    .chart-canvas-responsive {
+        height: 120px !important;
+    }
+    
+    .section-header-mobile .section-title {
+        font-size: 13px;
+    }
+    
+    /* Stats Slider Extra Small */
+    .stats-grid-scroll {
+        flex-wrap: nowrap !important;
+        gap: 6px;
+    }
+    
+    .stat-card {
+        flex: 0 0 115px;
+        min-width: 115px;
+        max-width: 115px;
+        padding: 8px;
+        border-radius: 8px;
+    }
+    
+    .stat-card .stat-label {
+        font-size: 10px;
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+    }
+    
+    .stat-card .stat-label span:first-child {
+        font-size: 12px !important;
+    }
+    
+    .stat-card .stat-row {
+        font-size: 9px;
+    }
+    
+    .stat-card .stat-values {
+        gap: 4px;
+    }
+}
+
+/* ===== Topbar Mobile ===== */
+@media (max-width: 768px) {
+    .topbar-right {
+        gap: 8px;
+    }
+    
+    .clock-display {
+        display: none;
+    }
+    
+    .status-badge {
+        padding: 4px 8px;
+        font-size: 10px;
+        border-radius: 12px;
+    }
+    
+    .status-badge span:not(.status-dot) {
+        display: none;
+    }
+    
+    .status-dot {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .lang-toggle-btn {
+        padding: 6px 10px;
+        border-radius: 20px;
+    }
+    
+    .lang-separator {
+        display: none;
+    }
+    
+    .theme-toggle {
+        width: 32px;
+        height: 32px;
+        font-size: 15px;
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar {
+        padding: 8px 10px;
+    }
+    
+    .topbar-left {
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .page-title {
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .hamburger-btn {
+        font-size: 20px;
+        padding: 4px;
+    }
+    
+    .topbar-right {
+        gap: 5px;
+    }
+    
+    .status-badge {
+        padding: 3px 6px;
+    }
+    
+    .lang-toggle-btn {
+        padding: 4px 8px;
+    }
+    
+    .lang-flag-toggle svg {
+        width: 16px;
+        height: 11px;
+    }
+    
+    .theme-toggle {
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
     }
 }

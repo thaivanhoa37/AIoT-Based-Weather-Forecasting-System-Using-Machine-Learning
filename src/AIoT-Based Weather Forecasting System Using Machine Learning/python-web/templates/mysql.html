@@ -109,18 +109,24 @@
             <!-- Database Summary -->
             <section class="section">
                 <h2 class="section-title" data-i18n="mysqlExt.dbOverview">Tổng quan cơ sở dữ liệu</h2>
-                <div class="stats-grid">
+                <div class="stats-grid-db">
                     <div class="stat-card">
-                        <div class="stat-label" data-i18n="mysqlExt.totalRecords">Tổng số bản ghi</div>
-                        <div class="stat-value" id="totalRecords">--</div>
+                        <div class="stat-card-content">
+                            <div class="stat-label" data-i18n="mysqlExt.totalRecords">Tổng số bản ghi</div>
+                            <div class="stat-value" id="totalRecords">--</div>
+                        </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label" data-i18n="mysqlExt.estSize">Dung lượng ước tính</div>
-                        <div class="stat-value" style="font-size: 18px;" id="storageSize">--</div>
+                        <div class="stat-card-content">
+                            <div class="stat-label" data-i18n="mysqlExt.estSize">Dung lượng ước tính</div>
+                            <div class="stat-value" id="storageSize">--</div>
+                        </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label" data-i18n="mysqlExt.latestRecord">Bản ghi mới nhất</div>
-                        <div class="stat-value" style="font-size: 14px;" id="latestRecord">--</div>
+                        <div class="stat-card-content">
+                            <div class="stat-label" data-i18n="mysqlExt.latestRecord">Bản ghi mới nhất</div>
+                            <div class="stat-value" id="latestRecord">--</div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -278,6 +284,30 @@
                             🗑️ <span data-i18n="mysqlExt.deleteAll">Xóa tất cả dữ liệu</span>
                         </button>
                     </div>
+
+                    <!-- Delete by ID Range -->
+                    <div class="form-group mt-20" style="border-top: 1px solid var(--border); padding-top: 20px;">
+                        <label class="form-label">🔢 <span data-i18n="mysqlExt.deleteByIdRange">Xóa theo khoảng ID</span></label>
+                        <div class="id-range-container">
+                            <div class="id-input-group">
+                                <label class="form-label-small" data-i18n="mysqlExt.fromId">Từ ID</label>
+                                <input type="number" class="form-input" id="deleteStartId" placeholder="Ví dụ: 1" min="1">
+                            </div>
+                            <span class="date-separator">→</span>
+                            <div class="id-input-group">
+                                <label class="form-label-small" data-i18n="mysqlExt.toId">Đến ID</label>
+                                <input type="number" class="form-input" id="deleteEndId" placeholder="Ví dụ: 1000" min="1">
+                            </div>
+                        </div>
+                        <div class="info-text mt-10" id="deleteIdPreviewCount">
+                            <span>⏳ <span data-i18n="mysqlExt.selectIdRangeHint">Nhập khoảng ID để xem số bản ghi sẽ bị xóa</span></span>
+                        </div>
+                        <div class="mt-10">
+                            <button class="btn btn-warning" onclick="confirmDeleteByIdRange()">
+                                🔢 <span data-i18n="mysqlExt.deleteByIdRangeBtn">Xóa theo khoảng ID</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
@@ -356,6 +386,27 @@
             min-width: 200px;
         }
 
+        .id-range-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .id-input-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .id-input-group .form-input {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
         .date-separator {
             font-size: 20px;
             color: var(--text-secondary);
@@ -410,29 +461,64 @@
             font-size: 16px;
         }
 
+        /* Stats Grid - Desktop: 3 card chia đều chiều ngang */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        /* Tablet: vẫn 3 cột, gap nhỏ hơn */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .stats-grid {
+                gap: 8px;
+            }
+            
+            .stats-grid .stat-card {
+                padding: 15px 20px;
+            }
+            
+            .stats-grid .stat-value {
+                font-size: 20px;
+            }
         }
 
         .stat-card {
             background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
             color: white;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 25px 30px;
+            border-radius: 12px;
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+            flex: 1;
         }
 
         .stat-label {
-            font-size: 12px;
+            font-size: 13px;
             opacity: 0.9;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .stat-value {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
+        }
+
+        /* Mobile: xếp hàng dọc */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .stats-grid .stat-card {
+                padding: 15px 20px;
+            }
         }
 
         body.dark-mode .tool-card {

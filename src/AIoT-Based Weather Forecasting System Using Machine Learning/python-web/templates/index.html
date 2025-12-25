@@ -609,33 +609,6 @@
         }
     }
 
-    function addScrollButtonsHourly() {
-        const container = document.querySelector('.forecast-grid-container');
-        if (!container) return;
-
-        const existingBtn = container.querySelectorAll('.scroll-btn');
-        existingBtn.forEach(btn => btn.remove());
-
-        const leftBtn = document.createElement('button');
-        leftBtn.className = 'scroll-btn scroll-left';
-        leftBtn.innerHTML = '❮';
-        leftBtn.onclick = () => {
-            const grid = document.getElementById('forecastHourlyGrid');
-            grid.parentElement.scrollBy({ left: -400, behavior: 'smooth' });
-        };
-
-        const rightBtn = document.createElement('button');
-        rightBtn.className = 'scroll-btn scroll-right';
-        rightBtn.innerHTML = '❯';
-        rightBtn.onclick = () => {
-            const grid = document.getElementById('forecastHourlyGrid');
-            grid.parentElement.scrollBy({ left: 400, behavior: 'smooth' });
-        };
-
-        container.appendChild(leftBtn);
-        container.appendChild(rightBtn);
-    }
-
     function addScrollButtonsFor7Day() {
         const container = document.getElementById('forecast7DayContainer');
         if (!container) return;

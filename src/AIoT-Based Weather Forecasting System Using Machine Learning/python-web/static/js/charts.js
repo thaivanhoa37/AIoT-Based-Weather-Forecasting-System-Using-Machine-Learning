@@ -37,7 +37,7 @@ function setupEventListeners() {
 // Set time range and reload charts
 function setTimeRange(range) {
     const rangeMap = {
-        'today': '24h',
+        'today': 'today',
         '24h': '24h',
         '7d': '7d',
         '30d': '30d',

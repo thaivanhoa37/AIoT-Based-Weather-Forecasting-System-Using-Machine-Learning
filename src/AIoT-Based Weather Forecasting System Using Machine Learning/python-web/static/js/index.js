@@ -44,6 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
             loadRealtimeData();
         }
     });
+
+    // Listen for language change event to refresh forecast displays
+    window.addEventListener('languageChanged', () => {
+        console.log('Language changed - refreshing forecasts');
+        displayForecast7Day();
+        displayForecastHourly();
+    });
 });
 
 // Load real-time data from SQL
@@ -128,10 +135,10 @@ async function displayForecast7Day() {
     const grid = document.getElementById('forecast7DayGrid');
     if (!grid) return;
     
-    grid.innerHTML = '<div class="loading-text" style="grid-column: 1/-1; text-align: center; padding: 20px;">🔄 Đang tải dự báo từ ML model...</div>';
+    // Helper function to get translation - use i18n system
+    const t = (key) => window.i18n && typeof window.i18n.t === 'function' ? window.i18n.t(key) : key.split('.').pop();
     
-    // Helper function to get translation
-    const t = (key) => typeof getTranslation === 'function' ? getTranslation(key) : key.split('.').pop();
+    grid.innerHTML = `<div class="loading-text" style="grid-column: 1/-1; text-align: center; padding: 20px;">🔄 ${t('index.loadingForecastML')}</div>`;
     
     try {
         const response = await fetch('/api/ml/predict?hours_ahead=168');
@@ -224,7 +231,11 @@ async function displayForecast7Day() {
             if (dateParts.length === 3) {
                 const [day, month, year] = dateParts;
                 const dateObj = new Date(year, month - 1, day);
-                const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+                // Use i18n for day names
+                const currentLang = localStorage.getItem('language') || 'vi';
+                const dayNamesVi = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+                const dayNamesEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const dayNames = currentLang === 'en' ? dayNamesEn : dayNamesVi;
                 dayName = dayNames[dateObj.getDay()];
                 displayDate = `${day}/${month}`;
             }
@@ -280,7 +291,10 @@ async function displayForecastHourly() {
     const grid = document.getElementById('forecastHourlyGrid');
     if (!grid) return;
     
-    grid.innerHTML = '<div class="loading-text" style="grid-column: 1/-1; text-align: center; padding: 20px;">🔄 Đang tải dự báo...</div>';
+    // Helper function to get translation - use i18n system
+    const t = (key) => window.i18n && typeof window.i18n.t === 'function' ? window.i18n.t(key) : key.split('.').pop();
+    
+    grid.innerHTML = `<div class="loading-text" style="grid-column: 1/-1; text-align: center; padding: 20px;">🔄 ${t('index.loadingForecast')}</div>`;
     
     try {
         const response = await fetch('/api/ml/predict?hours_ahead=24');
@@ -292,9 +306,6 @@ async function displayForecastHourly() {
         }
 
         grid.innerHTML = '';
-
-        // Helper function to get translation (same as forecast page)
-        const t = (key) => typeof getTranslation === 'function' ? getTranslation(key) : key.split('.').pop();
 
         // Display all 24 hours
         data.forecasts.slice(0, 24).forEach((forecast, index) => {
@@ -412,17 +423,12 @@ async function displayForecastHourly() {
             grid.appendChild(card);
         });
 
-        // Add scroll buttons (defined in index.html)
-        if (typeof addScrollButtonsHourly === 'function') {
-            addScrollButtonsHourly();
-        }
-
     } catch (error) {
         console.error('Error loading hourly forecast:', error);
         grid.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--danger);">
                 <div style="font-size: 48px; margin-bottom: 10px;">⚠️</div>
-                <div style="font-size: 16px; font-weight: bold;">Lỗi tải dự báo</div>
+                <div style="font-size: 16px; font-weight: bold;">${t('index.errorLoadForecast')}</div>
                 <div style="font-size: 14px; color: var(--text-secondary); margin-top: 10px;">${error.message}</div>
             </div>
         `;

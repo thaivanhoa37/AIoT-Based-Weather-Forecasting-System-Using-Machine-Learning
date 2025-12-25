@@ -107,62 +107,63 @@
         <!-- Content -->
         <main class="content">
             <!-- Filter Panel -->
-            <section class="section">
-                <div class="filter-panel">
-                    <h3 class="section-title" data-i18n="charts.dataFilter">Bộ lọc dữ liệu</h3>
+            <section class="section filter-section-mobile">
+                <div class="filter-panel filter-panel-mobile">
+                    <h3 class="section-title filter-title-mobile" data-i18n="charts.dataFilter">🔧 Bộ lọc dữ liệu</h3>
 
                     <!-- Quick Time Range Buttons -->
-                    <div class="filter-row">
-                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                            <label class="form-label" data-i18n="charts.quickTimeRange">Khoảng thời gian nhanh</label>
-                            <div class="btn-group">
-                                <button class="btn btn-secondary" onclick="setTimeRange('today')" id="btnToday" data-i18n="common.today">Hôm nay</button>
-                                <button class="btn btn-primary" onclick="setTimeRange('24h')" id="btn24h" data-i18n="charts.last24h">24 giờ qua</button>
-                                <button class="btn btn-secondary" onclick="setTimeRange('7d')" id="btn7d" data-i18n="charts.last7d">7 ngày qua</button>
-                                <button class="btn btn-secondary" onclick="setTimeRange('30d')" id="btn30d" data-i18n="charts.last30d">30 ngày qua</button>
-                                <button class="btn btn-secondary" onclick="setTimeRange('custom')" id="btnCustom" data-i18n="charts.custom">Tùy chỉnh</button>
-                            </div>
+                    <div class="filter-row time-range-row">
+                        <label class="form-label mobile-label" data-i18n="charts.quickTimeRange">⏰ Khoảng thời gian</label>
+                        <div class="time-range-buttons">
+                            <button class="btn btn-time btn-secondary" onclick="setTimeRange('today')" id="btnToday" data-i18n="common.today">Hôm nay</button>
+                            <button class="btn btn-time btn-primary" onclick="setTimeRange('24h')" id="btn24h" data-i18n="charts.last24h">24h</button>
+                            <button class="btn btn-time btn-secondary" onclick="setTimeRange('7d')" id="btn7d" data-i18n="charts.last7d">7 ngày</button>
+                            <button class="btn btn-time btn-secondary" onclick="setTimeRange('30d')" id="btn30d" data-i18n="charts.last30d">30 ngày</button>
+                            <button class="btn btn-time btn-secondary" onclick="setTimeRange('custom')" id="btnCustom" data-i18n="charts.custom">📅</button>
                         </div>
                     </div>
 
                     <!-- Custom Date/Time Range -->
-                    <div class="filter-row" id="customRangeRow" style="display: none;">
-                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                            <label class="form-label">📅 <span data-i18n="charts.fromDate">Từ ngày & giờ</span></label>
+                    <div class="filter-row custom-range-row" id="customRangeRow" style="display: none;">
+                        <div class="form-group custom-date-group">
+                            <label class="form-label mobile-label">📅 <span data-i18n="charts.fromDate">Từ</span></label>
                             <input type="datetime-local" class="form-input" id="startDateTime">
                         </div>
-                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                            <label class="form-label">📅 <span data-i18n="charts.toDate">Đến ngày & giờ</span></label>
+                        <div class="form-group custom-date-group">
+                            <label class="form-label mobile-label">📅 <span data-i18n="charts.toDate">Đến</span></label>
                             <input type="datetime-local" class="form-input" id="endDateTime">
                         </div>
                     </div>
 
-                    <!-- Node and Granularity -->
-                    <div class="filter-row">
-                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                            <label class="form-label" data-i18n="charts.node">Node</label>
-                            <select class="form-select" id="nodeSelect">
-                                <option value="all" data-i18n="common.all">Tất cả</option>
-                                <option value="node1">Node 1</option>
-                                <option value="node2">Node 2</option>
-                            </select>
+                    <!-- Node and Granularity - Collapsible on mobile -->
+                    <details class="filter-details">
+                        <summary class="filter-summary">⚙️ <span data-i18n="charts.advancedOptions">Tùy chọn nâng cao</span></summary>
+                        <div class="filter-row advanced-filters">
+                            <div class="form-group">
+                                <label class="form-label mobile-label" data-i18n="charts.node">📍 Node</label>
+                                <select class="form-select" id="nodeSelect">
+                                    <option value="all" data-i18n="common.all">Tất cả</option>
+                                    <option value="node1">Node 1</option>
+                                    <option value="node2">Node 2</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label mobile-label" data-i18n="charts.granularity">📊 Chi tiết</label>
+                                <select class="form-select" id="granularitySelect">
+                                    <option value="hour" data-i18n="charts.byHour">Theo giờ</option>
+                                    <option value="day" data-i18n="charts.byDay">Theo ngày</option>
+                                    <option value="week" data-i18n="charts.byWeek">Theo tuần</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                            <label class="form-label" data-i18n="charts.granularity">Độ chi tiết hiển thị</label>
-                            <select class="form-select" id="granularitySelect">
-                                <option value="hour" data-i18n="charts.byHour">Theo giờ (chi tiết)</option>
-                                <option value="day" data-i18n="charts.byDay">Theo ngày</option>
-                                <option value="week" data-i18n="charts.byWeek">Theo tuần</option>
-                            </select>
-                        </div>
-                    </div>
+                    </details>
 
                     <!-- Action Buttons -->
-                    <div class="filter-row">
-                        <button class="btn btn-primary" onclick="applyFilters()">
-                            🔍 <span data-i18n="charts.applyFilter">Áp dụng bộ lọc</span>
+                    <div class="filter-row action-buttons-row">
+                        <button class="btn btn-primary btn-action" onclick="applyFilters()">
+                            🔍 <span data-i18n="charts.applyFilter">Áp dụng</span>
                         </button>
-                        <button class="btn btn-secondary" onclick="resetFilters()">
+                        <button class="btn btn-secondary btn-action" onclick="resetFilters()">
                             🔄 <span data-i18n="charts.resetFilter">Đặt lại</span>
                         </button>
                     </div>
@@ -170,7 +171,7 @@
                     <!-- Time Range Info Display -->
                     <div class="info-panel mt-10" id="timeRangeInfo" style="display: none;">
                         <div class="info-panel-content">
-                            <strong>⏱️ <span data-i18n="charts.timeRangeViewing">Khoảng thời gian đang xem:</span></strong><br>
+                            <strong>⏱️ <span data-i18n="charts.timeRangeViewing">Đang xem:</span></strong><br>
                             <span id="timeRangeText"></span>
                         </div>
                     </div>
@@ -178,21 +179,25 @@
             </section>
 
             <!-- All Sensors Detailed Charts (Combined - No Separation) -->
-            <section class="section">
-                <h2 class="section-title">📊 <span data-i18n="charts.allSensors">Tất cả cảm biến - Xem chi tiết</span></h2>
-                <p class="section-subtitle" data-i18n="charts.allSensorsDesc">Hiển thị tất cả dữ liệu cảm biến IoT và API thời tiết trong một giao diện thống nhất</p>
-                <div id="allSensorsChartsGrid"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px;">
+            <section class="section charts-section-mobile">
+                <div class="section-header-mobile">
+                    <h2 class="section-title">📊 <span data-i18n="charts.allSensors">Biểu đồ cảm biến</span></h2>
+                    <p class="section-subtitle" data-i18n="charts.allSensorsDesc">Dữ liệu IoT & thời tiết</p>
+                </div>
+                <div id="allSensorsChartsGrid" class="charts-grid-responsive">
                     <!-- Detailed charts will be populated by JavaScript -->
                 </div>
             </section>
 
             <!-- Statistics Cards -->
-            <section class="section">
-                <h2 class="section-title">📈 <span data-i18n="charts.statistics">Thống kê tổng hợp</span></h2>
+            <section class="section stats-section-mobile">
+                <h2 class="section-title">📈 <span data-i18n="charts.statistics">Thống kê</span></h2>
                 <div class="stats-scroll-container" id="statsContainer">
                     <div class="stats-grid-scroll" id="statsGrid">
                         <!-- Stats will be populated by JavaScript -->
+                    </div>
+                    <div class="stats-scroll-hint" id="statsScrollHint">
+                        <!-- Scroll dots will be added by JS -->
                     </div>
                 </div>
             </section>
@@ -213,15 +218,28 @@
 
         // All sensors configuration (IoT + Weather API - NO SEPARATION)
         const allSensors = [
-            { key: 'temperature', name: 'Nhiệt độ', unit: '°C', color: '#ff6b9d', icon: '🌡️' },
-            { key: 'humidity', name: 'Độ ẩm', unit: '%', color: '#4299e1', icon: '💧' },
-            { key: 'pressure', name: 'Áp suất', unit: 'hPa', color: '#f6ad55', icon: '🎯' },
-            { key: 'co2', name: 'CO₂', unit: 'ppm', color: '#68d391', icon: '☁️' },
-            { key: 'dust', name: 'Bụi mịn', unit: 'µg/m³', color: '#b794f4', icon: '😷' },
-            { key: 'windSpeed', name: 'Tốc độ gió', unit: 'km/h', color: '#90cdf4', icon: '🌬️' },
-            { key: 'rainfall', name: 'Lượng mưa', unit: 'mm', color: '#63b3ed', icon: '🌧️' },
-            { key: 'uvIndex', name: 'Chỉ số UV', unit: '', color: '#fbd38d', icon: '☀️' }
+            { key: 'temperature', nameKey: 'charts.sensors.temperature', name: 'Nhiệt độ', unit: '°C', color: '#ff6b9d', icon: '🌡️' },
+            { key: 'humidity', nameKey: 'charts.sensors.humidity', name: 'Độ ẩm', unit: '%', color: '#4299e1', icon: '💧' },
+            { key: 'pressure', nameKey: 'charts.sensors.pressure', name: 'Áp suất', unit: 'hPa', color: '#f6ad55', icon: '🎯' },
+            { key: 'co2', nameKey: 'charts.sensors.co2', name: 'CO₂', unit: 'ppm', color: '#68d391', icon: '☁️' },
+            { key: 'dust', nameKey: 'charts.sensors.dust', name: 'Bụi mịn', unit: 'µg/m³', color: '#b794f4', icon: '😷' },
+            { key: 'windSpeed', nameKey: 'charts.sensors.windSpeed', name: 'Tốc độ gió', unit: 'km/h', color: '#90cdf4', icon: '🌬️' },
+            { key: 'rainfall', nameKey: 'charts.sensors.rainfall', name: 'Lượng mưa', unit: 'mm', color: '#63b3ed', icon: '🌧️' },
+            { key: 'uvIndex', nameKey: 'charts.sensors.uvIndex', name: 'Chỉ số UV', unit: '', color: '#fbd38d', icon: '☀️' }
         ];
+        
+        // Helper function to get translated text
+        function t(key) {
+            if (typeof i18n !== 'undefined' && i18n.t) {
+                return i18n.t(key);
+            }
+            return null;
+        }
+        
+        // Get sensor name with i18n
+        function getSensorName(sensor) {
+            return t(sensor.nameKey) || sensor.name;
+        }
 
         // Initialize datetime inputs
         function initializeDateTimeInputs() {
@@ -400,6 +418,9 @@
         function drawAllDetailedCharts() {
             const grid = document.getElementById('allSensorsChartsGrid');
             grid.innerHTML = '';
+            
+            const isMobile = window.innerWidth <= 480;
+            const isTablet = window.innerWidth <= 768;
 
             allSensors.forEach(sensor => {
                 // Create chart container
@@ -408,33 +429,26 @@
 
                 // Create header with title and current value
                 const header = document.createElement('div');
-                header.style.display = 'flex';
-                header.style.justifyContent = 'space-between';
-                header.style.alignItems = 'center';
-                header.style.marginBottom = '15px';
+                header.className = 'chart-header-mobile';
 
                 const title = document.createElement('h3');
                 title.className = 'chart-title';
-                title.innerHTML = `${sensor.icon} ${sensor.name}`;
-                title.style.margin = '0';
-                title.style.fontSize = '16px';
+                title.innerHTML = `${sensor.icon} ${getSensorName(sensor)}`;
 
                 // Current value display
                 const valueDisplay = document.createElement('div');
-                valueDisplay.style.textAlign = 'right';
+                valueDisplay.className = 'chart-value-display';
 
                 if (chartsData[sensor.key] && chartsData[sensor.key].length > 0) {
                     const latest = chartsData[sensor.key][chartsData[sensor.key].length - 1];
                     const currentVal = document.createElement('div');
-                    currentVal.style.fontSize = '24px';
-                    currentVal.style.fontWeight = 'bold';
+                    currentVal.className = 'chart-current-value';
                     currentVal.style.color = sensor.color;
-                    currentVal.textContent = `${latest.value} ${sensor.unit}`;
+                    currentVal.textContent = `${latest.value}${sensor.unit}`;
 
                     const updateTime = document.createElement('div');
-                    updateTime.style.fontSize = '11px';
-                    updateTime.style.color = 'var(--text-secondary)';
-                    updateTime.textContent = `Cập nhật: ${latest.time.split(' ')[1]}`;
+                    updateTime.className = 'chart-update-time';
+                    updateTime.textContent = latest.time.split(' ')[1];
 
                     valueDisplay.appendChild(currentVal);
                     valueDisplay.appendChild(updateTime);
@@ -443,25 +457,60 @@
                 header.appendChild(title);
                 header.appendChild(valueDisplay);
 
+                // Create canvas wrapper for responsive
+                const canvasWrapper = document.createElement('div');
+                canvasWrapper.className = 'chart-canvas-wrapper';
+
                 // Create canvas for chart
                 const canvas = document.createElement('canvas');
-                canvas.width = 700;
-                canvas.height = 280;
+                canvas.className = 'chart-canvas-responsive';
+                
+                // Set explicit height based on device - synced with CSS
+                let canvasHeight;
+                if (window.innerWidth <= 360) {
+                    canvasHeight = 120;
+                } else if (isMobile) {
+                    canvasHeight = 140;
+                } else if (isTablet) {
+                    canvasHeight = 160;
+                } else {
+                    canvasHeight = 180;
+                }
+                
+                // Set canvas CSS size
                 canvas.style.width = '100%';
-                canvas.style.height = 'auto';
+                canvas.style.height = canvasHeight + 'px';
+                canvas.style.display = 'block';
 
+                canvasWrapper.appendChild(canvas);
                 container.appendChild(header);
-                container.appendChild(canvas);
+                container.appendChild(canvasWrapper);
                 grid.appendChild(container);
 
-                // Draw chart
-                if (chartsData[sensor.key]) {
-                    AppUtils.drawLineChart(canvas, chartsData[sensor.key], {
-                        color: sensor.color,
-                        padding: 60
-                    });
+                // Draw chart after DOM is ready
+                if (chartsData[sensor.key] && chartsData[sensor.key].length > 0) {
+                    // Use setTimeout to ensure canvas is in DOM and has dimensions
+                    setTimeout(() => {
+                        const padding = isMobile ? 30 : (isTablet ? 40 : 50);
+                        AppUtils.drawLineChart(canvas, chartsData[sensor.key], {
+                            color: sensor.color,
+                            padding: padding
+                        });
+                    }, 50);
                 }
             });
+            
+            // Add resize listener for responsive redraw (debounced)
+            if (!window.chartsResizeListener) {
+                window.chartsResizeListener = true;
+                let resizeTimeout;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(() => {
+                        drawAllDetailedCharts();
+                    }, 300);
+                });
+            }
         }
 
         // Update statistics
@@ -470,7 +519,7 @@
             statsGrid.innerHTML = '';
 
             allSensors.forEach(sensor => {
-                if (!chartsData[sensor.key]) return;
+                if (!chartsData[sensor.key] || chartsData[sensor.key].length === 0) return;
 
                 const values = chartsData[sensor.key].map(d => parseFloat(d.value));
                 const min = Math.min(...values).toFixed(1);
@@ -479,19 +528,110 @@
 
                 const statCard = document.createElement('div');
                 statCard.className = 'stat-card';
+                
+                const minLabel = t('charts.min') || 'Thấp nhất';
+                const maxLabel = t('charts.max') || 'Cao nhất';
+                const avgLabel = t('charts.avg') || 'Trung bình';
+                
                 statCard.innerHTML = `
-                    <div class="stat-label">${sensor.icon} ${sensor.name}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
-                        <div>Min: <strong>${min} ${sensor.unit}</strong></div>
-                        <div>Max: <strong>${max} ${sensor.unit}</strong></div>
-                        <div>Avg: <strong>${avg} ${sensor.unit}</strong></div>
+                    <div class="stat-label">
+                        <span style="font-size: 16px;">${sensor.icon}</span>
+                        <span>${getSensorName(sensor)}</span>
+                    </div>
+                    <div class="stat-values">
+                        <div class="stat-row">
+                            <span class="stat-row-label">${minLabel}</span>
+                            <span class="stat-row-value min">${min} ${sensor.unit}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">${maxLabel}</span>
+                            <span class="stat-row-value max">${max} ${sensor.unit}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">${avgLabel}</span>
+                            <span class="stat-row-value avg">${avg} ${sensor.unit}</span>
+                        </div>
                     </div>
                 `;
                 statsGrid.appendChild(statCard);
             });
             
-            // Add scroll buttons for stats
-            addStatsScrollButtons();
+            // Add scroll indicator dots
+            updateScrollIndicator();
+            
+            // Listen for scroll to update dots
+            statsGrid.addEventListener('scroll', updateScrollIndicator);
+            
+            // Enable mouse drag scrolling
+            enableDragScroll(statsGrid);
+        }
+        
+        // Enable drag to scroll for mouse
+        function enableDragScroll(element) {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+            
+            element.addEventListener('mousedown', (e) => {
+                isDown = true;
+                element.style.cursor = 'grabbing';
+                startX = e.pageX - element.offsetLeft;
+                scrollLeft = element.scrollLeft;
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                isDown = false;
+                element.style.cursor = 'grab';
+            });
+            
+            element.addEventListener('mouseup', () => {
+                isDown = false;
+                element.style.cursor = 'grab';
+            });
+            
+            element.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - element.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                element.scrollLeft = scrollLeft - walk;
+            });
+        }
+        
+        // Update scroll indicator dots
+        function updateScrollIndicator() {
+            const statsGrid = document.getElementById('statsGrid');
+            const scrollHint = document.getElementById('statsScrollHint');
+            if (!statsGrid || !scrollHint) return;
+            
+            const cards = statsGrid.querySelectorAll('.stat-card');
+            const cardCount = cards.length;
+            if (cardCount === 0) return;
+            
+            // Calculate visible cards and total pages
+            const containerWidth = statsGrid.clientWidth;
+            const cardWidth = cards[0]?.offsetWidth || 160;
+            const gap = 12;
+            const visibleCards = Math.floor(containerWidth / (cardWidth + gap)) || 1;
+            const totalPages = Math.ceil(cardCount / visibleCards);
+            
+            // Get current page based on scroll position
+            const scrollLeft = statsGrid.scrollLeft;
+            const maxScroll = statsGrid.scrollWidth - containerWidth;
+            const currentPage = maxScroll > 0 ? Math.round((scrollLeft / maxScroll) * (totalPages - 1)) : 0;
+            
+            // Create dots
+            scrollHint.innerHTML = '';
+            for (let i = 0; i < Math.min(totalPages, 8); i++) {
+                const dot = document.createElement('span');
+                dot.className = 'scroll-dot' + (i === currentPage ? ' active' : '');
+                dot.style.cursor = 'pointer';
+                dot.onclick = () => {
+                    const targetScroll = maxScroll > 0 ? (maxScroll / (totalPages - 1)) * i : 0;
+                    statsGrid.scrollTo({ left: targetScroll, behavior: 'smooth' });
+                };
+                scrollHint.appendChild(dot);
+            }
         }
         
         function addStatsScrollButtons() {
@@ -525,6 +665,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeDateTimeInputs();
             loadChartsData();
+            
+            // Listen for language change to refresh charts and stats
+            window.addEventListener('languageChanged', () => {
+                if (Object.keys(chartsData).length > 0) {
+                    drawAllDetailedCharts();
+                    updateStatistics();
+                }
+            });
         });
     </script>
     

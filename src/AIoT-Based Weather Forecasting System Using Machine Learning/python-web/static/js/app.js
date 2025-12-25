@@ -307,7 +307,7 @@ function showModal(title, message, onConfirm, onCancel) {
     const cancelBtn = document.getElementById('modalCancel');
 
     modalTitle.textContent = title;
-    modalBody.textContent = message;
+    modalBody.innerHTML = message;
 
     overlay.classList.add('active');
 
@@ -586,8 +586,22 @@ async function fetchSystemStats() {
 
 function drawLineChart(canvas, data, options = {}) {
     const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Get actual display size
+    const displayWidth = canvas.clientWidth || canvas.width / dpr;
+    const displayHeight = canvas.clientHeight || canvas.height / dpr;
+    
+    // Set canvas buffer size to match display size * dpr
+    canvas.width = displayWidth * dpr;
+    canvas.height = displayHeight * dpr;
+    
+    // Scale context to match dpr
+    ctx.scale(dpr, dpr);
+    
+    // Use display dimensions for drawing
+    const width = displayWidth;
+    const height = displayHeight;
     const padding = options.padding || 40;
 
     // Clear canvas
@@ -645,37 +659,45 @@ function drawLineChart(canvas, data, options = {}) {
 
     // Draw labels
     ctx.fillStyle = isDark ? '#cbd5e0' : '#718096';
-    ctx.font = '10px sans-serif';
+    
+    // Responsive font size
+    const fontSize = width < 300 ? 8 : (width < 400 ? 9 : 10);
+    ctx.font = `${fontSize}px sans-serif`;
     ctx.textAlign = 'center';
 
-    // X-axis labels (show every nth label to avoid crowding)
-    const labelInterval = Math.max(1, Math.ceil(data.length / 8)); // Show max 8 labels
-    ctx.save(); // Save context state
+    // X-axis labels (show fewer labels on small screens)
+    const maxLabels = width < 300 ? 4 : (width < 400 ? 5 : 8);
+    const labelInterval = Math.max(1, Math.ceil(data.length / maxLabels));
+    ctx.save();
 
     data.forEach((point, index) => {
         if (index % labelInterval === 0 || index === data.length - 1) {
             const x = padding + (width - 2 * padding) * index / (data.length - 1);
 
-            // Split time into date and time parts for better display
+            // Split time into date and time parts
             const timeParts = point.time.split(' ');
-            const datepart = timeParts[0] || '';
-            const timepart = timeParts[1] || '';
+            const timepart = timeParts[1] || timeParts[0] || '';
 
-            // Draw date on first line
-            ctx.fillText(datepart, x, height - 25);
-            // Draw time on second line
-            ctx.fillText(timepart, x, height - 10);
+            // Only show time on mobile for cleaner look
+            if (width < 350) {
+                ctx.fillText(timepart.substring(0, 5), x, height - 8);
+            } else {
+                const datepart = timeParts[0] || '';
+                ctx.fillText(datepart, x, height - 18);
+                ctx.fillText(timepart, x, height - 6);
+            }
         }
     });
 
-    ctx.restore(); // Restore context state
+    ctx.restore();
 
     // Y-axis labels
     ctx.textAlign = 'right';
-    for (let i = 0; i <= 5; i++) {
-        const value = minValue + (range * (5 - i) / 5);
-        const y = padding + (height - 2 * padding) * i / 5;
-        ctx.fillText(value.toFixed(1), padding - 10, y + 4);
+    const yLabelCount = width < 300 ? 3 : 5;
+    for (let i = 0; i <= yLabelCount; i++) {
+        const value = minValue + (range * (yLabelCount - i) / yLabelCount);
+        const y = padding + (height - 2 * padding) * i / yLabelCount;
+        ctx.fillText(value.toFixed(1), padding - 5, y + 4);
     }
 }
 

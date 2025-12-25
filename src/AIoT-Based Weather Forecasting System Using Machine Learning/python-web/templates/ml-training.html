@@ -38,12 +38,41 @@
             line-height: 1.6;
         }
 
-        /* Stats Grid */
+        /* Stats Grid - Luôn hiển thị 4 cột trên 1 hàng */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
             margin-bottom: 30px;
+            width: 100%;
+        }
+
+        .stats-grid .stat-card {
+            width: 100%;
+        }
+
+        /* Wrapper để full width */
+        .stats-grid-wrapper {
+            width: 100%;
+        }
+
+        /* Tablet: flex nhưng nhỏ hơn */
+        @media (max-width: 1200px) and (min-width: 769px) {
+            .stats-grid {
+                gap: 6px;
+            }
+            
+            .stat-card {
+                padding: 18px 12px;
+            }
+            
+            .stat-value {
+                font-size: 18px;
+            }
+            
+            .stat-label {
+                font-size: 11px;
+            }
         }
 
         .stat-card {
@@ -53,22 +82,27 @@
             padding: 20px;
             text-align: center;
             transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
         }
 
         .stat-card:hover {
             border-color: var(--primary-color);
             box-shadow: 0 4px 12px var(--shadow);
-            transform: translateY(-4px);
+            transform: translateY(-2px);
         }
 
         .stat-icon {
-            font-size: 24px;
+            font-size: 28px;
             margin-bottom: 8px;
             display: block;
         }
 
         .stat-label {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-secondary);
             font-weight: 600;
             margin-bottom: 8px;
@@ -76,8 +110,12 @@
         }
 
         .stat-value {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
             color: var(--primary-color);
         }
 
@@ -407,7 +445,46 @@
             }
 
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                gap: 12px;
+                padding-bottom: 12px;
+                margin-left: -15px;
+                margin-right: -15px;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
+            .stats-grid .stat-card {
+                min-width: 160px;
+                flex-shrink: 0;
+                scroll-snap-align: start;
+            }
+
+            .stats-grid::-webkit-scrollbar {
+                height: 6px;
+            }
+
+            .stats-grid::-webkit-scrollbar-track {
+                background: var(--border-color);
+                border-radius: 10px;
+            }
+
+            .stats-grid::-webkit-scrollbar-thumb {
+                background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+                border-radius: 10px;
+            }
+
+            .scroll-indicator-mobile {
+                display: block !important;
+                animation: bounce-horizontal 2s infinite;
+            }
+
+            @keyframes bounce-horizontal {
+                0%, 100% { transform: translateX(0); opacity: 0.5; }
+                50% { transform: translateX(5px); opacity: 1; }
             }
 
             .form-grid {
@@ -442,7 +519,25 @@
             }
 
             .stats-grid {
-                grid-template-columns: 1fr;
+                display: flex;
+                gap: 10px;
+            }
+
+            .stats-grid .stat-card {
+                min-width: 140px;
+                padding: 15px 12px;
+            }
+
+            .stats-grid .stat-icon {
+                font-size: 20px;
+            }
+
+            .stats-grid .stat-value {
+                font-size: 16px;
+            }
+
+            .stats-grid .stat-label {
+                font-size: 11px;
             }
 
             .form-section {
@@ -866,26 +961,31 @@
             <!-- Quick Stats -->
             <section class="section">
                 <h2 class="section-title">📊 <span data-i18n="mlTrainingExt.currentInfo">Thông tin hiện tại</span></h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">🤖</div>
-                        <div class="stat-label" data-i18n="mlTrainingExt.model">Model</div>
-                        <div class="stat-value" id="currentModelType">Prophet</div>
+                <div class="stats-grid-wrapper">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">🤖</div>
+                            <div class="stat-label" data-i18n="mlTrainingExt.model">Model</div>
+                            <div class="stat-value" id="currentModelType">Prophet</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-label" data-i18n="mlTrainingExt.lastTrain">Huấn luyện gần nhất</div>
+                            <div class="stat-value" id="lastTrainTime">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-label" data-i18n="mlTrainingExt.r2Score">R² Score</div>
+                            <div class="stat-value" id="modelAccuracy">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📁</div>
+                            <div class="stat-label" data-i18n="mlTrainingExt.dataLabel">Dữ liệu</div>
+                            <div class="stat-value" id="trainingDataCount">0</div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📅</div>
-                        <div class="stat-label" data-i18n="mlTrainingExt.lastTrain">Huấn luyện gần nhất</div>
-                        <div class="stat-value" id="lastTrainTime">--</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📈</div>
-                        <div class="stat-label" data-i18n="mlTrainingExt.r2Score">R² Score</div>
-                        <div class="stat-value" id="modelAccuracy">--</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📁</div>
-                        <div class="stat-label" data-i18n="mlTrainingExt.dataLabel">Dữ liệu</div>
-                        <div class="stat-value" id="trainingDataCount">0</div>
+                    <div class="scroll-indicator-mobile" style="display: none; text-align: center; color: var(--text-secondary); font-size: 11px; margin-top: 8px;">
+                        <span>👆 <span data-i18n="mlTrainingExt.swipeToSeeMore">Kéo sang để xem thêm</span></span>
                     </div>
                 </div>
             </section>
@@ -898,8 +998,8 @@
                         <div class="form-group">
                             <label class="form-label">🤖 <span data-i18n="mlTrainingExt.selectModel">Chọn Model</span></label>
                             <select class="form-select" id="modelType" onchange="updateCurrentModel()">
-                                <option value="prophet">Prophet (Khuyến nghị)</option>
-                                <option value="lightgbm">LightGBM (Boosting)</option>
+                                <option value="prophet" data-i18n="mlTrainingExt.prophetRecommend">Prophet (Khuyến nghị)</option>
+                                <option value="lightgbm" data-i18n="mlTrainingExt.lightgbmBoost">LightGBM (Boosting)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -912,56 +1012,56 @@
                     <div class="sensor-selection-section" style="margin-top: 20px;">
                         <label class="form-label" style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                             🎯 <span data-i18n="mlTrainingExt.selectSensors">Chọn biến để huấn luyện</span>
-                            <button type="button" class="btn-select-all" onclick="toggleAllSensors(true)" style="font-size: 11px; padding: 4px 10px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">Chọn tất cả</button>
-                            <button type="button" class="btn-deselect-all" onclick="toggleAllSensors(false)" style="font-size: 11px; padding: 4px 10px; background: var(--border-color); color: var(--text); border: none; border-radius: 4px; cursor: pointer;">Bỏ chọn</button>
+                            <button type="button" class="btn-select-all" onclick="toggleAllSensors(true)" style="font-size: 11px; padding: 4px 10px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;" data-i18n="mlTrainingExt.selectAll">Chọn tất cả</button>
+                            <button type="button" class="btn-deselect-all" onclick="toggleAllSensors(false)" style="font-size: 11px; padding: 4px 10px; background: var(--border-color); color: var(--text); border: none; border-radius: 4px; cursor: pointer;" data-i18n="mlTrainingExt.deselectAll">Bỏ chọn</button>
                         </label>
                         
                         <!-- Sensor Data Group -->
                         <div class="sensor-group" style="margin-bottom: 15px;">
-                            <div class="sensor-group-title" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">📡 Dữ liệu cảm biến</div>
+                            <div class="sensor-group-title" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">📡 <span data-i18n="mlTrainingExt.sensorData">Dữ liệu cảm biến</span></div>
                             <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
                                 <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
                                     <input type="checkbox" id="target_temperature" value="temperature" class="sensor-checkbox" checked style="width: 18px; height: 18px; accent-color: var(--primary-color);">
                                     <span class="checkbox-icon" style="font-size: 20px;">🌡️</span>
-                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Nhiệt độ</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);" data-i18n="mlTrainingExt.temperature">Nhiệt độ</span>
                                 </label>
                                 <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
                                     <input type="checkbox" id="target_humidity" value="humidity" class="sensor-checkbox" checked style="width: 18px; height: 18px; accent-color: var(--primary-color);">
                                     <span class="checkbox-icon" style="font-size: 20px;">💧</span>
-                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Độ ẩm</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);" data-i18n="mlTrainingExt.humidity">Độ ẩm</span>
                                 </label>
                                 <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
                                     <input type="checkbox" id="target_pressure" value="pressure" class="sensor-checkbox" checked style="width: 18px; height: 18px; accent-color: var(--primary-color);">
                                     <span class="checkbox-icon" style="font-size: 20px;">📊</span>
-                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Áp suất</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);" data-i18n="mlTrainingExt.pressure">Áp suất</span>
                                 </label>
                             </div>
                         </div>
                         
                         <!-- Weather API Data Group -->
                         <div class="sensor-group">
-                            <div class="sensor-group-title" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">🌐 Dữ liệu Weather API</div>
+                            <div class="sensor-group-title" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;">🌐 <span data-i18n="mlTrainingExt.weatherApiData">Dữ liệu Weather API</span></div>
                             <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
                                 <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
                                     <input type="checkbox" id="target_wind_speed" value="wind_speed" class="sensor-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
                                     <span class="checkbox-icon" style="font-size: 20px;">💨</span>
-                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Tốc độ gió</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);" data-i18n="mlTrainingExt.windSpeed">Tốc độ gió</span>
                                 </label>
                                 <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
                                     <input type="checkbox" id="target_rainfall" value="rainfall" class="sensor-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
                                     <span class="checkbox-icon" style="font-size: 20px;">🌧️</span>
-                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Lượng mưa</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);" data-i18n="mlTrainingExt.rainfall">Lượng mưa</span>
                                 </label>
                                 <label class="checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: var(--bg); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
                                     <input type="checkbox" id="target_uv_index" value="uv_index" class="sensor-checkbox" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
                                     <span class="checkbox-icon" style="font-size: 20px;">☀️</span>
-                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);">Chỉ số UV</span>
+                                    <span class="checkbox-label" style="font-weight: 600; color: var(--text);" data-i18n="mlTrainingExt.uvIndex">Chỉ số UV</span>
                                 </label>
                             </div>
                         </div>
                         
                         <div id="selectedCount" style="margin-top: 15px; font-size: 13px; color: var(--text-secondary);">
-                            Đã chọn: <strong style="color: var(--primary-color);">4</strong> biến để huấn luyện
+                            <span data-i18n="mlTrainingExt.selectedVars">Đã chọn</span>: <strong style="color: var(--primary-color);">4</strong> <span data-i18n="mlTrainingExt.varsToTrain">biến để huấn luyện</span>
                         </div>
                     </div>
 
@@ -980,7 +1080,7 @@
                         <div class="progress-fill" id="trainingProgress" style="width: 0%;"></div>
                     </div>
                     <div class="progress-info">
-                        <div class="progress-text" id="trainingProgressText" data-i18n="mlTrainingExt.trainingStatus">Sẵn sàng huấn luyện</div>
+                        <div class="progress-text" id="trainingProgressText" data-i18n="mlTrainingExt.readyToTrain">Sẵn sàng huấn luyện</div>
                         <div class="progress-percent" id="progressPercent">0%</div>
                     </div>
 
@@ -992,7 +1092,7 @@
                         <h3 style="margin-bottom: 15px; color: var(--text); font-size: 15px;">✅ <span data-i18n="mlTrainingExt.results">Kết quả huấn luyện</span></h3>
                         <div class="results-grid">
                             <div class="result-item">
-                                <div class="result-label">Model Type</div>
+                                <div class="result-label" data-i18n="mlTrainingExt.modelType">Model Type</div>
                                 <div class="result-value" id="trainedModelType">--</div>
                             </div>
                             <div class="result-item">
@@ -1008,11 +1108,11 @@
                                 <div class="result-value" id="r2Value">--</div>
                             </div>
                             <div class="result-item">
-                                <div class="result-label">Độ chính xác</div>
+                                <div class="result-label" data-i18n="mlTrainingExt.accuracy">Độ chính xác</div>
                                 <div class="result-value" id="accuracyValue">--</div>
                             </div>
                             <div class="result-item">
-                                <div class="result-label">Thời gian</div>
+                                <div class="result-label" data-i18n="mlTrainingExt.trainingTime">Thời gian</div>
                                 <div class="result-value" id="timeValue">--</div>
                             </div>
                         </div>
@@ -1022,16 +1122,16 @@
 
             <!-- Model Selection -->
             <section class="section">
-                <h2 class="section-title">🤖 Supported Models</h2>
-                <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;" data-i18n="mlTrainingExt.modelComparison">So sánh các model và chọn model phù hợp với nhu cầu của bạn.</p>
+                <h2 class="section-title">🤖 <span data-i18n="mlTrainingExt.supportedModels">Supported Models</span></h2>
+                <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;" data-i18n="mlTrainingExt.compareDesc">So sánh các model và chọn model phù hợp với nhu cầu của bạn.</p>
                 <div class="model-grid">
                     <div class="model-item selected" onclick="selectModel('prophet')" id="model-prophet">
                         <span class="model-icon">📈</span>
                         <div class="model-name">Prophet</div>
                         <div class="model-info">
-                            <div><span>Độ chính xác:</span> <span>⭐⭐⭐⭐</span></div>
-                            <div><span>Tốc độ:</span> <span>⭐⭐⭐⭐⭐</span></div>
-                            <div><span>Phức tạp:</span> <span>⭐⭐</span></div>
+                            <div><span data-i18n="mlTrainingExt.accuracyLabel">Độ chính xác:</span> <span>⭐⭐⭐⭐</span></div>
+                            <div><span data-i18n="mlTrainingExt.speedLabel">Tốc độ:</span> <span>⭐⭐⭐⭐⭐</span></div>
+                            <div><span data-i18n="mlTrainingExt.complexityLabel">Phức tạp:</span> <span>⭐⭐</span></div>
                         </div>
                     </div>
 
@@ -1039,9 +1139,9 @@
                         <span class="model-icon">🚀</span>
                         <div class="model-name">LightGBM</div>
                         <div class="model-info">
-                            <div><span>Độ chính xác:</span> <span>⭐⭐⭐⭐⭐</span></div>
-                            <div><span>Tốc độ:</span> <span>⭐⭐⭐⭐⭐</span></div>
-                            <div><span>Phức tạp:</span> <span>⭐⭐⭐</span></div>
+                            <div><span data-i18n="mlTrainingExt.accuracyLabel">Độ chính xác:</span> <span>⭐⭐⭐⭐⭐</span></div>
+                            <div><span data-i18n="mlTrainingExt.speedLabel">Tốc độ:</span> <span>⭐⭐⭐⭐⭐</span></div>
+                            <div><span data-i18n="mlTrainingExt.complexityLabel">Phức tạp:</span> <span>⭐⭐⭐</span></div>
                         </div>
                     </div>
                 </div>
@@ -1060,92 +1160,92 @@
 
                     <div class="form-grid" style="margin-top: 20px;">
                         <div class="form-group">
-                            <label class="form-label">🔄 Chu kỳ huấn luyện</label>
+                            <label class="form-label">🔄 <span data-i18n="mlTrainingExt.trainingCycle">Chu kỳ huấn luyện</span></label>
                             <select class="form-select" id="autoTrainInterval">
-                                <option value="1">Mỗi 1 ngày</option>
-                                <option value="3">Mỗi 3 ngày</option>
-                                <option value="7" selected>Mỗi 7 ngày (Khuyến nghị)</option>
-                                <option value="14">Mỗi 14 ngày</option>
-                                <option value="30">Mỗi 30 ngày</option>
+                                <option value="1" data-i18n="mlTrainingExt.every1Day">Mỗi 1 ngày</option>
+                                <option value="3" data-i18n="mlTrainingExt.every3Days">Mỗi 3 ngày</option>
+                                <option value="7" selected data-i18n="mlTrainingExt.every7Days">Mỗi 7 ngày (Khuyến nghị)</option>
+                                <option value="14" data-i18n="mlTrainingExt.every14Days">Mỗi 14 ngày</option>
+                                <option value="30" data-i18n="mlTrainingExt.every30Days">Mỗi 30 ngày</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">🕐 Giờ chạy</label>
+                            <label class="form-label">🕐 <span data-i18n="mlTrainingExt.runTime">Giờ chạy</span></label>
                             <select class="form-select" id="autoTrainHour">
-                                <option value="0">00:00 (Nửa đêm)</option>
-                                <option value="2" selected>02:00 (Khuyến nghị)</option>
+                                <option value="0">00:00 (<span data-i18n="mlTrainingExt.midnight">Nửa đêm</span>)</option>
+                                <option value="2" selected>02:00 (<span data-i18n="mlTrainingExt.recommended">Khuyến nghị</span>)</option>
                                 <option value="4">04:00</option>
                                 <option value="6">06:00</option>
-                                <option value="12">12:00 (Trưa)</option>
-                                <option value="18">18:00 (Chiều)</option>
+                                <option value="12">12:00 (<span data-i18n="mlTrainingExt.noon">Trưa</span>)</option>
+                                <option value="18">18:00 (<span data-i18n="mlTrainingExt.evening">Chiều</span>)</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">🤖 Model sử dụng</label>
+                            <label class="form-label">🤖 <span data-i18n="mlTrainingExt.modelUsed">Model sử dụng</span></label>
                             <select class="form-select" id="autoTrainModel">
                                 <option value="prophet" selected>Prophet</option>
                                 <option value="lightgbm">LightGBM</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">📊 Số lượng dữ liệu</label>
+                            <label class="form-label">📊 <span data-i18n="mlTrainingExt.dataAmount">Số lượng dữ liệu</span></label>
                             <input type="number" class="form-input" id="autoTrainDataPoints" value="10000" min="1000" max="20000">
                         </div>
                     </div>
 
                     <!-- Sensor Selection for Auto-Training -->
                     <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid var(--border-color);">
-                        <h3 class="section-subtitle">🎯 Chọn biến để huấn luyện tự động</h3>
+                        <h3 class="section-subtitle">🎯 <span data-i18n="mlTrainingExt.selectSensors">Chọn biến để huấn luyện tự động</span></h3>
                         
                         <!-- Sensor Data Section -->
                         <div style="margin-bottom: 20px;">
-                            <h4 style="margin-bottom: 10px; color: var(--text-secondary);">📡 Dữ Liệu Cảm Biến</h4>
+                            <h4 style="margin-bottom: 10px; color: var(--text-secondary);">📡 <span data-i18n="mlTrainingExt.sensorData">Dữ Liệu Cảm Biến</span></h4>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
                                 <label class="checkbox-item">
                                     <input type="checkbox" class="auto-train-sensor-checkbox" value="temperature" checked>
-                                    <span style="margin-left: 8px;">🌡️ Nhiệt độ</span>
+                                    <span style="margin-left: 8px;">🌡️ <span data-i18n="mlTrainingExt.temperature">Nhiệt độ</span></span>
                                 </label>
                                 <label class="checkbox-item">
                                     <input type="checkbox" class="auto-train-sensor-checkbox" value="humidity" checked>
-                                    <span style="margin-left: 8px;">💧 Độ ẩm</span>
+                                    <span style="margin-left: 8px;">💧 <span data-i18n="mlTrainingExt.humidity">Độ ẩm</span></span>
                                 </label>
                                 <label class="checkbox-item">
                                     <input type="checkbox" class="auto-train-sensor-checkbox" value="pressure">
-                                    <span style="margin-left: 8px;">📊 Áp suất</span>
+                                    <span style="margin-left: 8px;">📊 <span data-i18n="mlTrainingExt.pressure">Áp suất</span></span>
                                 </label>
                             </div>
                         </div>
 
                         <!-- Weather API Section -->
                         <div style="padding: 12px; background: rgba(102, 126, 234, 0.05); border-left: 3px solid var(--primary-color); border-radius: 4px; margin-bottom: 15px;">
-                            <h4 style="margin-bottom: 10px; color: var(--text-secondary);">🌐 Dữ Liệu Weather API</h4>
+                            <h4 style="margin-bottom: 10px; color: var(--text-secondary);">🌐 <span data-i18n="mlTrainingExt.weatherApiData">Dữ Liệu Weather API</span></h4>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
                                 <label class="checkbox-item">
                                     <input type="checkbox" class="auto-train-sensor-checkbox" value="wind_speed">
-                                    <span style="margin-left: 8px;">💨 Tốc độ gió</span>
+                                    <span style="margin-left: 8px;">💨 <span data-i18n="mlTrainingExt.windSpeed">Tốc độ gió</span></span>
                                 </label>
                                 <label class="checkbox-item">
                                     <input type="checkbox" class="auto-train-sensor-checkbox" value="rainfall">
-                                    <span style="margin-left: 8px;">🌧️ Lượng mưa</span>
+                                    <span style="margin-left: 8px;">🌧️ <span data-i18n="mlTrainingExt.rainfall">Lượng mưa</span></span>
                                 </label>
                                 <label class="checkbox-item">
                                     <input type="checkbox" class="auto-train-sensor-checkbox" value="uv_index">
-                                    <span style="margin-left: 8px;">☀️ Chỉ số UV</span>
+                                    <span style="margin-left: 8px;">☀️ <span data-i18n="mlTrainingExt.uvIndex">Chỉ số UV</span></span>
                                 </label>
                             </div>
                         </div>
 
                         <div id="autoTrainSelectedCount" style="margin-top: 12px; padding: 10px; background: rgba(81, 207, 102, 0.1); border-radius: 4px; font-size: 14px; color: var(--text-secondary);">
-                            📊 Đã chọn: <strong style="color: var(--primary-color);">2</strong> biến cảm biến + <strong style="color: #667eea;">0</strong> biến API
+                            📊 <span data-i18n="mlTrainingExt.selectedVars">Đã chọn</span>: <strong style="color: var(--primary-color);">2</strong> <span data-i18n="mlTrainingExt.sensorVars">biến cảm biến</span> + <strong style="color: #667eea;">0</strong> <span data-i18n="mlTrainingExt.apiVars">biến API</span>
                         </div>
                     </div>
 
                     <div class="auto-train-info" id="autoTrainInfo" style="margin-top: 20px;">
                         <div class="info-text">
-                            <span>📅 Lần huấn luyện tiếp theo: <strong id="nextTrainTime">--</strong></span>
+                            <span>📅 <span data-i18n="mlTrainingExt.nextTraining">Lần huấn luyện tiếp theo</span>: <strong id="nextTrainTime">--</strong></span>
                         </div>
                         <div class="info-text" style="margin-top: 8px;">
-                            <span>📝 Lần huấn luyện cuối: <strong id="lastAutoTrainTime">--</strong></span>
+                            <span>📝 <span data-i18n="mlTrainingExt.lastAutoTrain">Lần huấn luyện cuối</span>: <strong id="lastAutoTrainTime">--</strong></span>
                         </div>
                     </div>
 
@@ -1154,7 +1254,7 @@
                             ▶️ <span data-i18n="mlTrainingExt.enableAutoTrain">Bật Auto-Training</span>
                         </button>
                         <button class="btn btn-secondary" onclick="saveAutoTrainSettings()">
-                            💾 <span data-i18n="common.save">Lưu cài đặt</span>
+                            💾 <span data-i18n="mlTrainingExt.saveSettings">Lưu cài đặt</span>
                         </button>
                         <button class="btn btn-warning" onclick="runAutoTrainNow()">
                             ⚡ <span data-i18n="mlTrainingExt.trainNow">Chạy ngay</span>
@@ -1164,18 +1264,18 @@
 
                 <!-- Training History Table -->
                 <div class="form-section" style="margin-top: 25px;">
-                    <h3 class="section-subtitle">📋 Lịch sử huấn luyện tự động</h3>
+                    <h3 class="section-subtitle">📋 <span data-i18n="mlTrainingExt.autoTrainHistory">Lịch sử huấn luyện tự động</span></h3>
                     <div style="overflow-x: auto; margin-top: 15px;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="background: var(--primary-color); color: white;">
-                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--primary-color);">Thời gian</th>
-                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--primary-color);">Model</th>
-                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--primary-color);">Biến</th>
-                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);">Dữ liệu</th>
-                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);">Độ chính xác</th>
-                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);">Thời gian</th>
-                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);">Trạng thái</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--primary-color);" data-i18n="mlTrainingExt.histTime">Thời gian</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--primary-color);" data-i18n="mlTrainingExt.histModel">Model</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid var(--primary-color);" data-i18n="mlTrainingExt.histVariables">Biến</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);" data-i18n="mlTrainingExt.histData">Dữ liệu</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);" data-i18n="mlTrainingExt.histAccuracy">Độ chính xác</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);" data-i18n="mlTrainingExt.histDuration">Thời gian</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid var(--primary-color);" data-i18n="mlTrainingExt.histStatus">Trạng thái</th>
                                 </tr>
                             </thead>
                             <tbody id="autoTrainHistoryBody">
@@ -1206,6 +1306,11 @@
             updateClock();
             setInterval(updateClock, 1000);
             
+            // Update language toggle button state
+            if (typeof updateLanguageToggleButton === 'function') {
+                updateLanguageToggleButton();
+            }
+            
             // Load ML Training page data
             loadMLInfo();
         });
@@ -1234,9 +1339,9 @@
                 if (lastTrainTimeEl) {
                     if (modelInfo.last_trained) {
                         const date = new Date(modelInfo.last_trained);
-                        lastTrainTimeEl.textContent = date.toLocaleString('vi-VN');
+                        lastTrainTimeEl.textContent = date.toLocaleString(i18n.currentLang === 'vi' ? 'vi-VN' : 'en-US');
                     } else {
-                        lastTrainTimeEl.textContent = 'Chưa huấn luyện';
+                        lastTrainTimeEl.textContent = i18n.t('mlTrainingExt.notTrained');
                     }
                 }
                 
@@ -1274,6 +1379,11 @@
                 console.error('Error loading ML info:', error);
             }
         }
+        
+        // Listen for language change events to update dynamic content
+        window.addEventListener('languageChanged', () => {
+            loadMLInfo();
+        });
 
         function initTheme() {
             const themeToggle = document.getElementById('themeToggle');
@@ -1329,7 +1439,10 @@
             
             if (typeof AppUtils !== 'undefined') {
                 const modelNames = { 'prophet': 'Prophet', 'lightgbm': 'LightGBM' };
-                AppUtils.showToast(`✅ Đã chọn model ${modelNames[model]}`, 'success');
+                const msg = i18n.currentLang === 'vi' 
+                    ? `✅ Đã chọn model ${modelNames[model]}` 
+                    : `✅ Selected model ${modelNames[model]}`;
+                AppUtils.showToast(msg, 'success');
             }
         }
 
