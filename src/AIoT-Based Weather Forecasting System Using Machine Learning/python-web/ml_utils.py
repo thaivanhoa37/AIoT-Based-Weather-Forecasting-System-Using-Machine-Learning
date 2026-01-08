@@ -91,6 +91,88 @@ class MLManager:
         """Get the current active model"""
         return self.models.get(self.current_model_type, prophet_model)
     
+    def train_model(self, model_type: str, data: list, targets: list) -> dict:
+        """
+        Train model with specific targets (for auto-train compatibility)
+        
+        Args:
+            model_type: Type of model to train (prophet, lightgbm)
+            data: List of data dictionaries with sensor readings
+            targets: List of target features to train
+        
+        Returns:
+            dict with training results
+        """
+        try:
+            from models.sensor_data import SensorData
+            from datetime import datetime
+            
+            # Convert data dictionaries to SensorData objects
+            records = []
+            for d in data:
+                record = SensorData(
+                    timestamp=datetime.fromisoformat(d['timestamp']) if isinstance(d['timestamp'], str) else d['timestamp'],
+                    temperature=d.get('temperature', 0),
+                    humidity=d.get('humidity', 0),
+                    pressure=d.get('pressure', 0),
+                    aqi=d.get('aqi', 0)
+                )
+                records.append(record)
+            
+            # Separate sensor and weather targets
+            sensor_targets = [t for t in targets if t in ['temperature', 'humidity', 'pressure', 'aqi', 'co2', 'dust']]
+            weather_targets = [t for t in targets if t in ['wind_speed', 'rainfall', 'uv_index']]
+            
+            # For weather targets, we need to get weather data
+            weather_records = None
+            if weather_targets:
+                try:
+                    from database import SessionLocal
+                    from models.weather_forecasting import WeatherForecasting
+                    from sqlalchemy import desc
+                    
+                    db = SessionLocal()
+                    weather_records = db.query(WeatherForecasting).order_by(
+                        desc(WeatherForecasting.timestamp)
+                    ).limit(len(records)).all()
+                    db.close()
+                except Exception as e:
+                    logger.warning(f"Could not fetch weather data: {e}")
+                    weather_records = None
+            
+            # Call train_selected_targets
+            result = self.train_selected_targets(
+                records,
+                model_type,
+                sensor_targets,
+                weather_records,
+                weather_targets
+            )
+            
+            # Format result for compatibility
+            if result.get('success'):
+                return {
+                    'success': True,
+                    'accuracy': result.get('overall_accuracy', 0) / 100,  # Convert to decimal
+                    'training_time': result.get('training_time', 0),
+                    'message': 'Training completed successfully',
+                    'models_trained': result.get('models_trained', [])
+                }
+            else:
+                return {
+                    'success': False,
+                    'message': result.get('error', 'Training failed')
+                }
+                
+        except Exception as e:
+            logger.error(f"Error in train_model: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                'success': False,
+                'message': str(e)
+            }
+    
     def train_all_models(self, records, model_type: str = None, weather_records=None) -> dict:
         """
         Train a specific model type or current model with all targets

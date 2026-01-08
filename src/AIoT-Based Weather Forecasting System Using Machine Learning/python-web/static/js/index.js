@@ -306,6 +306,10 @@ async function displayForecastHourly() {
         }
 
         grid.innerHTML = '';
+        
+        // Lấy giờ hiện tại để highlight
+        const now = new Date();
+        const currentHour = now.getHours();
 
         // Display all 24 hours
         data.forecasts.slice(0, 24).forEach((forecast, index) => {
@@ -405,6 +409,13 @@ async function displayForecastHourly() {
 
             const card = document.createElement('div');
             card.className = 'forecast-card';
+            
+            // Kiểm tra xem có phải giờ hiện tại không
+            const isCurrentHour = hour === currentHour;
+            if (isCurrentHour) {
+                card.classList.add('current-hour');
+            }
+            card.dataset.hour = hour;
             card.style.animation = `fadeInUp 0.3s ease ${index * 0.03}s both`;
 
             card.innerHTML = `
@@ -422,6 +433,26 @@ async function displayForecastHourly() {
             `;
             grid.appendChild(card);
         });
+        
+        // Scroll đến giờ hiện tại sau khi render
+        setTimeout(() => {
+            const currentCard = grid.querySelector('.forecast-card.current-hour');
+            if (currentCard) {
+                const container = grid.parentElement;
+                if (container) {
+                    const cardLeft = currentCard.offsetLeft;
+                    const cardWidth = currentCard.offsetWidth;
+                    const containerWidth = container.offsetWidth;
+                    
+                    // Scroll để card hiện tại ở giữa màn hình
+                    const scrollPosition = cardLeft - (containerWidth / 2) + (cardWidth / 2);
+                    container.scrollTo({
+                        left: Math.max(0, scrollPosition),
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        }, 100);
 
     } catch (error) {
         console.error('Error loading hourly forecast:', error);

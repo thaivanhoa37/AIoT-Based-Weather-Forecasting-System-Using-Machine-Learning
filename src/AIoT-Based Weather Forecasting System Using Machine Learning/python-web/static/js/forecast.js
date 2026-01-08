@@ -185,6 +185,10 @@ function updateForecastGrid(forecasts) {
         return;
     }
     
+    // Lấy giờ hiện tại để highlight
+    const now = new Date();
+    const currentHour = now.getHours();
+    
     grid.innerHTML = displayForecasts.map((forecast, index) => {
         const tempValue = parseFloat(forecast.temperature);
         const humidityValue = parseFloat(forecast.humidity);
@@ -284,8 +288,11 @@ function updateForecastGrid(forecasts) {
         
         const confidence = parseInt(forecast.confidence) || 0;
         
+        // Kiểm tra xem có phải giờ hiện tại không
+        const isCurrentHour = hour === currentHour;
+        
         return `
-            <div class="forecast-card" style="animation: fadeInUp 0.3s ease ${index * 0.05}s both;">
+            <div class="forecast-card ${isCurrentHour ? 'current-hour' : ''}" data-hour="${hour}" style="animation: fadeInUp 0.3s ease ${index * 0.05}s both;">
                 <div class="forecast-time">${forecast.timestamp.split(' ')[1] || '--:--'}</div>
                 <div class="forecast-icon">${weatherIcon || '🌤️'}</div>
                 <div class="forecast-temp">${isNaN(tempValue) ? '--' : tempValue}°C</div>
@@ -320,11 +327,25 @@ function updateForecastGrid(forecasts) {
         document.head.appendChild(style);
     }
     
-    // Auto-scroll to start
-    const container = document.getElementById('forecastGridContainer');
-    if (container) {
-        container.scrollLeft = 0;
-    }
+    // Scroll đến giờ hiện tại sau khi render
+    setTimeout(() => {
+        const currentCard = grid.querySelector('.forecast-card.current-hour');
+        if (currentCard) {
+            const container = grid.parentElement;
+            if (container) {
+                const cardLeft = currentCard.offsetLeft;
+                const cardWidth = currentCard.offsetWidth;
+                const containerWidth = container.offsetWidth;
+                
+                // Scroll để card hiện tại ở giữa màn hình
+                const scrollPosition = cardLeft - (containerWidth / 2) + (cardWidth / 2);
+                container.scrollTo({
+                    left: Math.max(0, scrollPosition),
+                    behavior: 'smooth'
+                });
+            }
+        }
+    }, 100);
 }
 
 // Update forecast table

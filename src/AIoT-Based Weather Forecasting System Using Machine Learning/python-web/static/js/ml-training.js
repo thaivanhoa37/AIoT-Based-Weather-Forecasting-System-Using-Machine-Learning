@@ -6,6 +6,9 @@ let trainingInProgress = false;
 document.addEventListener('DOMContentLoaded', () => {
     loadMLTrainingPage();
     initSensorCheckboxes();
+    initAutoTrainCheckboxes();
+    loadAutoTrainSettings();
+    loadAutoTrainHistory();
 });
 
 // Initialize sensor checkboxes
@@ -590,8 +593,50 @@ async function loadAutoTrainSettings() {
         
         // Update next train time
         if (nextTrainTime) {
-            const nextTime = settings.next_train_time || 'Chưa xác định';
-            nextTrainTime.textContent = nextTime;
+            if (settings.enabled) {
+                // Calculate next training time
+                const now = new Date();
+                const intervalDays = settings.interval_days || 7;
+                const targetHour = settings.hour || 2;
+                
+                let nextDate;
+                
+                if (settings.last_auto_train_timestamp) {
+                    // If we have a last training timestamp, add interval days
+                    try {
+                        nextDate = new Date(settings.last_auto_train_timestamp);
+                        nextDate.setDate(nextDate.getDate() + intervalDays);
+                        nextDate.setHours(targetHour, 0, 0, 0);
+                    } catch (e) {
+                        // If parsing fails, calculate from now
+                        nextDate = new Date();
+                        nextDate.setDate(nextDate.getDate() + intervalDays);
+                        nextDate.setHours(targetHour, 0, 0, 0);
+                    }
+                } else {
+                    // No previous training, calculate from today
+                    nextDate = new Date();
+                    nextDate.setHours(targetHour, 0, 0, 0);
+                    
+                    // If today's target hour has passed, move to tomorrow
+                    if (now.getHours() >= targetHour) {
+                        nextDate.setDate(nextDate.getDate() + 1);
+                    }
+                }
+                
+                // Format the date
+                const dateStr = nextDate.toLocaleString('vi-VN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                nextTrainTime.textContent = dateStr;
+            } else {
+                nextTrainTime.textContent = 'Auto-Training đang tắt';
+            }
         }
         
         // Update last train time
@@ -645,8 +690,11 @@ function getAutoTrainTargets() {
 // Toggle auto-train
 async function toggleAutoTrain() {
     try {
+        const btnToggle = document.getElementById('btnToggleAutoTrain');
+        const currentlyEnabled = btnToggle.classList.contains('btn-danger');
+        
         const settings = {
-            enabled: !document.getElementById('btnToggleAutoTrain').classList.contains('btn-danger'),
+            enabled: !currentlyEnabled,  // Toggle the state
             interval_days: parseInt(document.getElementById('autoTrainInterval')?.value || 7),
             hour: parseInt(document.getElementById('autoTrainHour')?.value || 2),
             model_type: document.getElementById('autoTrainModel')?.value || 'prophet',
@@ -656,7 +704,7 @@ async function toggleAutoTrain() {
         
         // Validate
         if (settings.enabled && settings.targets.length === 0) {
-            AppUtils.showToast('Vui lòng chọn ít nhất 1 cảm biến', 'warning');
+            AppUtils.showToast('Vui lòng chọn ít nhất 1 biến để huấn luyện', 'warning');
             return;
         }
         
@@ -673,8 +721,13 @@ async function toggleAutoTrain() {
         const result = await response.json();
         
         if (result.success) {
-            AppUtils.showToast(result.message, 'success');
-            loadAutoTrainSettings();
+            const message = settings.enabled 
+                ? '✓ Auto-Training đã được bật!' 
+                : '✓ Auto-Training đã được tắt!';
+            AppUtils.showToast(message, 'success');
+            
+            // Reload settings to update UI
+            await loadAutoTrainSettings();
         }
     } catch (error) {
         console.error('Toggle error:', error);
@@ -685,8 +738,11 @@ async function toggleAutoTrain() {
 // Save auto-train settings
 async function saveAutoTrainSettings() {
     try {
+        const btnToggle = document.getElementById('btnToggleAutoTrain');
+        const currentlyEnabled = btnToggle.classList.contains('btn-danger');
+        
         const settings = {
-            enabled: document.getElementById('btnToggleAutoTrain').classList.contains('btn-danger'),
+            enabled: currentlyEnabled,  // Keep current enabled state
             interval_days: parseInt(document.getElementById('autoTrainInterval')?.value || 7),
             hour: parseInt(document.getElementById('autoTrainHour')?.value || 2),
             model_type: document.getElementById('autoTrainModel')?.value || 'prophet',
@@ -696,7 +752,7 @@ async function saveAutoTrainSettings() {
         
         // Validate
         if (settings.targets.length === 0) {
-            AppUtils.showToast('Vui lòng chọn ít nhất 1 cảm biến', 'warning');
+            AppUtils.showToast('Vui lòng chọn ít nhất 1 biến để huấn luyện', 'warning');
             return;
         }
         
@@ -714,7 +770,9 @@ async function saveAutoTrainSettings() {
         
         if (result.success) {
             AppUtils.showToast('✓ Cài đặt đã được lưu!', 'success');
-            loadAutoTrainSettings();
+            
+            // Reload settings to update UI including next training time
+            await loadAutoTrainSettings();
         }
     } catch (error) {
         console.error('Save error:', error);
@@ -728,9 +786,12 @@ async function runAutoTrainNow() {
         // Check if targets are selected
         const targets = getAutoTrainTargets();
         if (targets.length === 0) {
-            AppUtils.showToast('Vui lòng chọn ít nhất 1 cảm biến để huấn luyện', 'warning');
+            AppUtils.showToast('Vui lòng chọn ít nhất 1 biến để huấn luyện', 'warning');
             return;
         }
+        
+        // First save current settings
+        await saveAutoTrainSettings();
         
         AppUtils.showToast('⏳ Đang khởi động quá trình huấn luyện tự động...', 'info');
         
@@ -747,30 +808,43 @@ async function runAutoTrainNow() {
         
         if (result.success) {
             AppUtils.showToast('✓ ' + result.message, 'success');
-            addProgressLog(`✓ Auto-Training hoàn tất!`, 'success');
-            addProgressLog(`📈 Độ chính xác: ${(result.accuracy * 100).toFixed(2)}%`, 'info');
-            addProgressLog(`⏱️ Thời gian: ${result.training_time.toFixed(1)}s`, 'info');
             
-            // Show sensor targets
-            if (result.sensor_targets && result.sensor_targets.length > 0) {
-                addProgressLog(`📡 Biến cảm biến: ${result.sensor_targets.join(', ')}`, 'info');
+            // Log to progress if available
+            if (typeof addProgressLog === 'function') {
+                addProgressLog(`✓ Auto-Training hoàn tất!`, 'success');
+                
+                if (result.accuracy) {
+                    addProgressLog(`📈 Độ chính xác: ${(result.accuracy * 100).toFixed(2)}%`, 'info');
+                }
+                
+                if (result.training_time) {
+                    addProgressLog(`⏱️ Thời gian: ${result.training_time.toFixed(1)}s`, 'info');
+                }
+                
+                // Show sensor targets
+                if (result.sensor_targets && result.sensor_targets.length > 0) {
+                    addProgressLog(`📡 Biến cảm biến: ${result.sensor_targets.join(', ')}`, 'info');
+                }
+                
+                // Show API targets
+                if (result.api_targets && result.api_targets.length > 0) {
+                    addProgressLog(`🌐 Biến Weather API: ${result.api_targets.join(', ')}`, 'info');
+                }
             }
             
-            // Show API targets
-            if (result.api_targets && result.api_targets.length > 0) {
-                addProgressLog(`🌐 Biến Weather API: ${result.api_targets.join(', ')}`, 'info');
-            }
-            
-            // Reload settings
-            setTimeout(() => {
-                loadAutoTrainSettings();
-                loadTrainingHistory();
+            // Reload all data
+            setTimeout(async () => {
+                await loadAutoTrainSettings();
+                await loadAutoTrainHistory();
+                await loadMLTrainingPage();  // Reload model info
             }, 1000);
         }
     } catch (error) {
         console.error('Run error:', error);
         AppUtils.showToast('Lỗi: ' + error.message, 'error');
-        addProgressLog(`✗ Auto-Training thất bại: ${error.message}`, 'error');
+        if (typeof addProgressLog === 'function') {
+            addProgressLog(`✗ Auto-Training thất bại: ${error.message}`, 'error');
+        }
     }
 }
 

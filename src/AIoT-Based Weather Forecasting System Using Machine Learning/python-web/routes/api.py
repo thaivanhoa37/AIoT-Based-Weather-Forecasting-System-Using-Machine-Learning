@@ -597,7 +597,7 @@ async def update_auto_train_settings(request_body: dict = None):
         if "model_type" in request_body and request_body["model_type"] in ["prophet", "lightgbm"]:
             settings["model_type"] = request_body["model_type"]
         if "data_points" in request_body:
-            settings["data_points"] = max(1000, min(20000, int(request_body["data_points"])))
+            settings["data_points"] = max(1000, min(100000, int(request_body["data_points"])))
         if "targets" in request_body and isinstance(request_body["targets"], list):
             # Validate targets - support both sensor and API targets
             valid_targets = ["temperature", "humidity", "pressure", "aqi", "co2", "dust",

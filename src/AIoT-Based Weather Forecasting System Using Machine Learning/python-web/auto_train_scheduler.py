@@ -68,21 +68,37 @@ class AutoTrainScheduler:
         target_hour = settings.get("hour", 2)
         interval_days = settings.get("interval_days", 7)
         
-        # Check if current hour matches target hour
+        # Check if current hour matches target hour (allowing a 1-hour window)
         if now.hour != target_hour:
             return False
         
-        # Check if we already trained today
+        # Check if we already trained in the last hour (prevent duplicate runs)
+        if self.last_check:
+            time_since_check = (now - self.last_check).total_seconds()
+            if time_since_check < 3600:  # Less than 1 hour since last check
+                return False
+        
+        # Check if enough time has passed since last training
         last_train_str = settings.get("last_auto_train_timestamp")
         if last_train_str:
             try:
                 last_train = datetime.fromisoformat(last_train_str)
                 days_since = (now - last_train).days
+                
+                # Only train if interval has passed
                 if days_since < interval_days:
+                    logger.debug(f"Only {days_since} days since last training, need {interval_days} days")
                     return False
-            except:
-                pass
+                    
+                logger.info(f"Training interval met: {days_since} days >= {interval_days} days")
+            except Exception as e:
+                logger.warning(f"Could not parse last training time: {e}")
+                # If we can't parse, proceed with training
+        else:
+            logger.info("No previous training found, will train now")
         
+        # Update last check time
+        self.last_check = now
         return True
     
     def run_training(self):
@@ -231,12 +247,27 @@ class AutoTrainScheduler:
         
         while self.running:
             try:
-                self.check_and_run()
+                settings = self.load_settings()
+                
+                # Only check if enabled
+                if settings.get("enabled", False):
+                    if self.should_train(settings):
+                        logger.info("⏰ Auto-training triggered by scheduler")
+                        print(f"\n⏰ Đến giờ huấn luyện tự động: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+                        self.run_training()
+                else:
+                    # If disabled, just log periodically (every 6 hours)
+                    if not hasattr(self, '_last_disabled_log') or \
+                       (datetime.now() - self._last_disabled_log).total_seconds() > 21600:
+                        logger.info("Auto-Training is disabled")
+                        self._last_disabled_log = datetime.now()
+                        
             except Exception as e:
                 logger.error(f"Scheduler error: {e}")
             
-            # Sleep for 1 hour before next check
-            for _ in range(3600):  # 3600 seconds = 1 hour
+            # Sleep for 30 minutes before next check (more frequent than 1 hour)
+            # This ensures we don't miss the target hour
+            for _ in range(1800):  # 1800 seconds = 30 minutes
                 if not self.running:
                     break
                 time.sleep(1)
