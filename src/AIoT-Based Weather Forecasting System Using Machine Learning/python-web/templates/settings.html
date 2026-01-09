@@ -765,19 +765,19 @@
                             
                             <!-- Dropdown chọn tỉnh thành -->
                             <div class="form-group" style="margin-bottom: 15px;">
-                                <label class="form-label">🏙️ Tỉnh/Thành phố</label>
+                                <label class="form-label">🏙️ <span data-i18n="settingsExt.province">Tỉnh/Thành phố</span></label>
                                 <select class="form-control" id="provinceSelect" onchange="onProvinceChange()">
-                                    <option value="">-- Chọn tỉnh/thành phố --</option>
+                                    <option value="" data-i18n="settingsExt.selectProvince">-- Chọn tỉnh/thành phố --</option>
                                 </select>
                             </div>
 
                             <!-- Dropdown chọn xã/phường -->
                             <div class="form-group" style="margin-bottom: 15px;">
-                                <label class="form-label">🏠 Xã/Phường</label>
+                                <label class="form-label">🏠 <span data-i18n="settingsExt.ward">Xã/Phường</span></label>
                                 <select class="form-control" id="wardSelect" onchange="onWardChange()">
-                                    <option value="">-- Chọn xã/phường --</option>
+                                    <option value="" data-i18n="settingsExt.selectWard">-- Chọn xã/phường --</option>
                                 </select>
-                                <div class="form-label-note">Chọn xã/phường để có địa chỉ chi tiết nhất</div>
+                                <div class="form-label-note" data-i18n="settingsExt.wardNote">Chọn xã/phường để có địa chỉ chi tiết nhất</div>
                             </div>
                         </div>
 
@@ -890,13 +890,13 @@
 
                         <!-- Nút hành động -->
                         <div class="btn-container">
-                            <button class="btn-secondary" type="button" onclick="loadEnvConfig()" style="flex: 0.5;">🔄 <span>Tải lại</span></button>
+                            <button class="btn-secondary" type="button" onclick="loadEnvConfig()" style="flex: 0.5;">🔄 <span data-i18n="settingsExt.reload">Tải lại</span></button>
                             <button class="btn-secondary" type="button" onclick="testMysqlConnection()" style="flex: 1;">🔗 <span data-i18n="settingsExt.testConnection">Kiểm tra kết nối</span></button>
-                            <button class="btn-save" type="button" onclick="saveEnvConfig()" style="flex: 1;">💾 <span data-i18n="settingsExt.saveSettings">Lưu vào .env</span></button>
+                            <button class="btn-save" type="button" onclick="saveEnvConfig()" style="flex: 1;">💾 <span data-i18n="settingsExt.saveToEnv">Lưu vào .env</span></button>
                         </div>
 
                         <div class="info-box warning" style="margin-top: 15px;">
-                            ⚠️ <span>Sau khi lưu .env, bạn cần <strong>restart server</strong> để áp dụng thay đổi.</span>
+                            ⚠️ <span data-i18n="settingsExt.envWarning">Sau khi lưu .env, bạn cần <strong>restart server</strong> để áp dụng thay đổi.</span>
                         </div>
                     </div>
 
@@ -979,6 +979,46 @@
                     }
                 });
             }
+            
+            // Listen to language change event to update dynamic texts
+            window.addEventListener('languageChanged', (e) => {
+                console.log('Language changed to:', e.detail.language);
+                // Update ward select options text if province is already selected
+                const wardSelect = document.getElementById('wardSelect');
+                if (wardSelect && wardSelect.options.length === 1) {
+                    // Only default option exists, update its text
+                    const firstOption = wardSelect.options[0];
+                    if (firstOption.value === '') {
+                        const selectWardText = i18n ? i18n.t('settingsExt.selectWard') : '-- Chọn xã/phường --';
+                        const noWardsText = i18n ? i18n.t('settingsExt.noWards') : '-- Không có xã/phường --';
+                        // Determine which text to use based on current text
+                        if (firstOption.textContent.includes('Không có') || firstOption.textContent.includes('No ward')) {
+                            firstOption.textContent = noWardsText;
+                        } else {
+                            firstOption.textContent = selectWardText;
+                        }
+                    }
+                }
+                
+                // Update province select default option
+                const provinceSelect = document.getElementById('provinceSelect');
+                if (provinceSelect && provinceSelect.options[0]) {
+                    const firstOption = provinceSelect.options[0];
+                    if (firstOption.value === '') {
+                        const selectProvinceText = i18n ? i18n.t('settingsExt.selectProvince') : '-- Chọn tỉnh/thành phố --';
+                        firstOption.textContent = selectProvinceText;
+                    }
+                }
+                
+                // Update database status text
+                checkDatabaseStatus();
+                
+                // Re-format uptime with new language
+                const uptimeElement = document.getElementById('uptimeValue');
+                if (uptimeElement && uptimeElement.dataset.seconds) {
+                    uptimeElement.textContent = formatUptime(parseFloat(uptimeElement.dataset.seconds));
+                }
+            });
         });
 
         // Load cấu hình từ .env
@@ -1194,8 +1234,9 @@
             
             console.log('onProvinceChange called, selectedIndex:', selectedIndex, 'type:', typeof selectedIndex);
             
-            // Reset ward select
-            wardSelect.innerHTML = '<option value="">-- Chọn xã/phường --</option>';
+            // Reset ward select - use i18n for text
+            const selectWardText = i18n ? i18n.t('settingsExt.selectWard') : '-- Chọn xã/phường --';
+            wardSelect.innerHTML = `<option value="">${selectWardText}</option>`;
             
             // Kiểm tra selectedIndex - là string, không phải number
             if (selectedIndex === '' || selectedIndex === null || selectedIndex === undefined) {
@@ -1274,7 +1315,8 @@
                 AppUtils.showToast(`📍 Đã tải ${wards.length} xã/phường`, 'success');
             } else {
                 console.log('No wards found for province');
-                wardSelect.innerHTML = '<option value="">-- Không có xã/phường --</option>';
+                const noWardsText = i18n ? i18n.t('settingsExt.noWards') : '-- Không có xã/phường --';
+                wardSelect.innerHTML = `<option value="">${noWardsText}</option>`;
             }
         }
 
@@ -1451,29 +1493,38 @@
                 const badge = document.getElementById('dbStatus');
                 const details = document.getElementById('dbStatusDetails');
                 
+                const connectedOkText = i18n ? i18n.t('settingsExt.connectedOk') : 'Kết nối OK';
+                const connectionFailedText = i18n ? i18n.t('settingsExt.connectionFailed') : 'Mất kết nối';
+                const connectingText = i18n ? i18n.t('settingsExt.connecting') : 'Đang kết nối';
+                const cannotConnectText = i18n ? i18n.t('settingsExt.cannotConnect') : 'Không thể kết nối';
+                
                 if (data.success && data.connected) {
-                    badge.innerHTML = '<span class="status-dot"></span><span>✓ Kết nối OK</span>';
+                    badge.innerHTML = `<span class="status-dot"></span><span>✓ ${connectedOkText}</span>`;
                     badge.className = 'status-badge';
                     
                     // Hiển thị thông tin kết nối
                     if (data.info) {
-                        details.innerHTML = `<strong>✓ Đang kết nối:</strong><br>
+                        const connectingToText = i18n && i18n.isEnglish() ? 'Connected to' : 'Đang kết nối';
+                        details.innerHTML = `<strong>✓ ${connectingToText}:</strong><br>
                             🖥️ Host: <code>${data.info.host}</code><br>
                             🔌 Port: <code>${data.info.port}</code><br>
                             👤 User: <code>${data.info.user}</code><br>
                             💾 Database: <code>${data.info.database}</code>`;
                     }
                 } else {
-                    badge.innerHTML = '<span class="status-dot"></span><span>✗ Mất kết nối</span>';
+                    badge.innerHTML = `<span class="status-dot"></span><span>✗ ${connectionFailedText}</span>`;
                     badge.className = 'status-badge error';
-                    details.innerHTML = `<strong>✗ Không thể kết nối:</strong><br><code style="font-size: 11px; color: #f56565;">${data.message || 'Lỗi không xác định'}</code>`;
+                    const errorMsg = i18n && i18n.isEnglish() ? 'Cannot connect' : 'Không thể kết nối';
+                    details.innerHTML = `<strong>✗ ${errorMsg}:</strong><br><code style="font-size: 11px; color: #f56565;">${data.message || 'Unknown error'}</code>`;
                 }
             } catch (error) {
                 const badge = document.getElementById('dbStatus');
                 const details = document.getElementById('dbStatusDetails');
-                badge.innerHTML = '<span class="status-dot"></span><span>✗ Lỗi</span>';
+                const errorText = i18n ? i18n.t('settingsExt.error') : 'Lỗi';
+                const connectionErrorText = i18n && i18n.isEnglish() ? 'Connection Error' : 'Lỗi kết nối';
+                badge.innerHTML = `<span class="status-dot"></span><span>✗ ${errorText}</span>`;
                 badge.className = 'status-badge error';
-                details.innerHTML = `<strong>✗ Lỗi kết nối:</strong><br><code style="font-size: 11px; color: #f56565;">${error.message}</code>`;
+                details.innerHTML = `<strong>✗ ${connectionErrorText}:</strong><br><code style="font-size: 11px; color: #f56565;">${error.message}</code>`;
             }
         }
 
@@ -1677,18 +1728,23 @@
             const badge = document.getElementById('dbStatus');
             const details = document.getElementById('dbStatusDetails');
             
+            const connectedOkText = i18n ? i18n.t('settingsExt.connectedOk') : 'Kết nối OK';
+            const connectionFailedText = i18n ? i18n.t('settingsExt.connectionFailed') : 'Lỗi kết nối';
+            const connectionSuccessText = i18n ? i18n.t('settingsExt.connectionSuccess') : 'Kết nối thành công';
+            const connectionFailedMsgText = i18n ? i18n.t('settingsExt.connectionFailedMsg') : 'Kết nối thất bại';
+            
             if (success) {
-                badge.innerHTML = '<span class="status-dot"></span><span>✓ Kết nối OK</span>';
+                badge.innerHTML = `<span class="status-dot"></span><span>✓ ${connectedOkText}</span>`;
                 badge.className = 'status-badge';
-                details.innerHTML = `<strong>✓ Kết nối thành công</strong><br>
+                details.innerHTML = `<strong>✓ ${connectionSuccessText}</strong><br>
                     🖥️ Host: <code>${document.getElementById('mysqlHost').value}</code><br>
                     🔌 Port: <code>${document.getElementById('mysqlPort').value}</code><br>
                     👤 User: <code>${document.getElementById('mysqlUser').value}</code><br>
                     💾 Database: <code>${document.getElementById('mysqlDb').value}</code>`;
             } else {
-                badge.innerHTML = '<span class="status-dot"></span><span>✗ Lỗi kết nối</span>';
+                badge.innerHTML = `<span class="status-dot"></span><span>✗ ${connectionFailedText}</span>`;
                 badge.className = 'status-badge error';
-                details.innerHTML = `<strong>✗ Kết nối thất bại</strong><br><code style="font-size: 11px; color: #f56565;">${info}</code>`;
+                details.innerHTML = `<strong>✗ ${connectionFailedMsgText}</strong><br><code style="font-size: 11px; color: #f56565;">${info}</code>`;
             }
         }
 
@@ -1762,6 +1818,29 @@
             }
         }
 
+        function formatUptime(seconds) {
+            if (seconds === undefined || seconds === null || isNaN(seconds)) {
+                return '--';
+            }
+
+            const totalSeconds = Math.max(0, Math.floor(seconds));
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+            // Get localized time units
+            const daysText = i18n ? i18n.t('settingsExt.daysShort') : 'd';
+            const hoursText = i18n ? i18n.t('settingsExt.hoursShort') : 'h';
+            const minutesText = i18n ? i18n.t('settingsExt.minutesShort') : 'm';
+
+            const parts = [];
+            if (days) parts.push(`${days}${daysText}`);
+            if (hours || days) parts.push(`${hours}${hoursText}`);
+            parts.push(`${minutes}${minutesText}`);
+
+            return parts.join(' ');
+        }
+
         async function showSystemInfo() {
             try {
                 const response = await fetch('/api/system/info');
@@ -1780,7 +1859,7 @@
 💾 RAM: ${info.ram_used || '--'} / ${info.ram_total || '--'}
 📦 Storage: ${info.disk_used || '--'} / ${info.disk_total || '--'}
 🌡️  Nhiệt độ CPU: ${info.cpu_temp || '--'}°C
-⏱️  Uptime: ${info.uptime || '--'}
+⏱️  Uptime: ${formatUptime(info.uptime)}
                     `;
                     alert(message);
                 } else {
@@ -1831,20 +1910,24 @@
                     
                     tempElement.textContent = cpuTemp.toFixed(1) + ' °C';
                     
+                    const tempGoodText = i18n ? i18n.t('settingsExt.tempGood') : 'Bình thường';
+                    const tempHotText = i18n ? i18n.t('settingsExt.tempHot') : 'Nóng';
+                    const tempDangerText = i18n ? i18n.t('settingsExt.tempDanger') : 'Nguy hiểm';
+                    
                     if (cpuTemp < 50) {
                         tempElement.className = 'stat-value temp-good';
                         tempStatusElement.className = 'temp-status-good';
-                        tempStatusElement.textContent = '✓ Bình thường';
+                        tempStatusElement.textContent = `✓ ${tempGoodText}`;
                         document.getElementById('tempProgressBar').style.width = (cpuTemp / 80) * 100 + '%';
                     } else if (cpuTemp < 70) {
                         tempElement.className = 'stat-value temp-warning';
                         tempStatusElement.className = 'temp-status-warning';
-                        tempStatusElement.textContent = '⚠️ Nóng';
+                        tempStatusElement.textContent = `⚠️ ${tempHotText}`;
                         document.getElementById('tempProgressBar').style.width = (cpuTemp / 80) * 100 + '%';
                     } else {
                         tempElement.className = 'stat-value temp-danger';
                         tempStatusElement.className = 'temp-status-danger';
-                        tempStatusElement.textContent = '🔴 Nguy hiểm';
+                        tempStatusElement.textContent = `🔴 ${tempDangerText}`;
                         document.getElementById('tempProgressBar').style.width = '100%';
                     }
 
@@ -1859,13 +1942,14 @@
 
                     // Uptime
                     const uptime = sys.uptime || 0;
-                    const hours = Math.floor(uptime / 3600);
-                    const minutes = Math.floor((uptime % 3600) / 60);
-                    document.getElementById('uptimeValue').textContent = hours + ' h';
+                    const uptimeElement = document.getElementById('uptimeValue');
+                    uptimeElement.textContent = formatUptime(uptime);
+                    uptimeElement.dataset.seconds = uptime; // Store for language switching
                     
-                    // Get boot time
+                    // Get boot time - use appropriate locale
                     const bootTime = new Date(Date.now() - uptime * 1000);
-                    const bootTimeStr = bootTime.toLocaleString('vi-VN');
+                    const locale = i18n && i18n.isEnglish() ? 'en-US' : 'vi-VN';
+                    const bootTimeStr = bootTime.toLocaleString(locale);
                     document.getElementById('bootTime').textContent = bootTimeStr;
                 } else {
                     AppUtils.showToast('✗ Không thể tải thông tin', 'error');

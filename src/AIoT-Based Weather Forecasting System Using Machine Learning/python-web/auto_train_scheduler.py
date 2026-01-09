@@ -68,34 +68,50 @@ class AutoTrainScheduler:
         target_hour = settings.get("hour", 2)
         interval_days = settings.get("interval_days", 7)
         
-        # Check if current hour matches target hour (allowing a 1-hour window)
-        if now.hour != target_hour:
-            return False
-        
-        # Check if we already trained in the last hour (prevent duplicate runs)
+        # Check if we already trained in the last 2 hours (prevent duplicate runs)
         if self.last_check:
             time_since_check = (now - self.last_check).total_seconds()
-            if time_since_check < 3600:  # Less than 1 hour since last check
+            if time_since_check < 7200:  # Less than 2 hours since last check
                 return False
         
         # Check if enough time has passed since last training
         last_train_str = settings.get("last_auto_train_timestamp")
+        should_train_today = False
+        
         if last_train_str:
             try:
                 last_train = datetime.fromisoformat(last_train_str)
-                days_since = (now - last_train).days
+                time_since_train = (now - last_train).total_seconds()
+                days_since = time_since_train / 86400  # Convert to days (float)
                 
-                # Only train if interval has passed
+                # Check if interval has passed
                 if days_since < interval_days:
-                    logger.debug(f"Only {days_since} days since last training, need {interval_days} days")
+                    logger.debug(f"Only {days_since:.2f} days since last training, need {interval_days} days")
+                    return False
+                
+                # Check if we already trained today at the target hour
+                if last_train.date() == now.date() and last_train.hour >= target_hour:
+                    logger.debug("Already trained today at target hour")
                     return False
                     
-                logger.info(f"Training interval met: {days_since} days >= {interval_days} days")
+                should_train_today = True
+                logger.info(f"Training interval met: {days_since:.2f} days >= {interval_days} days")
             except Exception as e:
                 logger.warning(f"Could not parse last training time: {e}")
                 # If we can't parse, proceed with training
+                should_train_today = True
         else:
             logger.info("No previous training found, will train now")
+            should_train_today = True
+        
+        if not should_train_today:
+            return False
+        
+        # Check if current time is at or past the target hour
+        # Allow training anytime after the target hour (not just exactly at that hour)
+        if now.hour < target_hour:
+            logger.debug(f"Current hour {now.hour} is before target hour {target_hour}")
+            return False
         
         # Update last check time
         self.last_check = now
